@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Heart Teardown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Unbounded:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout idea: a physiology chart recorder. The beating heart is the stage, the Wiggers strip is the instrument beside it. Single dark theme by choice. */
+  color-scheme: dark;
+  --ink:#0a101a;
+  --panel:#111a28;
+  --panel-2:#172235;
+  --line:#26344f;
+  --text:#e9edf5;
+  --muted:#8e9ab2;
+  --art:#ff5364;      /* arterial, oxygenated */
+  --ven:#5a93ff;      /* venous, deoxygenated */
+  --atr:#ffb84d;      /* left atrial pressure */
+  --ecg:#86f0cf;      /* ECG trace */
+  --font-display:"Unbounded","IBM Plex Sans",system-ui,sans-serif;
+  --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--ink);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:15px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--atr);outline-offset:2px}
+
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:18px}
+
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 20px}
+.brand{display:flex;flex-direction:column;gap:4px;min-width:0}
+a.eyebrow{text-decoration:none}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--art)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(26px,6vw,40px);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.tagline{color:var(--muted);margin:0;font-size:14px}
+
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--panel);gap:2px}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:999px;font-family:var(--font-mono);font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;min-width:40px}
+.seg button[aria-pressed="true"]{background:var(--text);color:var(--ink)}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+@media (min-width:980px){
+  .grid{grid-template-columns:minmax(0,520px) minmax(0,1fr);align-items:start}
+  .stage{position:sticky;top:16px}
+}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+
+.heart-box{position:relative;border-radius:18px;background:radial-gradient(120% 90% at 50% 40%,#16233a 0%,#0c1420 70%);border:1px solid var(--line);overflow:hidden}
+#heart{display:block;width:100%;height:auto}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.panel h2{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+
+.phase{display:flex;flex-direction:column;gap:10px}
+.phase-head{display:flex;align-items:baseline;gap:10px}
+.phase-n{font-family:var(--font-mono);font-size:12px;color:var(--atr);white-space:nowrap}
+.phase-name{font-family:var(--font-display);font-weight:500;font-size:clamp(16px,4.4vw,20px);line-height:1.2;margin:0}
+.phase-desc{margin:0;color:#c9d1e0;min-height:4.5em}
+.phase-note{margin:0;color:var(--atr);font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12.5px;background:var(--panel-2)}
+.chip i{width:9px;height:9px;border-radius:50%;background:#56627a;flex:none}
+.chip.open i{background:var(--ecg);box-shadow:0 0 8px var(--ecg)}
+.chip.open b{color:var(--ecg)}
+.chip b{font-weight:600;color:var(--muted)}
+
+.reads{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (min-width:560px){.reads{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.read{background:var(--panel-2);border-radius:10px;padding:8px 10px;border-left:3px solid var(--line);min-width:0}
+.read span{display:block;font-size:11.5px;color:var(--muted);line-height:1.25}
+.read strong{font-family:var(--font-mono);font-weight:600;font-size:19px;font-variant-numeric:tabular-nums}
+.read small{display:block;font-family:var(--font-mono);font-size:10.5px;color:var(--muted);white-space:nowrap;line-height:1.3}
+.read.r-lv{border-left-color:var(--art)}
+.read.r-ao{border-left-color:#ff9aa5}
+.read.r-la{border-left-color:var(--atr)}
+.read.r-vol{border-left-color:var(--ven)}
+
+.controls{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.play{border:0;border-radius:999px;background:var(--art);color:#1a0508;font-weight:600;padding:9px 18px 9px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;min-width:112px}
+.play svg{width:14px;height:14px;fill:currentColor;flex:none}
+.toggle{border:1px solid var(--line);background:var(--panel-2);border-radius:999px;padding:7px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.toggle::before{content:"";width:9px;height:9px;border-radius:50%;background:#56627a}
+.toggle[aria-pressed="true"]{color:var(--text);border-color:#3a4c70}
+.toggle[aria-pressed="true"]::before{background:var(--atr);box-shadow:0 0 8px var(--atr)}
+.hr{display:flex;align-items:center;gap:10px;flex:1 1 220px;min-width:0}
+.hr label{font-size:13px;color:var(--muted);white-space:nowrap}
+.hr output{font-family:var(--font-mono);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap;min-width:64px;text-align:right}
+input[type=range]{flex:1;min-width:60px;accent-color:var(--art);height:24px}
+.hint{margin:0;font-size:12.5px;color:var(--muted)}
+
+.conds{display:flex;flex-wrap:wrap;gap:8px}
+.conds button{border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:8px 12px;cursor:pointer;font-size:13.5px;color:#c9d1e0;text-align:left}
+.conds button[aria-pressed="true"]{background:var(--text);color:var(--ink);border-color:var(--text);font-weight:600}
+
+canvas.plot{display:block;width:100%;touch-action:pan-y;cursor:ew-resize}
+#wig{height:440px}
+#pv{height:230px;cursor:default}
+
+.two{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+@media (min-width:640px){.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.stats{display:flex;flex-wrap:wrap;gap:6px 16px;font-family:var(--font-mono);font-size:12.5px;color:var(--muted);margin-top:8px;font-variant-numeric:tabular-nums}
+.stats b{color:var(--text);font-weight:600}
+.notes{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;color:#c9d1e0}
+.notes li::marker{color:var(--art)}
+.prac{display:inline-flex;margin-top:14px;border:1px solid var(--art);color:var(--art);border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:600;text-decoration:none}
+.prac:hover{background:var(--art);color:#1a0508}
+footer{color:var(--muted);font-size:12.5px;max-width:70ch}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <a class="eyebrow" href="./">← Smart Heart 3.0</a>
+      <h1>Teardown</h1>
+      <p class="tagline" data-i18n="tagline"></p>
+    </div>
+    <div class="seg" role="group" aria-label="Language" id="langs">
+      <button type="button" data-lang="en">EN</button>
+      <button type="button" data-lang="ru">RU</button>
+      <button type="button" data-lang="uz">UZ</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="col stage">
+      <div class="heart-box"><canvas id="heart" width="620" height="610" role="img" aria-label="Animated heart cross-section"></canvas></div>
+
+      <section class="panel phase" aria-live="off">
+        <div class="phase-head">
+          <span class="phase-n" id="phaseN"></span>
+          <h3 class="phase-name" id="phaseName"></h3>
+        </div>
+        <p class="phase-desc" id="phaseDesc"></p>
+        <p class="phase-note" id="phaseNote" hidden></p>
+        <div class="chips">
+          <span class="chip" id="chipMi"><i></i><span data-i18n="mitral"></span> <b></b></span>
+          <span class="chip" id="chipAo"><i></i><span data-i18n="aortic"></span> <b></b></span>
+        </div>
+        <div class="reads">
+          <div class="read r-lv"><span data-i18n="rLv"></span><strong id="vLv">0</strong><small>mmHg</small></div>
+          <div class="read r-ao"><span data-i18n="rAo"></span><strong id="vAo">0</strong><small>mmHg</small></div>
+          <div class="read r-la"><span data-i18n="rLa"></span><strong id="vLa">0</strong><small>mmHg</small></div>
+          <div class="read r-vol"><span data-i18n="rVol"></span><strong id="vVol">0</strong><small>mL</small></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="panel controls">
+        <div class="row">
+          <button type="button" class="play" id="play"><svg viewBox="0 0 14 14" aria-hidden="true"><path id="playIcon" d="M2 1h3.5v12H2zM8.5 1H12v12H8.5z"/></svg><span id="playLabel"></span></button>
+          <div class="seg" role="group" id="speeds" aria-label="Speed">
+            <button type="button" data-speed="1">1×</button>
+            <button type="button" data-speed="0.5">½×</button>
+            <button type="button" data-speed="0.25">¼×</button>
+            <button type="button" data-speed="0.1">⅒×</button>
+          </div>
+          <button type="button" class="toggle" id="sound" aria-pressed="false" data-i18n="sound"></button>
+          <button type="button" class="toggle" id="cond" aria-pressed="true" data-i18n="conduction"></button>
+        </div>
+        <div class="row">
+          <div class="hr">
+            <label for="hr" data-i18n="hr"></label>
+            <input type="range" id="hr" min="40" max="120" step="1" value="75">
+            <output id="hrOut" for="hr"></output>
+          </div>
+        </div>
+        <p class="hint" data-i18n="hrHint"></p>
+      </section>
+
+      <section class="panel">
+        <h2 data-i18n="condTitle"></h2>
+        <div class="conds" id="conds" role="group">
+          <button type="button" data-c="normal"></button>
+          <button type="button" data-c="as"></button>
+          <button type="button" data-c="mr"></button>
+          <button type="button" data-c="ar"></button>
+          <button type="button" data-c="ms"></button>
+          <button type="button" data-c="mvp"></button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 data-i18n="wigTitle"></h2>
+        <canvas class="plot" id="wig" role="img" aria-label="Wiggers diagram"></canvas>
+        <p class="hint" data-i18n="wigHint" style="margin-top:8px"></p>
+      </section>
+
+      <div class="two">
+        <section class="panel">
+          <h2 data-i18n="pvTitle"></h2>
+          <canvas class="plot" id="pv" role="img" aria-label="Pressure-volume loop"></canvas>
+          <div class="stats" id="stats"></div>
+        </section>
+        <section class="panel">
+          <h2 data-i18n="notesTitle"></h2>
+          <ul class="notes" id="notes"></ul>
+          <a class="prac" id="prac" href="./"></a>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <footer data-i18n="disclaimer"></footer>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ───────────── text ───────────── */
+const T = {
+en:{
+  tagline:'One heartbeat, taken apart and kept in sync.',
+  play:'Play', pause:'Pause', sound:'Heart sounds', conduction:'Conduction',
+  hr:'Heart rate', bpm:'bpm',
+  hrHint:'Raise the heart rate and watch diastole shrink much more than systole.',
+  condTitle:'Condition',
+  conds:{normal:'Normal', as:'Aortic stenosis', mr:'Mitral regurgitation', ar:'Aortic regurgitation', ms:'Mitral stenosis', mvp:'Mitral valve prolapse'},
+  prac:'Practise this in Smart Heart',
+  wigTitle:'Wiggers diagram', wigHint:'Drag across the diagram to move through the beat.',
+  trP:'Pressure, mmHg', trV:'LV volume, mL', trE:'ECG', trS:'Heart sounds',
+  lgAo:'Aorta', lgLv:'LV', lgLa:'LA', systole:'systole', diastole:'diastole', ms:'ms',
+  pvTitle:'Pressure–volume loop', pvDash:'dashed: normal heart', pvX:'LV volume, mL', pvY:'LV pressure, mmHg',
+  notesTitle:'What to notice',
+  mitral:'Mitral valve', aortic:'Aortic valve', open:'open', closed:'closed',
+  rLv:'LV pressure', rAo:'Aortic pressure', rLa:'LA pressure', rVol:'LV volume',
+  edv:'EDV', esv:'ESV', ef:'EF', ml:'mL',
+  lab:{ra:'RA', rv:'RV', la:'LA', lv:'LV', ao:'Aorta', pa:'Pulm. artery'},
+  leak:'With this leak the phase is not truly isovolumetric.',
+  disclaimer:'Teaching model with typical textbook values at rest. It is not patient data and not for clinical decisions.',
+  phases:[
+    ['Atrial systole','The atria contract and top up the ventricles: the atrial kick, about 20% of filling. P wave on the ECG.'],
+    ['Isovolumetric contraction','All four valves are closed. Pressure climbs steeply while volume stays the same. It begins with S1.'],
+    ['Rapid ejection','LV pressure exceeds aortic pressure, the aortic valve opens and blood leaves fast.'],
+    ['Reduced ejection','Ejection slows as the ventricle repolarises (T wave). Pressures start to fall.'],
+    ['Isovolumetric relaxation','The aortic valve closes: S2 and the dicrotic notch. All valves closed, pressure falls, volume constant.'],
+    ['Rapid filling','LV pressure drops below atrial pressure, the mitral valve opens and blood pours in passively.'],
+    ['Diastasis','Slow filling as the pressures equalise. This is the phase that shortens first when the heart speeds up.']
+  ],
+  notes:{
+    normal:['EDV ≈ 120 mL, ESV ≈ 50 mL, so stroke volume is 70 mL and EF ≈ 58%.','S1 is mitral and tricuspid closure. S2 is aortic and pulmonary closure.','LV pressure swings from about 5 to 120 mmHg while the aorta stays at 120/80.'],
+    as:['The LV has to generate about 190 mmHg while the aorta sees only about 115: a large systolic gradient across the valve.','The aortic pulse rises slowly and peaks late (pulsus parvus et tardus).','Crescendo–decrescendo ejection murmur, soft S2, and an S4 as the atrium pushes into a stiff, hypertrophied LV.'],
+    mr:['In systole blood has two exits: the aorta and back into the LA. There are no true isovolumetric phases.','A tall v wave appears on the left atrial pressure trace.','Holosystolic murmur, soft S1, and an S3 as the large volume rushes back in early diastole.'],
+    ar:['In diastole blood leaks back from the aorta. The LV fills from two sources and dilates (EDV ≈ 200 mL).','Wide pulse pressure, about 160/50: high systolic, low diastolic.','Early diastolic decrescendo murmur starting right after S2.'],
+    ms:['LA pressure stays far above LV pressure all through diastole: a persistent gradient.','The LV fills slowly. EDV and stroke volume fall.','Loud S1, an opening snap after S2, and a low mid-diastolic rumble with presystolic accentuation.'],
+    mvp:['A mitral leaflet billows back into the LA in mid-systole. The sudden tensing of the chordae makes the mid-systolic click.','The leak begins only after the click, so the murmur is late systolic and runs up to S2.','Standing or a Valsalva makes the LV smaller, so the click and the murmur come earlier.']
+  }
+},
+ru:{
+  tagline:'Один удар сердца — по частям и синхронно.',
+  play:'Пуск', pause:'Пауза', sound:'Тоны сердца', conduction:'Проводящая система',
+  hr:'ЧСС', bpm:'уд/мин',
+  hrHint:'Увеличьте ЧСС: диастола укорачивается гораздо сильнее, чем систола.',
+  condTitle:'Состояние',
+  conds:{normal:'Норма', as:'Аортальный стеноз', mr:'Митральная недостаточность', ar:'Аортальная недостаточность', ms:'Митральный стеноз', mvp:'Пролапс митрального клапана'},
+  prac:'Отработать в Smart Heart',
+  wigTitle:'Диаграмма Виггерса', wigHint:'Проведите по диаграмме, чтобы перемещаться по сердечному циклу.',
+  trP:'Давление, мм рт. ст.', trV:'Объём ЛЖ, мл', trE:'ЭКГ', trS:'Тоны сердца',
+  lgAo:'Аорта', lgLv:'ЛЖ', lgLa:'ЛП', systole:'систола', diastole:'диастола', ms:'мс',
+  pvTitle:'Петля давление–объём', pvDash:'пунктир — норма', pvX:'Объём ЛЖ, мл', pvY:'Давление в ЛЖ, мм рт. ст.',
+  notesTitle:'На что обратить внимание',
+  mitral:'Митральный клапан', aortic:'Аортальный клапан', open:'открыт', closed:'закрыт',
+  rLv:'Давление в ЛЖ', rAo:'Давление в аорте', rLa:'Давление в ЛП', rVol:'Объём ЛЖ',
+  edv:'КДО', esv:'КСО', ef:'ФВ', ml:'мл',
+  lab:{ra:'ПП', rv:'ПЖ', la:'ЛП', lv:'ЛЖ', ao:'Аорта', pa:'Лёг. артерия'},
+  leak:'При такой регургитации фаза не является истинно изоволюмической.',
+  disclaimer:'Учебная модель с типичными значениями из учебников в покое. Это не данные пациента и не для клинических решений.',
+  phases:[
+    ['Систола предсердий','Предсердия сокращаются и дополняют наполнение желудочков: предсердная надбавка, около 20% наполнения. На ЭКГ — зубец P.'],
+    ['Изоволюмическое сокращение','Все четыре клапана закрыты. Давление резко растёт, объём не меняется. Фаза начинается с I тона.'],
+    ['Быстрое изгнание','Давление в ЛЖ превышает аортальное, аортальный клапан открывается, кровь быстро выбрасывается.'],
+    ['Медленное изгнание','Изгнание замедляется, желудочек реполяризуется (зубец T). Давление начинает снижаться.'],
+    ['Изоволюмическое расслабление','Аортальный клапан закрывается: II тон и дикротическая вырезка. Все клапаны закрыты, давление падает, объём постоянен.'],
+    ['Быстрое наполнение','Давление в ЛЖ падает ниже предсердного, митральный клапан открывается, кровь пассивно поступает в желудочек.'],
+    ['Диастазис','Медленное наполнение, давления выравниваются. Эта фаза укорачивается первой при учащении ритма.']
+  ],
+  notes:{
+    normal:['КДО ≈ 120 мл, КСО ≈ 50 мл, поэтому ударный объём 70 мл, ФВ ≈ 58%.','I тон — закрытие митрального и трёхстворчатого клапанов. II тон — закрытие аортального и лёгочного.','Давление в ЛЖ меняется примерно от 5 до 120 мм рт. ст., в аорте остаётся 120/80.'],
+    as:['ЛЖ вынужден развивать около 190 мм рт. ст., а в аорте лишь около 115: большой систолический градиент на клапане.','Пульсовая волна в аорте нарастает медленно и достигает пика поздно (pulsus parvus et tardus).','Ромбовидный систолический шум изгнания, ослабленный II тон и IV тон: предсердие выталкивает кровь в жёсткий гипертрофированный ЛЖ.'],
+    mr:['В систолу у крови два выхода: в аорту и обратно в ЛП. Истинных изоволюмических фаз нет.','На кривой давления в левом предсердии появляется высокая волна v.','Голосистолический шум, ослабленный I тон и III тон: большой объём крови быстро возвращается в ЛЖ в начале диастолы.'],
+    ar:['В диастолу кровь возвращается из аорты. ЛЖ наполняется из двух источников и расширяется (КДО ≈ 200 мл).','Высокое пульсовое давление, около 160/50: высокое систолическое, низкое диастолическое.','Ранний диастолический убывающий шум сразу после II тона.'],
+    ms:['Давление в ЛП остаётся намного выше давления в ЛЖ всю диастолу: постоянный градиент.','ЛЖ наполняется медленно. КДО и ударный объём снижены.','Громкий I тон, щелчок открытия после II тона и низкий мезодиастолический шум с пресистолическим усилением.'],
+    mvp:['Створка митрального клапана в середине систолы прогибается в ЛП. Резкое натяжение хорд даёт мезосистолический щелчок.','Регургитация начинается только после щелчка, поэтому шум позднесистолический и длится до II тона.','В положении стоя или при пробе Вальсальвы ЛЖ уменьшается, и щелчок с шумом возникают раньше.']
+  }
+},
+uz:{
+  tagline:'Bitta yurak urishi — qismlarga ajratilgan va sinxron.',
+  play:'Boshlash', pause:'Pauza', sound:'Yurak tonlari', conduction:'O‘tkazuvchi tizim',
+  hr:'Yurak urish tezligi', bpm:'zarba/daq',
+  hrHint:'Yurak urish tezligini oshiring: diastola sistolaga qaraganda ancha ko‘proq qisqaradi.',
+  condTitle:'Holat',
+  conds:{normal:'Me’yor', as:'Aorta stenozi', mr:'Mitral yetishmovchilik', ar:'Aorta yetishmovchiligi', ms:'Mitral stenoz', mvp:'Mitral klapan prolapsi'},
+  prac:'Smart Heart’da mashq qilish',
+  wigTitle:'Wiggers diagrammasi', wigHint:'Yurak sikli bo‘ylab harakatlanish uchun diagramma ustida suring.',
+  trP:'Bosim, mm sim. ust.', trV:'ChQ hajmi, ml', trE:'EKG', trS:'Yurak tonlari',
+  lgAo:'Aorta', lgLv:'ChQ', lgLa:'ChB', systole:'sistola', diastole:'diastola', ms:'ms',
+  pvTitle:'Bosim–hajm halqasi', pvDash:'uzuq chiziq — me’yor', pvX:'ChQ hajmi, ml', pvY:'ChQ bosimi, mm sim. ust.',
+  notesTitle:'Nimaga e’tibor berish kerak',
+  mitral:'Mitral klapan', aortic:'Aorta klapani', open:'ochiq', closed:'yopiq',
+  rLv:'ChQ bosimi', rAo:'Aorta bosimi', rLa:'ChB bosimi', rVol:'ChQ hajmi',
+  edv:'EDV', esv:'ESV', ef:'EF', ml:'ml',
+  lab:{ra:'O‘B', rv:'O‘Q', la:'ChB', lv:'ChQ', ao:'Aorta', pa:'O‘pka art.'},
+  leak:'Bunday regurgitatsiyada bu faza haqiqiy izovolyumik emas.',
+  disclaimer:'Tinch holatdagi darsliklardagi odatiy qiymatlarga asoslangan o‘quv modeli. Bu bemor ma’lumotlari emas va klinik qarorlar uchun mo‘ljallanmagan.',
+  phases:[
+    ['Bo‘lmachalar sistolasi','Bo‘lmachalar qisqarib, qorinchalarni qo‘shimcha to‘ldiradi: to‘lishning taxminan 20%. EKGda P tishcha.'],
+    ['Izovolyumik qisqarish','To‘rtala klapan yopiq. Bosim keskin oshadi, hajm o‘zgarmaydi. Faza I ton bilan boshlanadi.'],
+    ['Tez haydash','Chap qorincha bosimi aorta bosimidan oshadi, aorta klapani ochiladi, qon tez haydaladi.'],
+    ['Sekin haydash','Haydash sekinlashadi, qorincha repolyarizatsiyalanadi (T tishcha). Bosim pasaya boshlaydi.'],
+    ['Izovolyumik bo‘shashish','Aorta klapani yopiladi: II ton va dikrotik kemtik. Barcha klapanlar yopiq, bosim pasayadi, hajm o‘zgarmaydi.'],
+    ['Tez to‘lish','Chap qorincha bosimi bo‘lmacha bosimidan pasayadi, mitral klapan ochiladi, qon passiv ravishda oqib kiradi.'],
+    ['Diastazis','Sekin to‘lish, bosimlar tenglashadi. Yurak urishi tezlashganda birinchi bo‘lib shu faza qisqaradi.']
+  ],
+  notes:{
+    normal:['Oxirgi diastolik hajm ≈ 120 ml, oxirgi sistolik hajm ≈ 50 ml, demak zarb hajmi 70 ml, EF ≈ 58%.','I ton — mitral va uch tavaqali klapanlarning yopilishi. II ton — aorta va o‘pka arteriyasi klapanlarining yopilishi.','Chap qorincha bosimi taxminan 5 dan 120 mm sim. ust. gacha o‘zgaradi, aortada 120/80 saqlanadi.'],
+    as:['Chap qorincha taxminan 190 mm sim. ust. bosim hosil qilishga majbur, aortada esa atigi 115 atrofida: klapanda katta sistolik gradiyent.','Aortadagi puls to‘lqini sekin ko‘tariladi va cho‘qqisiga kech yetadi (pulsus parvus et tardus).','Kuchayib-susayuvchi sistolik haydash shovqini, susaygan II ton va IV ton: bo‘lmacha qonni qattiq, gipertrofiyalangan qorinchaga itaradi.'],
+    mr:['Sistolada qonning ikki yo‘li bor: aortaga va orqaga, chap bo‘lmachaga. Haqiqiy izovolyumik fazalar yo‘q.','Chap bo‘lmacha bosimi egri chizig‘ida baland v to‘lqini paydo bo‘ladi.','Golosistolik shovqin, susaygan I ton va III ton: diastola boshida katta hajmdagi qon qorinchaga tez qaytadi.'],
+    ar:['Diastolada qon aortadan orqaga qaytadi. Chap qorincha ikki manbadan to‘ladi va kengayadi (oxirgi diastolik hajm ≈ 200 ml).','Puls bosimi yuqori, taxminan 160/50: sistolik yuqori, diastolik past.','II tondan so‘ng darhol boshlanuvchi erta diastolik susayuvchi shovqin.'],
+    ms:['Chap bo‘lmacha bosimi butun diastola davomida chap qorincha bosimidan ancha yuqori: doimiy gradiyent.','Chap qorincha sekin to‘ladi. Oxirgi diastolik hajm va zarb hajmi kamayadi.','Kuchli I ton, II tondan keyin ochilish chertkisi va presistolik kuchayishli past mezodiastolik shovqin.'],
+    mvp:['Mitral klapan tavaqasi sistola o‘rtasida chap bo‘lmachaga bukiladi. Xordalarning keskin tortilishi mezosistolik chertkini hosil qiladi.','Regurgitatsiya faqat chertkidan keyin boshlanadi, shuning uchun shovqin kech sistolik bo‘lib, II tongacha davom etadi.','Tik turganda yoki Valsalva sinamasida chap qorincha kichrayadi, chertki va shovqin ertaroq paydo bo‘ladi.']
+  }
+}};
+
+/* ───────────── maths ───────────── */
+const U = 0.8;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const sstep=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
+
+function pchip(pts){
+  const n=pts.length,x=pts.map(p=>p[0]),y=pts.map(p=>p[1]),h=[],d=[],m=new Array(n);
+  for(let i=0;i<n-1;i++){h[i]=x[i+1]-x[i];d[i]=(y[i+1]-y[i])/h[i];}
+  const e=(d[0]*d[n-2]>0)?(d[0]+d[n-2])/2:0; m[0]=e; m[n-1]=e;
+  for(let i=1;i<n-1;i++){
+    if(d[i-1]*d[i]<=0) m[i]=0;
+    else{const w1=2*h[i]+h[i-1],w2=h[i]+2*h[i-1];m[i]=(w1+w2)/(w1/d[i-1]+w2/d[i]);}
+  }
+  return u=>{
+    u=clamp(u,x[0],x[n-1]);
+    let i=0; while(i<n-2&&u>x[i+1])i++;
+    const t=(u-x[i])/h[i],t2=t*t,t3=t2*t;
+    return (2*t3-3*t2+1)*y[i]+(t3-2*t2+t)*h[i]*m[i]+(-2*t3+3*t2)*y[i+1]+(t3-t2)*h[i]*m[i+1];
+  };
+}
+
+/* canonical beat: 0.8 s at 75 bpm, u = 0 at P-wave onset
+   0.16 QRS onset · 0.20 mitral closes (S1) · 0.25 aortic opens · 0.50 aortic closes (S2) · 0.58 mitral opens */
+const PH=[0,0.20,0.25,0.35,0.50,0.58,0.70,0.80];
+const phaseOf=u=>{for(let i=0;i<7;i++)if(u<PH[i+1])return i;return 6;};
+
+const COND={
+normal:{
+  ao:[[0,87],[.10,84],[.20,81.5],[.25,80],[.33,116],[.37,119],[.45,111],[.50,99],[.515,94],[.54,99],[.58,97],[.70,91],[.80,87]],
+  lv:[[0,6],[.10,9],[.16,9],[.20,14],[.25,80],[.33,118],[.37,120],[.45,109],[.50,96],[.58,11],[.62,3],[.66,3.5],[.70,4.5],[.80,6]],
+  la:[[0,6.5],[.08,10],[.16,9.3],[.22,10],[.30,4],[.50,10],[.58,12],[.66,5.5],[.80,6.5]],
+  vol:[[0,105],[.04,107],[.14,119.5],[.16,120],[.20,120],[.25,120],[.35,80],[.50,50],[.58,50],[.70,97],[.80,105]],
+  pMax:140,pStep:40,vR:[30,130],
+  sounds:[{u:.20,k:'s1',g:1},{u:.50,k:'s2',g:.85}],
+  mur:null,murF:300,wall:1,laK:1,aoOpen:1,aoGap:0,miOpen:1,miGap:0
+},
+as:{
+  ao:[[0,82],[.10,78],[.20,73.5],[.25,72],[.33,95],[.42,115],[.48,105],[.50,100],[.515,97],[.54,100],[.58,97],[.70,88],[.80,82]],
+  lv:[[0,10],[.10,15],[.16,15],[.20,22],[.25,75],[.32,160],[.39,190],[.46,150],[.50,96],[.58,13],[.62,5],[.66,6],[.70,7],[.80,10]],
+  la:[[0,10.5],[.08,18],[.16,15.5],[.22,15],[.30,8],[.50,12],[.58,14],[.66,7.5],[.80,10.5]],
+  vol:[[0,97],[.04,99],[.14,109.5],[.16,110],[.20,110],[.25,110],[.35,82],[.50,45],[.58,45],[.70,88],[.80,97]],
+  pMax:210,pStep:50,vR:[30,130],
+  sounds:[{u:.11,k:'s4',g:.4},{u:.20,k:'s1',g:.9},{u:.50,k:'s2',g:.35}],
+  mur:u=>{if(u<.25||u>.50)return 0;const x=(u-.25)/.25;return Math.pow(Math.sin(Math.PI*Math.pow(x,1.25)),1.2);},
+  murF:320,wall:1.42,laK:1.05,aoOpen:.28,aoGap:0,miOpen:1,miGap:0
+},
+mr:{
+  ao:[[0,76],[.10,73.5],[.20,71],[.25,70],[.33,108],[.37,111],[.45,102],[.50,90],[.515,86],[.54,90],[.58,88],[.70,81],[.80,76]],
+  lv:[[0,8],[.10,10],[.16,10.5],[.20,16],[.25,70],[.33,112],[.37,115],[.45,100],[.50,87],[.58,30],[.62,5],[.66,5.5],[.70,6],[.80,8]],
+  la:[[0,10],[.08,14],[.16,11],[.22,14],[.30,16],[.45,30],[.55,36],[.58,34],[.66,9],[.80,10]],
+  vol:[[0,158],[.04,160],[.14,169.5],[.16,170],[.20,170],[.25,160],[.35,115],[.50,75],[.58,70],[.70,150],[.80,158]],
+  pMax:140,pStep:40,vR:[50,190],
+  sounds:[{u:.20,k:'s1',g:.45},{u:.50,k:'s2',g:.8},{u:.645,k:'s3',g:.5}],
+  mur:u=>.85*sstep(.20,.215,u)*(1-sstep(.565,.58,u)),
+  murF:420,wall:.95,laK:1.16,aoOpen:1,aoGap:0,miOpen:1,miGap:5
+},
+ar:{
+  ao:[[0,62],[.10,56],[.20,51],[.25,50],[.31,140],[.36,160],[.45,135],[.50,105],[.54,98],[.58,90],[.70,72],[.80,62]],
+  lv:[[0,10],[.10,13],[.16,13],[.20,18],[.25,50],[.31,143],[.36,162],[.45,133],[.50,102],[.58,10],[.62,5],[.66,6],[.70,7],[.80,10]],
+  la:[[0,10.5],[.08,15],[.16,13.5],[.22,13],[.30,7],[.50,12],[.58,13],[.66,7.5],[.80,10.5]],
+  vol:[[0,188],[.04,190],[.14,199.5],[.16,200],[.20,200],[.25,200],[.35,140],[.50,80],[.58,90],[.70,170],[.80,188]],
+  pMax:180,pStep:40,vR:[60,220],
+  sounds:[{u:.20,k:'s1',g:.8},{u:.50,k:'s2',g:.6}],
+  mur:u=>{let d=u-.50;if(d<0)d+=U;if(d>.46)return 0;return sstep(0,.012,d)*Math.exp(-d/.13);},
+  murF:620,wall:.95,laK:1,aoOpen:1,aoGap:4.5,miOpen:1,miGap:0
+},
+ms:{
+  ao:[[0,76],[.10,73],[.20,71],[.25,70],[.33,102],[.37,105],[.45,98],[.50,88],[.515,84],[.54,88],[.58,86],[.70,80],[.80,76]],
+  lv:[[0,5],[.10,6],[.16,6],[.20,24],[.25,70],[.33,104],[.37,106],[.45,97],[.50,86],[.58,22],[.62,3],[.66,3.5],[.70,4],[.80,5]],
+  la:[[0,20],[.08,28],[.16,22],[.22,23],[.30,16],[.50,24],[.58,26],[.66,21],[.80,20]],
+  vol:[[0,80],[.04,82],[.14,94.5],[.16,95],[.20,95],[.25,95],[.35,65],[.50,45],[.58,45],[.70,68],[.80,80]],
+  pMax:140,pStep:40,vR:[30,130],
+  sounds:[{u:.20,k:'s1',g:1.4},{u:.50,k:'s2',g:.85},{u:.585,k:'os',g:.55}],
+  mur:u=>{if(u>=.61)return .6*sstep(.61,.63,u)*Math.exp(-(u-.61)/.16);if(u>=.02&&u<.195)return .7*(.3+.7*(u-.02)/.175);return 0;},
+  murF:120,wall:1,laK:1.2,aoOpen:1,aoGap:0,miOpen:.3,miGap:0
+},
+mvp:{
+  ao:[[0,87],[.10,84],[.20,81.5],[.25,80],[.33,116],[.37,119],[.45,111],[.50,99],[.515,94],[.54,99],[.58,97],[.70,91],[.80,87]],
+  lv:[[0,6],[.10,9],[.16,9],[.20,14],[.25,80],[.33,118],[.37,120],[.45,109],[.50,96],[.58,11],[.62,3],[.66,3.5],[.70,4.5],[.80,6]],
+  la:[[0,6.5],[.08,10],[.16,9.3],[.22,10],[.30,5],[.42,12],[.52,19],[.58,18],[.66,6],[.80,6.5]],
+  vol:[[0,113],[.04,115],[.14,129.5],[.16,130],[.20,130],[.25,130],[.35,90],[.50,52],[.58,52],[.70,104],[.80,113]],
+  pMax:140,pStep:40,vR:[30,140],
+  sounds:[{u:.20,k:'s1',g:1},{u:.335,k:'ck',g:.6},{u:.50,k:'s2',g:.85}],
+  mur:u=>.7*sstep(.35,.47,u)*(1-sstep(.495,.512,u)),
+  murF:450,wall:1,laK:1.06,aoOpen:1,aoGap:0,miOpen:1,miGap:u=>3.5*sstep(.33,.38,u),prol:u=>10*sstep(.30,.36,u)*(1-sstep(.56,.60,u))
+}};
+const SND={s1:{f:78,w:.055,c:3},s2:{f:112,w:.04,c:3},s3:{f:52,w:.05,c:2},s4:{f:46,w:.045,c:2},os:{f:260,w:.018,c:2},ck:{f:310,w:.014,c:2}};
+
+const N=400;
+for(const k in COND){
+  const c=COND[k];
+  c.f={ao:pchip(c.ao),lv:pchip(c.lv),la:pchip(c.la),vol:pchip(c.vol)};
+  let mx=-1e9,mn=1e9;
+  c.s={ao:[],lv:[],la:[],vol:[],ecg:[],pcg:[]};
+  for(let i=0;i<=N;i++){
+    const u=i/N*U;
+    c.s.ao.push(c.f.ao(u));c.s.lv.push(c.f.lv(u));c.s.la.push(c.f.la(u));
+    const v=c.f.vol(u);c.s.vol.push(v);mx=Math.max(mx,v);mn=Math.min(mn,v);
+    c.s.ecg.push(ecg(u));c.s.pcg.push(pcg(c,u));
+  }
+  c.edv=Math.round(mx);c.esv=Math.round(mn);c.ef=Math.round((mx-mn)/mx*100);
+}
+function ecg(u){
+  const g=(a,m,s)=>a*Math.exp(-((u-m)*(u-m))/(2*s*s));
+  return g(.13,.045,.018)+g(-.09,.176,.006)+g(1,.19,.008)+g(-.2,.207,.007)+g(.3,.44,.036);
+}
+function pcg(c,u){
+  let v=0;
+  for(const e of c.sounds){
+    const p=SND[e.k];let d=u-e.u;
+    if(d>=0&&d<p.w*1.6)v+=e.g*Math.sin(2*Math.PI*d*p.c/p.w)*Math.exp(-3.2*d/p.w);
+  }
+  if(c.mur){const m=c.mur(u);if(m>0)v+=m*.5*(Math.sin(u*2300)+Math.sin(u*3710+1)+Math.sin(u*5290+2))/2.2;}
+  return v;
+}
+
+/* heart rate → real duration of the three canonical stretches */
+const SEG=[0,.16,.58,.80];
+function durs(hr){
+  const T=60/hr,r=T/.8;
+  const d2=.42*Math.pow(r,r<1?.6:.25), d1=.16*Math.pow(r,r<1?.5:.25);
+  return [d1,d2,Math.max(.03,T-d1-d2),T];
+}
+let D=durs(75);
+const segOf=u=>u<SEG[1]?0:u<SEG[2]?1:2;
+const rate=u=>{const i=segOf(u);return (SEG[i+1]-SEG[i])/D[i];};
+function uToTau(u){const i=segOf(Math.min(u,U-1e-9));let t=0;for(let j=0;j<i;j++)t+=D[j];return t+(u-SEG[i])/(SEG[i+1]-SEG[i])*D[i];}
+function tauToU(t){for(let i=0;i<3;i++){if(t<=D[i]||i===2)return clamp(SEG[i]+t/D[i]*(SEG[i+1]-SEG[i]),0,U-1e-6);t-=D[i];}return 0;}
+
+const mitralOpenBase=u=>{
+  if(u<.16)return lerp(.55,1,sstep(0,.06,u));
+  if(u<.20)return 1-sstep(.165,.20,u);
+  if(u<.58)return 0;
+  if(u<.70)return sstep(.58,.615,u);
+  return lerp(1,.55,sstep(.70,.78,u));
+};
+const aorticOpenBase=u=>sstep(.25,.268,u)*(1-sstep(.485,.50,u));
+
+/* ───────────── state ───────────── */
+const S={lang:'en',cond:'normal',hr:75,speed:1,playing:true,sound:false,conduction:true,u:0.02};
+const $=id=>document.getElementById(id);
+const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ───────────── heart geometry (620 × 610 logical px) ───────────── */
+const HW=620,HH=610;
+const CH={
+  lv:{pts:[[305,302],[360,297],[418,304],[438,360],[425,430],[385,490],[335,515],[305,470],[296,390]],a:[335,300],dir:1,th:24,sept:-1},
+  rv:{pts:[[268,302],[215,297],[150,304],[128,360],[148,430],[200,478],[250,485],[270,400]],a:[235,300],dir:1,th:11,sept:1},
+  la:{pts:[[338,293],[336,240],[356,204],[400,194],[440,212],[458,255],[448,293],[395,298]],a:[395,298],dir:-1,th:6,sept:0},
+  ra:{pts:[[236,293],[238,240],[218,202],[175,192],[135,212],[118,255],[128,293],[180,298]],a:[180,298],dir:-1,th:6,sept:0}
+};
+for(const k in CH){const c=CH[k];c.cx=c.pts.reduce((s,p)=>s+p[0],0)/c.pts.length;c.cy=c.pts.reduce((s,p)=>s+p[1],0)/c.pts.length;}
+function chamber(c,k,thick){
+  const cav=[],out=[];
+  for(const [x,y] of c.pts){
+    const w=clamp(c.dir*(y-c.a[1])/70,0,1);
+    let sx=1-(1-Math.pow(k,1.15))*w; const sy=1-(1-Math.pow(k,.6))*w;
+    const septal=c.sept&&(c.sept<0?x<c.a[0]:x>c.a[0]);
+    if(k>1&&septal)sx=1;
+    const px=c.a[0]+(x-c.a[0])*sx,py=c.a[1]+(y-c.a[1])*sy;
+    cav.push([px,py]);
+    let dx=x-c.cx,dy=y-c.cy;const L=Math.hypot(dx,dy)||1;dx/=L;dy/=L;
+    const wt=clamp(c.dir*(y-c.a[1])/45,.12,1);
+    let th=c.th*thick*(1+1.1*Math.max(0,1-k))*wt;
+    if(septal)th*=.62;
+    out.push([px+dx*th,py+dy*th]);
+  }
+  return {cav,out};
+}
+const VES={
+  aorta:[[318,300],[318,220],[318,140],[340,92],[400,74],[462,92],[512,150],[530,230],[530,330]],
+  aAsc:[[318,300],[318,220],[318,140]],
+  pa:[[256,300],[256,225],[244,165],[196,137],[120,135],[30,135],[-20,135]],
+  paR:[[256,215],[285,172],[350,160],[440,165],[530,176],[640,182]],
+  svc:[[176,-20],[176,110],[178,200]],
+  ivc:[[82,630],[104,420],[140,290]],
+  pvU:[[640,238],[520,240],[452,244]],
+  pvL:[[640,278],[520,276],[450,270]]
+};
+const PATH={
+  L:[VES.pvU.concat([[400,250],[388,300],[386,380],[350,468],[318,400],[318,335]],VES.aorta),
+     VES.pvL.concat([[400,256],[388,300],[386,380],[350,468],[318,400],[318,335]],VES.aorta)],
+  R:[VES.svc.concat([[185,250],[181,300],[185,380],[225,450],[254,400],[256,335]],VES.pa),
+     VES.ivc.concat([[178,256],[181,300],[185,380],[225,450],[254,400],[256,335]],VES.pa)]
+};
+const RAD={L:[6,6,6,34,18,26,13,11,10,8,9,9,9,9,9,9,9,9],R:[9,9,9,34,18,26,13,11,10,8,9,9,9,8,8,8]};
+function cr(pts,s){
+  const n=pts.length,i=clamp(Math.floor(s),0,n-2),t=s-i;
+  const p0=pts[Math.max(0,i-1)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(n-1,i+2)];
+  const t2=t*t,t3=t2*t,o=[0,0,0,0];
+  for(let k=0;k<2;k++){
+    o[k]=.5*((2*p1[k])+(-p0[k]+p2[k])*t+(2*p0[k]-5*p1[k]+4*p2[k]-p3[k])*t2+(-p0[k]+3*p1[k]-3*p2[k]+p3[k])*t3);
+    o[k+2]=.5*((-p0[k]+p2[k])+2*(2*p0[k]-5*p1[k]+4*p2[k]-p3[k])*t+3*(-p0[k]+3*p1[k]-3*p2[k]+p3[k])*t2);
+  }
+  return o;
+}
+function smooth(ctx,pts,closed){
+  const n=pts.length,P=i=>closed?pts[(i+n)%n]:pts[clamp(i,0,n-1)];
+  ctx.moveTo(pts[0][0],pts[0][1]);
+  const lim=closed?n:n-1;
+  for(let i=0;i<lim;i++){
+    const p0=P(i-1),p1=P(i),p2=P(i+1),p3=P(i+2);
+    ctx.bezierCurveTo(p1[0]+(p2[0]-p0[0])/6,p1[1]+(p2[1]-p0[1])/6,p2[0]-(p3[0]-p1[0])/6,p2[1]-(p3[1]-p1[1])/6,p2[0],p2[1]);
+  }
+  if(closed)ctx.closePath();
+}
+
+/* particles */
+const parts=[];
+function spawn(side,s){
+  const paths=PATH[side],v=Math.random()<.5?0:1;
+  return {side,v,s:s==null?0:s,o:(Math.random()*2-1)*Math.sqrt(Math.random()),h1:2.4+Math.random()*1.5,h2:4.5+Math.random()*4.2,x:0,y:0,px:null,py:null,len:paths[v].length-1};
+}
+for(let i=0;i<150;i++){parts.push(spawn('L',Math.random()*17));parts.push(spawn('R',Math.random()*14.5));}
+const jets=[];
+
+/* ───────────── canvases ───────────── */
+const heart=$('heart'),hx=heart.getContext('2d');
+const wig=$('wig'),wx=wig.getContext('2d');
+const pv=$('pv'),px=pv.getContext('2d');
+let dpr=1,hs=1,wigW=0,wigH=0,pvW=0,pvH=0;
+function resize(){
+  dpr=Math.min(window.devicePixelRatio||1,2.5);
+  const bw=heart.parentElement.clientWidth||HW;
+  hs=bw/HW;heart.width=Math.round(bw*dpr);heart.height=Math.round(bw*HH/HW*dpr);
+  wigW=wig.clientWidth;wigH=wig.clientHeight;wig.width=Math.round(wigW*dpr);wig.height=Math.round(wigH*dpr);
+  pvW=pv.clientWidth;pvH=pv.clientHeight;pv.width=Math.round(pvW*dpr);pv.height=Math.round(pvH*dpr);
+}
+const css=getComputedStyle(document.documentElement);
+const C={text:css.getPropertyValue('--text').trim(),muted:css.getPropertyValue('--muted').trim(),line:css.getPropertyValue('--line').trim(),
+  art:css.getPropertyValue('--art').trim(),ven:css.getPropertyValue('--ven').trim(),atr:css.getPropertyValue('--atr').trim(),ecg:css.getPropertyValue('--ecg').trim()};
+const MONO='"IBM Plex Mono",ui-monospace,Menlo,monospace';
+
+function tube(pts,w,wall,lum,cap){
+  hx.lineCap=cap||'round';hx.lineJoin='round';
+  hx.beginPath();smooth(hx,pts,false);hx.strokeStyle=wall;hx.lineWidth=w;hx.stroke();
+  hx.beginPath();smooth(hx,pts,false);hx.strokeStyle=lum;hx.lineWidth=w-8;hx.stroke();
+}
+function cavFill(pts,c0,c1,cx,cy,r){
+  const g=hx.createRadialGradient(cx,cy,4,cx,cy,r);g.addColorStop(0,c0);g.addColorStop(1,c1);
+  hx.beginPath();smooth(hx,pts,true);hx.fillStyle=g;hx.fill();
+}
+function ring(g,tint,light){
+  const p=new Path2D();smooth(p,g.out,true);smooth(p,g.cav,true);
+  const gr=hx.createLinearGradient(0,180,0,560);
+  gr.addColorStop(0,light?'#b4505c':'#a8323f');gr.addColorStop(1,light?'#8a323e':'#6a1a26');
+  hx.fillStyle=gr;hx.fill(p,'evenodd');
+  if(tint>0){hx.fillStyle='rgba(255,140,120,'+(.2*tint).toFixed(3)+')';hx.fill(p,'evenodd');}
+  hx.lineWidth=1.5;hx.strokeStyle='#3a0c14';hx.beginPath();smooth(hx,g.out,true);hx.stroke();
+  hx.lineWidth=1.2;hx.strokeStyle='rgba(255,225,215,.28)';hx.beginPath();smooth(hx,g.cav,true);hx.stroke();
+}
+function avLeaflets(hA,hB,opA,opB,cl,gap,sten,o,thick,prol){prol=prol||0;
+  const cA=[cl[0]-gap,cl[1]],cB=[cl[0]+gap,cl[1]];
+  const mA=[cl[0]-5,cl[1]+16],mB=[cl[0]+5,cl[1]+14];
+  const oA=[lerp(opA[0],mA[0],sten),lerp(opA[1],mA[1],sten)],oB=[lerp(opB[0],mB[0],sten),lerp(opB[1],mB[1],sten)];
+  const tA=[lerp(cA[0],oA[0],o),lerp(cA[1],oA[1],o)],tB=[lerp(cB[0],oB[0],o),lerp(cB[1],oB[1],o)];
+  hx.lineCap='round';hx.strokeStyle='#f4e3d2';hx.lineWidth=thick;
+  for(const [h,t] of [[hA,tA],[hB,tB]]){
+    hx.beginPath();hx.moveTo(h[0],h[1]);
+    hx.quadraticCurveTo((h[0]+t[0])/2,(h[1]+t[1])/2-5*(1-o)-prol+sten*4*o,t[0],t[1]);hx.stroke();
+  }
+  return [tA,tB];
+}
+function semilunar(hA,hB,gap,sten,o,thick){
+  const c=(hA[0]+hB[0])/2;
+  hx.lineCap='round';hx.strokeStyle='#f4e3d2';hx.lineWidth=thick;
+  for(const sgn of [-1,1]){
+    const h=sgn<0?hA:hB;
+    const ct=[c+sgn*gap,h[1]-4],cc=[h[0]-sgn*2,h[1]+11];
+    const ot=[h[0]-sgn*(2+sten),h[1]-22],oc=[h[0]+sgn*(1-sten*.5),h[1]-10];
+    hx.beginPath();hx.moveTo(h[0],h[1]);
+    hx.quadraticCurveTo(lerp(cc[0],oc[0],o),lerp(cc[1],oc[1],o),lerp(ct[0],ot[0],o),lerp(ct[1],ot[1],o));hx.stroke();
+  }
+}
+function polyPart(pts,a,b){
+  let len=0;const seg=[];
+  for(let i=0;i<pts.length-1;i++){const l=Math.hypot(pts[i+1][0]-pts[i][0],pts[i+1][1]-pts[i][1]);seg.push(l);len+=l;}
+  a=clamp(a,0,1)*len;b=clamp(b,0,1)*len;if(b<=a)return;
+  let acc=0,started=false;hx.beginPath();
+  for(let i=0;i<seg.length;i++){
+    const s0=acc,s1=acc+seg[i];acc=s1;
+    if(s1<a||s0>b)continue;
+    const ta=clamp((a-s0)/seg[i],0,1),tb=clamp((b-s0)/seg[i],0,1);
+    const A=[lerp(pts[i][0],pts[i+1][0],ta),lerp(pts[i][1],pts[i+1][1],ta)],B=[lerp(pts[i][0],pts[i+1][0],tb),lerp(pts[i][1],pts[i+1][1],tb)];
+    if(!started){hx.moveTo(A[0],A[1]);started=true;}
+    hx.lineTo(B[0],B[1]);
+  }
+  hx.stroke();
+}
+
+function frameState(){
+  const c=COND[S.cond],b=COND.normal,u=S.u;
+  const du=.002,r=rate(u);
+  const dV=(c.f.vol(Math.min(U,u+du))-c.f.vol(Math.max(0,u-du)))/(2*du)*r;
+  const dVr=(b.f.vol(Math.min(U,u+du))-b.f.vol(Math.max(0,u-du)))/(2*du)*r;
+  const mi=mitralOpenBase(u),ao=aorticOpenBase(u);
+  return {c,u,vol:c.f.vol(u),lv:c.f.lv(u),aoP:c.f.ao(u),la:c.f.la(u),mi,ao,
+    inL:mi>.05?clamp(dV/450,0,1.6):0,outL:ao>.05?clamp(-dV/450,0,1.6):0,
+    inR:mi>.05?clamp(dVr/450,0,1.6):0,outR:ao>.05?clamp(-dVr/450,0,1.6):0,
+    kL:Math.pow(c.f.vol(u)/120,.42),kR:Math.pow(b.f.vol(u)/120,.42),
+    kA:pAtr(u)};
+}
+const pAtr=pchip([[0,.93],[.14,.74],[.20,.74],[.50,1],[.58,1.03],[.70,.9],[.80,.93]]);
+
+function stepParticles(st,dt){
+  for(const p of parts){
+    const L=p.side==='L',fin=L?st.inL:st.inR,fout=L?st.outL:st.outR;
+    let v,ns;
+    if(p.s<4){
+      v=(p.s<3?1.4:.5)+(p.s>=3?7*fin:2.5*fin);ns=p.s+v*dt;
+      if(st.mi<.1||fin<.02)ns=Math.min(ns,Math.max(p.s,p.h1));
+      if(st.mi<.1)ns=Math.min(ns,3.96);
+    }else if(p.s<9){
+      v=(p.s<6.5?16:6)*fin+18*fout;ns=p.s+v*dt;
+      if(fout<.02)ns=Math.min(ns,Math.max(p.s,p.h2));
+      if(st.ao<.1)ns=Math.min(ns,8.96);
+    }else{v=1.2+18*fout;ns=p.s+v*dt;}
+    p.s=ns;
+    if(p.s>=p.len-.02){Object.assign(p,spawn(p.side,0));}
+  }
+  // lesion jets
+  const c=st.c,u=st.u,k=dt*60;
+  const emit=(n,x,y,vx,vy,sp,life)=>{for(let i=0;i<n;i++)if(jets.length<260)jets.push({x:x+(Math.random()-.5)*4,y,vx:vx+(Math.random()-.5)*sp,vy:vy*(.75+Math.random()*.5),t:0,life});};
+  if(dt>0){
+    const n=x=>{const f=x*k;return Math.floor(f)+(Math.random()<f%1?1:0);};
+    if(S.cond==='as'&&st.outL>.05)emit(n(2.2*st.outL),318,288,0,-300,26,.26);
+    if(S.cond==='mr'||S.cond==='mvp'){const m=c.mur(u);if(m>0)emit(n((S.cond==='mvp'?1.8:2.6)*m),388,296,S.cond==='mvp'?-40:0,-240,110,.3);}
+    if(S.cond==='ar'){const m=c.mur(u);if(m>.04)emit(n(3*m),319,306,18,230,60,.34);}
+    if(S.cond==='ms'&&st.inL>.02)emit(n(1.6+1.5*st.inL),388,322,0,250,34,.3);
+  }
+  for(let i=jets.length-1;i>=0;i--){const j=jets[i];j.t+=dt;j.x+=j.vx*dt;j.y+=j.vy*dt;if(j.t>j.life)jets.splice(i,1);}
+}
+
+function drawHeart(st){
+  const c=st.c,u=st.u,t=T[S.lang];
+  hx.setTransform(dpr*hs,0,0,dpr*hs,0,0);hx.clearRect(0,0,HW,HH);
+  // soft pulse behind the heart
+  const tens=sstep(.18,.26,u)*(1-sstep(.48,.60,u));
+  const bg=hx.createRadialGradient(300,350,20,300,350,300);bg.addColorStop(0,'rgba(255,83,100,'+(.10+.07*tens).toFixed(3)+')');bg.addColorStop(1,'rgba(255,83,100,0)');
+  hx.fillStyle=bg;hx.fillRect(0,0,HW,HH);
+
+  const AW='#7a1e2a',AL='#d63c4b',VW='#22386f',VL='#3f6bd6';
+  const pulse=3.2*clamp((st.aoP-80)/40,-.6,2.2);
+  tube(VES.aorta,30+pulse,AW,AL);
+  tube(VES.paR,24,VW,VL);
+  tube(VES.pa,28+1.6*tens,VW,VL);
+  tube(VES.svc,27,VW,VL);
+  tube(VES.ivc,27,VW,VL);
+  tube(VES.aAsc,30+pulse,AW,AL,'butt');
+  tube(VES.pvU,19,AW,AL);tube(VES.pvL,19,AW,AL);
+
+  const lv=chamber(CH.lv,st.kL,c.wall),rv=chamber(CH.rv,st.kR,1),la=chamber(CH.la,st.kA*c.laK,1),ra=chamber(CH.ra,st.kA,1);
+  cavFill(ra.cav,'#4470dd','#2a4398',180,250,80);
+  cavFill(la.cav,'#e04453','#a51d2c',395,250,80);
+  cavFill(rv.cav,'#4470dd','#27408f',200,380,130);
+  cavFill(lv.cav,'#e04453','#9c1a28',365,390,150);
+
+  // blood
+  hx.lineCap='round';
+  for(const p of parts){
+    const L=p.side==='L',pts=PATH[p.side][p.v],R=RAD[p.side];
+    const q=cr(pts,p.s),i=clamp(Math.floor(p.s),0,R.length-2),f=p.s-i;
+    let r=lerp(R[i],R[i+1],f);
+    if(p.s>4.2&&p.s<8.6)r*=clamp(L?st.kL:st.kR,.55,1.3); else if(p.s>2.6&&p.s<3.8)r*=st.kA;
+    const tl=Math.hypot(q[2],q[3])||1;
+    const x=q[0]-q[3]/tl*p.o*r,y=q[1]+q[2]/tl*p.o*r;
+    const fade=clamp((p.len-p.s)/1.2,0,1)*clamp(p.s/.5,0,1);
+    hx.strokeStyle=L?'rgba(255,205,205,'+(.85*fade).toFixed(3)+')':'rgba(200,222,255,'+(.85*fade).toFixed(3)+')';
+    hx.lineWidth=2.6;hx.beginPath();
+    if(p.px!=null&&Math.hypot(x-p.px,y-p.py)<40)hx.moveTo(p.px,p.py);else hx.moveTo(x,y);
+    hx.lineTo(x+.01,y);hx.stroke();
+    p.px=x;p.py=y;
+  }
+  for(const j of jets){const a=1-j.t/j.life;hx.fillStyle='rgba(255,236,170,'+(.9*a).toFixed(3)+')';hx.beginPath();hx.arc(j.x,j.y,1.9,0,6.283);hx.fill();}
+
+  // walls
+  ring(ra,0,true);ring(la,0,true);ring(rv,tens,false);ring(lv,tens,false);
+
+  // fibrous AV plane
+  hx.lineCap='round';hx.strokeStyle='#e9cdb6';hx.lineWidth=4;
+  for(const s of [[[330,300],[358,300]],[[418,300],[452,299]],[[212,300],[244,300]],[[124,299],[150,300]],[[268,300],[306,300]]]){hx.beginPath();hx.moveTo(s[0][0],s[0][1]);hx.lineTo(s[1][0],s[1][1]);hx.stroke();}
+
+  // valves
+  const lvP=k=>{const x=CH.lv,p=k;const w=clamp((p[1]-x.a[1])/70,0,1);return [x.a[0]+(p[0]-x.a[0])*(1-(1-Math.pow(st.kL>1?1:st.kL,1.15))*w),x.a[1]+(p[1]-x.a[1])*(1-(1-Math.pow(st.kL,.6))*w)];};
+  const rvP=p=>{const x=CH.rv,w=clamp((p[1]-x.a[1])/70,0,1);return [x.a[0]+(p[0]-x.a[0])*(1-(1-Math.pow(st.kR,1.15))*w),x.a[1]+(p[1]-x.a[1])*(1-(1-Math.pow(st.kR,.6))*w)];};
+  const sten=1-c.miOpen;
+  const mGap=typeof c.miGap==='function'?c.miGap(u):c.miGap,mPr=c.prol?c.prol(u):0;
+  const mt=avLeaflets([358,300],[418,300],[366,335],[412,327],[388,310-mPr*.35],mGap,sten,st.mi,sten>0?4.6:3,mPr);
+  const tt=avLeaflets([150,300],[212,300],[160,333],[204,331],[181,310],0,0,st.mi,3);
+  hx.strokeStyle='rgba(244,227,210,.5)';hx.lineWidth=1;
+  const pm=[lvP([344,436]),lvP([414,418])],pr=[rvP([166,420]),rvP([232,436])];
+  for(const [a,b] of [[mt[0],pm[0]],[mt[1],pm[1]],[tt[0],pr[0]],[tt[1],pr[1]]]){hx.beginPath();hx.moveTo(a[0],a[1]);hx.lineTo(b[0],b[1]);hx.stroke();}
+  const aSt=(1-c.aoOpen)*10;
+  semilunar([306,300],[330,300],c.aoGap,aSt,st.ao,aSt>0?4.8:3);
+  semilunar([244,300],[268,300],0,0,st.ao,3);
+
+  // conduction system
+  if(S.conduction){
+    const his=[[246,288],[268,300],[284,312]];
+    const lb=his.concat([lv.cav[8],lv.cav[7],lv.cav[6],lv.cav[5],lv.cav[4]]);
+    const rb=his.concat([rv.cav[7],rv.cav[6],rv.cav[5],rv.cav[4]]);
+    hx.lineCap='round';hx.lineJoin='round';hx.lineWidth=1.6;hx.strokeStyle='rgba(255,226,122,.22)';
+    polyPart(lb,0,1);polyPart(rb,0,1);
+    const pr2=(u-.16)/.06;
+    if(pr2>0&&pr2<1.5){
+      hx.save();hx.shadowColor='#ffe27a';hx.shadowBlur=10;hx.lineWidth=3;hx.strokeStyle='rgba(255,236,160,'+clamp(1.5-pr2,0,1).toFixed(2)+')';
+      polyPart(lb,pr2-.5,pr2);polyPart(rb,pr2-.5,pr2);hx.restore();
+    }
+    const sa=1-sstep(0,.07,u),av=Math.exp(-Math.pow((u-.125)/.03,2));
+    for(const [x,y,i] of [[196,205,sa],[246,288,av]]){
+      hx.save();hx.shadowColor='#ffe27a';hx.shadowBlur=6+16*i;hx.fillStyle='rgba(255,226,122,'+(.45+.55*i).toFixed(2)+')';
+      hx.beginPath();hx.arc(x,y,4+2*i,0,6.283);hx.fill();hx.restore();
+    }
+    if(sa>.02){hx.fillStyle='rgba(255,226,122,'+(.10*sa).toFixed(3)+')';for(const g of [ra,la]){hx.beginPath();smooth(hx,g.out,true);hx.fill();}}
+  }
+
+  // labels
+  hx.textAlign='center';hx.textBaseline='middle';hx.font='600 14px '+MONO;
+  const lab=(s,x,y,col)=>{hx.lineWidth=4;hx.strokeStyle='rgba(8,12,20,.55)';hx.strokeText(s,x,y);hx.fillStyle=col||'#fff';hx.fillText(s,x,y);};
+  const cen=g=>[g.reduce((s,p)=>s+p[0],0)/g.length,g.reduce((s,p)=>s+p[1],0)/g.length];
+  let q=cen(lv.cav);lab(t.lab.lv,q[0]+8,q[1]+8);
+  q=cen(rv.cav);lab(t.lab.rv,q[0]-6,q[1]+4);
+  q=cen(la.cav);lab(t.lab.la,q[0]+14,q[1]-14);
+  q=cen(ra.cav);lab(t.lab.ra,q[0]-22,q[1]-4);
+  hx.font='500 12px '+MONO;
+  lab(t.lab.ao,410,44,'#ffc2c8');lab(t.lab.pa,96,108,'#c3d6ff');
+}
+
+/* ───────────── Wiggers ───────────── */
+function trace(ctx,arr,X,Y,col,w){
+  ctx.beginPath();
+  for(let i=0;i<=N;i++){const x=X(i/N*U),y=Y(arr[i]);i?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+  ctx.strokeStyle=col;ctx.lineWidth=w||1.8;ctx.lineJoin='round';ctx.stroke();
+}
+function drawWig(st){
+  const c=st.c,t=T[S.lang],W=wigW,H=wigH;
+  wx.setTransform(dpr,0,0,dpr,0,0);wx.clearRect(0,0,W,H);
+  const x0=38,x1=W-8,pw=x1-x0,Tt=D[3];
+  const X=u=>x0+uToTau(u)/Tt*pw;
+  const top=30,bottom=H-20,gap=12;
+  const avail=bottom-top-gap*3;
+  const hP=avail*.44,hV=avail*.22,hE=avail*.18,hS=avail*.16;
+  const yP=top,yV=yP+hP+gap,yE=yV+hV+gap,yS=yE+hE+gap;
+  const ph=phaseOf(st.u);
+  // phase bands
+  wx.font='500 11px '+MONO;wx.textAlign='center';wx.textBaseline='middle';
+  for(let i=0;i<7;i++){
+    const a=X(PH[i]),b=i===6?x1:X(PH[i+1]);
+    wx.fillStyle=i===ph?'rgba(255,184,77,.13)':(i%2?'rgba(255,255,255,.035)':'rgba(255,255,255,.012)');
+    wx.fillRect(a,top-4,b-a,bottom-top+4);
+    wx.fillStyle=i===ph?C.atr:C.muted;wx.fillText(String(i+1),(a+b)/2,9);
+  }
+  // systole / diastole bar
+  const sa=X(.20),sb=X(.50);
+  wx.fillStyle='rgba(90,147,255,.55)';wx.fillRect(x0,18,pw,4);
+  wx.fillStyle=C.art;wx.fillRect(sa,18,sb-sa,4);
+  // pressure
+  const YP=v=>yP+hP-(v/c.pMax)*hP;
+  wx.textAlign='right';wx.font='400 10px '+MONO;
+  for(let v=0;v<=c.pMax;v+=c.pStep){const y=YP(v);wx.strokeStyle='rgba(255,255,255,.07)';wx.lineWidth=1;wx.beginPath();wx.moveTo(x0,y);wx.lineTo(x1,y);wx.stroke();wx.fillStyle=C.muted;wx.fillText(String(v),x0-5,y);}
+  trace(wx,c.s.la,X,YP,C.atr,1.6);trace(wx,c.s.ao,X,YP,'#ff9aa5',1.8);trace(wx,c.s.lv,X,YP,C.art,2.2);
+  // volume
+  const YV=v=>yV+hV-((v-c.vR[0])/(c.vR[1]-c.vR[0]))*hV;
+  for(const v of [c.esv,c.edv]){const y=YV(v);wx.strokeStyle='rgba(255,255,255,.07)';wx.beginPath();wx.moveTo(x0,y);wx.lineTo(x1,y);wx.stroke();wx.fillStyle=C.muted;wx.fillText(String(v),x0-5,y);}
+  trace(wx,c.s.vol,X,YV,C.ven,2);
+  // ECG
+  const YE=v=>yE+hE*.78-v*hE*.7;
+  trace(wx,c.s.ecg,X,YE,C.ecg,1.6);
+  // sounds
+  const YS=v=>yS+hS/2-v*hS*.36;
+  trace(wx,c.s.pcg,X,YS,'#d6dcea',1.1);
+  // track titles
+  wx.textAlign='left';wx.textBaseline='top';wx.font='500 10.5px '+MONO;
+  const title=(s,y)=>{const w=wx.measureText(s).width;wx.fillStyle='rgba(17,26,40,.78)';wx.fillRect(x0+3,y+1,w+8,15);wx.fillStyle=C.muted;wx.fillText(s,x0+7,y+3);};
+  title(t.trP,yP);title(t.trV,yV);title(t.trE,yE);title(t.trS,yS);
+  // legend
+  wx.textAlign='right';let lx=x1-4;
+  for(const [s,col] of [[t.lgLa,C.atr],[t.lgLv,C.art],[t.lgAo,'#ff9aa5']]){wx.fillStyle=col;wx.fillText(s,lx,yP+3);lx-=wx.measureText(s).width+12;}
+  // time axis
+  wx.textBaseline='alphabetic';wx.textAlign='center';wx.font='400 10px '+MONO;wx.fillStyle=C.muted;
+  const stepT=Tt>1.05?.4:.2;
+  for(let s=0;s<Tt-.04;s+=stepT){const x=x0+s/Tt*pw;wx.fillRect(x,bottom,1,4);wx.textAlign=s===0?'left':'center';wx.fillText(Math.round(s*1000)+(s===0?' '+t.ms:''),x,H-3);}
+  wx.textAlign='right';wx.fillText(Math.round(Tt*1000)+' '+t.ms,x1,H-3);
+  // playhead
+  const xp=X(st.u);
+  wx.strokeStyle='rgba(255,255,255,.8)';wx.lineWidth=1;wx.beginPath();wx.moveTo(xp,top-6);wx.lineTo(xp,bottom);wx.stroke();
+  const dot=(y,col)=>{wx.fillStyle='#0a101a';wx.beginPath();wx.arc(xp,y,4.5,0,6.283);wx.fill();wx.fillStyle=col;wx.beginPath();wx.arc(xp,y,3,0,6.283);wx.fill();};
+  dot(YP(st.la),C.atr);dot(YP(st.aoP),'#ff9aa5');dot(YP(st.lv),C.art);dot(YV(st.vol),C.ven);dot(YE(ecg(st.u)),C.ecg);
+}
+
+function drawPV(st){
+  const c=st.c,t=T[S.lang],W=pvW,H=pvH;
+  px.setTransform(dpr,0,0,dpr,0,0);px.clearRect(0,0,W,H);
+  const x0=38,x1=W-8,y0=10,y1=H-30,vm=230,pm=c.pMax;
+  const X=v=>x0+v/vm*(x1-x0),Y=p=>y1-p/pm*(y1-y0);
+  px.font='400 10px '+MONO;px.fillStyle=C.muted;px.lineWidth=1;
+  px.textAlign='right';px.textBaseline='middle';
+  for(let p=0;p<=pm;p+=c.pStep){px.strokeStyle='rgba(255,255,255,.07)';px.beginPath();px.moveTo(x0,Y(p));px.lineTo(x1,Y(p));px.stroke();px.fillText(String(p),x0-5,Y(p));}
+  px.textAlign='center';px.textBaseline='top';
+  for(let v=0;v<=200;v+=50){px.strokeStyle='rgba(255,255,255,.07)';px.beginPath();px.moveTo(X(v),y0);px.lineTo(X(v),y1);px.stroke();px.fillText(String(v),X(v),y1+4);}
+  px.fillText(t.pvX,(x0+x1)/2,H-12);
+  const loop=(k,col,w,dash)=>{const s=COND[k].s;px.beginPath();for(let i=0;i<=N;i++){const x=X(s.vol[i]),y=Y(s.lv[i]);i?px.lineTo(x,y):px.moveTo(x,y);}px.closePath();px.setLineDash(dash||[]);px.strokeStyle=col;px.lineWidth=w;px.lineJoin='round';px.stroke();px.setLineDash([]);};
+  if(S.cond!=='normal'){loop('normal','rgba(233,237,245,.4)',1.2,[4,4]);px.textAlign='right';px.textBaseline='top';px.fillStyle=C.muted;px.fillText(t.pvDash,x1-2,y0+1);}
+  px.fillStyle='rgba(255,83,100,.10)';px.beginPath();const s=c.s;for(let i=0;i<=N;i++){const x=X(s.vol[i]),y=Y(s.lv[i]);i?px.lineTo(x,y):px.moveTo(x,y);}px.closePath();px.fill();
+  loop(S.cond,C.art,2.2);
+  const x=X(st.vol),y=Y(st.lv);
+  px.fillStyle='rgba(255,255,255,.18)';px.beginPath();px.arc(x,y,8,0,6.283);px.fill();
+  px.fillStyle='#fff';px.beginPath();px.arc(x,y,3.6,0,6.283);px.fill();
+}
+
+/* ───────────── sound ───────────── */
+let actx=null,master=null,murG=null,murF=null;
+function initAudio(){
+  if(actx)return true;
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return false;
+    actx=new AC();master=actx.createGain();master.gain.value=.9;master.connect(actx.destination);
+    const len=actx.sampleRate*2,buf=actx.createBuffer(1,len,actx.sampleRate),d=buf.getChannelData(0);
+    for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
+    const src=actx.createBufferSource();src.buffer=buf;src.loop=true;
+    murF=actx.createBiquadFilter();murF.type='bandpass';murF.Q.value=1.1;murF.frequency.value=COND[S.cond].murF;
+    murG=actx.createGain();murG.gain.value=0;src.connect(murF);murF.connect(murG);murG.connect(master);src.start();
+    return true;
+  }catch(e){actx=null;return false;}
+}
+function thump(k,g){
+  if(!actx||!S.sound)return;
+  const p=SND[k],t0=actx.currentTime,dur=(k==='os'||k==='ck')?.04:(k==='s1'?.13:.09);
+  const env=actx.createGain();env.gain.setValueAtTime(.0001,t0);env.gain.exponentialRampToValueAtTime(Math.max(.001,.9*g),t0+.008);env.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+  env.connect(master);
+  for(const [m,a] of [[1,1],[2,.55],[3,.2]]){const o=actx.createOscillator(),og=actx.createGain();o.type='sine';o.frequency.value=p.f*m;og.gain.value=a;o.connect(og);og.connect(env);o.start(t0);o.stop(t0+dur+.02);}
+}
+function fire(prev,cur,wrapped){
+  for(const e of COND[S.cond].sounds){
+    const hit=wrapped?(e.u>prev||e.u<=cur):(e.u>prev&&e.u<=cur);
+    if(hit)thump(e.k,e.g);
+  }
+}
+function murmur(u){
+  if(!actx||!murG)return;
+  const c=COND[S.cond],on=S.sound&&S.playing&&c.mur;
+  murG.gain.setTargetAtTime(on?c.mur(u)*(S.cond==='ms'?1.5:.5):0,actx.currentTime,.012);
+}
+
+/* ───────────── DOM ───────────── */
+let lastPhase=-1,lastMi=null,lastAo=null,tickN=0;
+function applyLang(){
+  const t=T[S.lang];document.documentElement.lang=S.lang;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t[el.dataset.i18n];});
+  document.querySelectorAll('#conds button').forEach(b=>{b.textContent=t.conds[b.dataset.c];b.setAttribute('aria-pressed',String(b.dataset.c===S.cond));});
+  document.querySelectorAll('#langs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lang===S.lang)));
+  document.querySelectorAll('#speeds button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.speed===S.speed)));
+  $('hrOut').textContent=S.hr+' '+t.bpm;
+  $('playLabel').textContent=S.playing?t.pause:t.play;
+  $('playIcon').setAttribute('d',S.playing?'M2 1h3.5v12H2zM8.5 1H12v12H8.5z':'M3 1l9.5 6L3 13z');
+  $('sound').setAttribute('aria-pressed',String(S.sound));$('cond').setAttribute('aria-pressed',String(S.conduction));
+  const c=COND[S.cond];
+  $('notes').innerHTML='';t.notes[S.cond].forEach(s=>{const li=document.createElement('li');li.textContent=s;$('notes').appendChild(li);});
+  $('stats').innerHTML='';
+  for(const [k,v] of [[t.edv,c.edv+' '+t.ml],[t.esv,c.esv+' '+t.ml],[t.ef,c.ef+'%']]){const s=document.createElement('span');s.textContent=k+' ';const b=document.createElement('b');b.textContent=v;s.appendChild(b);$('stats').appendChild(s);}
+  document.querySelectorAll('.read small').forEach((el,i)=>{el.textContent=i<3?(S.lang==='en'?'mmHg':(S.lang==='ru'?'мм рт. ст.':'mm sim. ust.')):t.ml;});
+  $('prac').textContent=t.prac+' →';$('prac').href='./?case='+PRAC[S.cond];
+  lastPhase=-1;lastMi=lastAo=null;
+}
+function updateDom(st){
+  const t=T[S.lang],ph=phaseOf(st.u);
+  if(ph!==lastPhase){
+    lastPhase=ph;$('phaseN').textContent=(ph+1)+' / 7';$('phaseName').textContent=t.phases[ph][0];$('phaseDesc').textContent=t.phases[ph][1];
+    const leak=(S.cond==='mr'&&(ph===1||ph===4))||(S.cond==='ar'&&ph===4);
+    $('phaseNote').hidden=!leak;$('phaseNote').textContent=leak?t.leak:'';
+  }
+  const mi=st.mi>.08,ao=st.ao>.08;
+  if(mi!==lastMi){lastMi=mi;$('chipMi').classList.toggle('open',mi);$('chipMi').querySelector('b').textContent=mi?t.open:t.closed;}
+  if(ao!==lastAo){lastAo=ao;$('chipAo').classList.toggle('open',ao);$('chipAo').querySelector('b').textContent=ao?t.open:t.closed;}
+  if(tickN%3===0||!S.playing){
+    $('vLv').textContent=Math.round(st.lv);$('vAo').textContent=Math.round(st.aoP);$('vLa').textContent=Math.round(st.la);$('vVol').textContent=Math.round(st.vol);
+  }
+}
+function save(){try{localStorage.setItem('smartheart-lang',S.lang);}catch(e){}}
+const PRAC={normal:'normal',as:'as',mr:'mr',ar:'ar',ms:'ms_sr',mvp:'mvp'};
+
+$('langs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.lang=b.dataset.lang;applyLang();save();});
+$('conds').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.cond=b.dataset.c;try{history.replaceState(null,'','#'+S.cond);}catch(_){ }jets.length=0;if(murF)murF.frequency.value=COND[S.cond].murF;applyLang();});
+$('speeds').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.speed=+b.dataset.speed;applyLang();});
+$('play').addEventListener('click',()=>{S.playing=!S.playing;if(S.playing&&actx&&actx.state==='suspended')actx.resume().catch(()=>{});applyLang();});
+$('sound').addEventListener('click',()=>{
+  if(!S.sound){if(!initAudio())return;if(actx.state==='suspended')actx.resume().catch(()=>{});}
+  S.sound=!S.sound;applyLang();
+});
+$('cond').addEventListener('click',()=>{S.conduction=!S.conduction;applyLang();});
+$('hr').addEventListener('input',e=>{S.hr=+e.target.value;D=durs(S.hr);$('hrOut').textContent=S.hr+' '+T[S.lang].bpm;});
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&!/^(BUTTON|INPUT)$/.test(e.target.tagName)){e.preventDefault();$('play').click();}});
+let scrub=false;
+const scrubTo=e=>{const r=wig.getBoundingClientRect(),x=clamp((e.clientX-r.left-38)/(r.width-46),0,.9999);S.u=tauToU(x*D[3]);};
+wig.addEventListener('pointerdown',e=>{scrub=true;try{wig.setPointerCapture(e.pointerId);}catch(_){ }if(S.playing){S.playing=false;applyLang();}scrubTo(e);});
+wig.addEventListener('pointermove',e=>{if(scrub)scrubTo(e);});
+const endScrub=()=>{scrub=false;};
+wig.addEventListener('pointerup',endScrub);wig.addEventListener('pointercancel',endScrub);
+window.addEventListener('resize',resize);
+
+/* ───────────── loop ───────────── */
+let last=0;
+function tick(now){
+  const dt=Math.min(.05,(now-last)/1000||0);last=now;tickN++;
+  let sim=0;
+  if(S.playing){
+    sim=dt*S.speed;const prev=S.u;let u=S.u+sim*rate(S.u),wr=false;
+    if(u>=U){u-=U;wr=true;}
+    S.u=u;fire(prev,u,wr);
+  }
+  const st=frameState();
+  stepParticles(st,sim);
+  drawHeart(st);drawWig(st);drawPV(st);updateDom(st);murmur(S.u);
+  requestAnimationFrame(tick);
+}
+function start(d){
+  try{const s=localStorage.getItem('smartheart-lang');if(T[s])S.lang=s;}catch(e){}
+  try{const q=new URLSearchParams(location.search).get('lang');if(T[q])S.lang=q;}catch(e){}
+  if(d&&typeof d==='object'){for(const k of ['lang','cond','hr','speed','conduction','u'])if(k in d)S[k]=d[k];if(!T[S.lang])S.lang='en';if(!COND[S.cond])S.cond='normal';}
+  const hc=()=>{const h=location.hash.slice(1);if(COND[h]&&h!==S.cond){S.cond=h;jets.length=0;if(murF)murF.frequency.value=COND[h].murF;applyLang();}};
+  if(COND[location.hash.slice(1)])S.cond=location.hash.slice(1);
+  window.addEventListener('hashchange',hc);
+  if(reduce){S.playing=false;S.u=.30;}
+  D=durs(S.hr);$('hr').value=S.hr;
+  resize();applyLang();
+  // settle the blood into a believable distribution before the first frame
+  for(let i=0;i<240;i++){S.u+=.016*rate(S.u);if(S.u>=U)S.u-=U;stepParticles(frameState(),.016);}
+  jets.length=0;if(reduce)S.u=.30;
+  requestAnimationFrame(t=>{last=t;tick(t);});
+}
+const hot=window.claude&&window.claude.hot;
+if(hot&&hot.snapshot)hot.snapshot(()=>({lang:S.lang,cond:S.cond,hr:S.hr,speed:S.speed,conduction:S.conduction,u:S.u}));
+if(hot&&hot.ready)hot.ready(start);else start((hot&&hot.data)||{});
+})();
+</script>
+</body>
+</html>

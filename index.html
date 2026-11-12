@@ -1,0 +1,1613 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Smart Heart 3.0</title>
+<meta name="description" content="See the electricity, hear the valves. A synchronized ECG and heart-sound trainer in English, Russian and Uzbek, with a built-in first-year glossary.">
+<meta property="og:title" content="Smart Heart 3.0 — see the electricity, hear the valves">
+<meta property="og:description" content="One synthesized heartbeat drives both the ECG and the heart sounds. 17 rhythms, 6 valve lesions, 16 clinical cases, an exam and a hover-to-learn glossary. English · Русский · Oʻzbekcha.">
+<meta name="theme-color" content="#06080b">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#06080b;--bg2:#090c11;--panel:#0d1218;--panel2:#121922;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.13);--text:#e9edf2;--muted:#8d97a6;--dim:#5a6472;--ecg:#3cf5a0;--pcg:#ffb648;--heart:#ff4d6d;--sky:#7cc4ff;--good:#3cf5a0;--bad:#ff5d73;--r:18px;--mono:'JetBrains Mono',ui-monospace,monospace;--serif:'Fraunces',Georgia,serif;--sans:'Inter',system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+body{min-height:100vh;background:radial-gradient(1100px 600px at 0% -10%,rgba(255,77,109,.09),transparent 60%),radial-gradient(900px 520px at 100% 0%,rgba(60,245,160,.05),transparent 60%),var(--bg);overflow-x:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.wrap{max-width:1400px;margin:0 auto;padding:14px 16px 40px}
+header.top{display:flex;align-items:center;gap:14px;justify-content:space-between;padding:4px 2px 16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.brand h1{font-family:var(--serif);font-weight:600;font-size:27px;letter-spacing:.005em;line-height:1}
+.brand h1 em,.intro h2 em{font-style:italic;font-weight:400;color:var(--heart)}
+.brand small{display:block;margin-top:5px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+nav.tabs{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px}
+nav.tabs button{padding:8px 18px;border-radius:999px;font-size:14px;color:var(--muted);font-weight:500;transition:.2s}
+nav.tabs button.on{background:var(--text);color:#0a0d12}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:16px;align-items:start}
+.left{display:grid;gap:16px;min-width:0}
+.card{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:var(--r);position:relative}
+.mon-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:16px 18px 10px}
+.mon-head .rn{font-family:var(--serif);font-size:24px;font-weight:500;line-height:1.1}
+.mon-head .sub{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
+.hr{display:flex;align-items:baseline;gap:8px;font-family:var(--mono)}
+.hr b{font-size:44px;font-weight:700;color:var(--ecg);line-height:.9;text-shadow:0 0 18px rgba(60,245,160,.35);min-width:2.2ch;text-align:right}
+.hr span{font-size:11px;color:var(--muted);letter-spacing:.1em}
+.hr svg{width:20px;height:20px;align-self:center;transition:transform .12s}
+.hr svg.beat{transform:scale(1.35)}
+.screen{position:relative;height:clamp(280px,40vh,390px);margin:0 10px;border-radius:12px;overflow:hidden;background:#04070a;border:1px solid rgba(60,245,160,.10);box-shadow:inset 0 0 60px rgba(0,0,0,.6)}
+.screen canvas{position:absolute;inset:0;width:100%;height:100%}
+.lane-lab{position:absolute;left:12px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;pointer-events:none}
+.lane-lab.e{top:10px;color:var(--ecg)} .lane-lab.p{color:var(--pcg)}
+.mon-foot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px 14px 14px}
+.cap{font-size:12.5px;color:var(--muted);line-height:1.45;max-width:640px}
+.cap b{color:var(--text);font-weight:500}
+.tools{display:flex;gap:6px;flex-wrap:wrap}
+.pill{border:1px solid var(--line2);border-radius:999px;padding:7px 12px;font-size:12.5px;color:var(--muted);display:inline-flex;align-items:center;gap:6px;transition:.15s;background:rgba(255,255,255,.02)}
+.pill:hover{color:var(--text);border-color:rgba(255,255,255,.25)}
+.pill.on{color:#07090c;background:var(--text);border-color:var(--text)}
+.breath{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--sky)}
+.breath i{display:block;width:46px;height:5px;border-radius:9px;background:rgba(124,196,255,.15);overflow:hidden}
+.breath i u{display:block;height:100%;background:var(--sky);width:30%}
+.row2{display:grid;grid-template-columns:330px minmax(0,1fr);gap:16px}
+.heart-card{padding:14px 14px 12px}
+.ttl{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+#heart{width:100%;height:auto;display:block;margin:6px 0 4px}
+.valves{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-top:4px}
+.vrow{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.vrow .vb{height:4px;border-radius:4px;background:rgba(255,255,255,.07);margin-top:4px;overflow:hidden}
+.vrow .vb u{display:block;height:100%;width:0;background:var(--text);transition:width .04s}
+.vrow em{font-style:normal;float:right;color:var(--dim)}
+.vrow em.leak{color:var(--bad)} .vrow em.open{color:var(--ecg)}
+.seal{position:absolute;inset:0;border-radius:var(--r);background:rgba(6,8,11,.86);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;text-align:center;padding:20px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);z-index:3}
+.sealed .seal{display:flex}
+.find{padding:16px 18px 18px}
+.find h4{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px;font-weight:500}
+.find h4:first-child{margin-top:0}
+.find p{font-size:14px;line-height:1.55;color:#cfd5dd}
+.find .lk{border-left:2px solid var(--heart);padding:8px 12px;background:rgba(255,77,109,.06);border-radius:0 10px 10px 0;margin-top:8px;font-size:13.5px;line-height:1.55;color:#e3e7ec}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13.5px}
+.kv dt{color:var(--muted);font-family:var(--mono);font-size:11.5px;padding-top:2px}
+.kv dd{color:#dfe4ea}
+.mur{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px;background:rgba(255,182,72,.035)}
+.mur b{font-weight:600;color:var(--pcg);font-size:13.5px}
+.mur p{font-size:13px;margin-top:3px;color:#c9d0d8}
+.casebar{border:1px solid rgba(124,196,255,.25);background:rgba(124,196,255,.06);border-radius:12px;padding:12px 14px;margin-bottom:6px}
+.casebar .k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--sky);text-transform:uppercase}
+.casebar .t{font-family:var(--serif);font-size:19px;margin:4px 0}
+.casebar p{font-size:13.5px;color:#cfd8e2}
+aside{display:grid;gap:16px;min-width:0}
+.panel{padding:16px}
+.sec{padding:14px 0;border-top:1px solid var(--line)}
+.sec:first-of-type{border-top:0;padding-top:4px}
+.sec h3{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:10px;display:flex;justify-content:space-between}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.glab{font-size:11px;color:var(--dim);margin:2px 0 6px;font-family:var(--mono)}
+.chip{border:1px solid var(--line2);border-radius:9px;padding:6px 10px;font-size:12.5px;color:#c3cad3;transition:.12s;background:rgba(255,255,255,.015)}
+.chip:hover{border-color:rgba(255,255,255,.3);color:var(--text)}
+.chip.on{background:var(--ecg);color:#04140c;border-color:var(--ecg);font-weight:600}
+.sl{margin:10px 0 14px}
+.sl .top{display:flex;justify-content:space-between;align-items:baseline;font-size:13px}
+.sl .top span{color:#d5dbe2}
+.sl output{font-family:var(--mono);font-size:12.5px;color:var(--text)}
+.sl .st{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-top:2px;letter-spacing:.04em}
+.sl .st.w{color:var(--pcg)} .sl .st.s{color:var(--bad)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:24px;background:transparent;margin-top:4px}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:4px;background:linear-gradient(90deg,var(--heart) var(--p,50%),rgba(255,255,255,.1) var(--p,50%))}
+input[type=range]::-moz-range-track{height:4px;border-radius:4px;background:rgba(255,255,255,.1)}
+input[type=range]::-moz-range-progress{height:4px;border-radius:4px;background:var(--heart)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;margin-top:-7px;box-shadow:0 0 0 4px rgba(255,77,109,.25)}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radius:50%;background:#fff}
+input[type=range]:disabled{opacity:.35}
+.seg{display:flex;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.seg button{flex:1;padding:7px 6px;border-radius:7px;font-size:12.5px;color:var(--muted)}
+.seg button.on{background:var(--panel2);color:var(--text);box-shadow:0 0 0 1px var(--line2)}
+.tg{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#d5dbe2;padding:6px 0}
+.sw{width:38px;height:22px;border-radius:22px;background:rgba(255,255,255,.12);position:relative;transition:.15s;flex:none}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s}
+.sw.on{background:var(--heart)} .sw.on::after{left:19px}
+.sitewrap{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:center}
+#torso{width:100%;height:auto}
+#torso .dot{cursor:pointer}
+#torso .dot circle.c{fill:rgba(255,255,255,.12);stroke:rgba(255,255,255,.4);transition:.15s}
+#torso .dot.on circle.c{fill:var(--heart);stroke:#fff}
+#torso .dot circle.ring{fill:none;stroke:var(--heart);opacity:0}
+#torso .dot.on circle.ring{animation:ring 1.6s infinite}
+@keyframes ring{0%{r:7;opacity:.8}100%{r:16;opacity:0}}
+.sitename{font-size:13px;line-height:1.45;color:#d5dbe2}
+.sitename small{display:block;color:var(--muted);font-size:11.5px;margin-top:4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;padding:12px 18px;font-weight:600;font-size:14.5px;background:var(--heart);color:#fff;transition:.15s;box-shadow:0 8px 30px rgba(255,77,109,.25)}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.btn.ghost{background:transparent;border:1px solid var(--line2);box-shadow:none;color:var(--text);font-weight:500}
+.btn.full{width:100%}
+.cases{display:grid;gap:8px}
+.case{text-align:left;border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:rgba(255,255,255,.015);transition:.15s}
+.case:hover{border-color:var(--line2);background:rgba(255,255,255,.03)}
+.case.on{border-color:var(--heart);background:rgba(255,77,109,.07)}
+.case .ct{font-size:14px;font-weight:600}
+.case .cs{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4}
+.case .tags{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.case .tags i{font-style:normal;font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;padding:2px 7px;border-radius:6px;background:rgba(60,245,160,.08);color:var(--ecg)}
+.case .tags i.s{background:rgba(255,182,72,.09);color:var(--pcg)}
+.exq h5{font-size:14px;font-weight:600;margin:14px 0 8px}
+.opt{display:block;width:100%;text-align:left;border:1px solid var(--line2);border-radius:10px;padding:10px 12px;margin-bottom:6px;font-size:13.5px;color:#d5dbe2;transition:.12s}
+.opt:hover:not(:disabled){border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.03)}
+.opt.ok{border-color:var(--good);background:rgba(60,245,160,.10);color:#fff}
+.opt.no{border-color:var(--bad);background:rgba(255,93,115,.10)}
+.opt:disabled{cursor:default}
+.prog{display:flex;gap:4px;margin:4px 0 12px}
+.prog i{flex:1;height:4px;border-radius:4px;background:rgba(255,255,255,.08)}
+.prog i.d{background:var(--text)} .prog i.c{background:var(--heart)}
+.reveal{border-radius:12px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid var(--line);margin-top:10px;font-size:13.5px;line-height:1.55;color:#d8dee5}
+.reveal b{color:#fff}
+.score{text-align:center;padding:10px 0}
+.score .big{font-family:var(--serif);font-size:64px;line-height:1}
+.score .big small{font-size:24px;color:var(--muted)}
+.score .verdict{font-family:var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--heart);font-size:12px;margin:10px 0 14px}
+.rl{font-size:13px;color:#cfd5dd;text-align:left;display:grid;gap:4px;margin-bottom:14px}
+.muted{color:var(--muted);font-size:13px;line-height:1.5}
+footer{margin-top:22px;color:var(--dim);font-size:12px;line-height:1.6;text-align:center}
+footer b{color:var(--muted);font-weight:500}
+.intro{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(800px 500px at 50% 40%,rgba(255,77,109,.14),transparent 70%),rgba(4,6,9,.94);backdrop-filter:blur(10px);transition:opacity .5s}
+.intro.gone{opacity:0;pointer-events:none}
+.intro .box{max-width:620px;text-align:center}
+.intro .kick{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.intro h2{font-family:var(--serif);font-weight:600;font-size:clamp(52px,11vw,96px);line-height:.95;margin:14px 0 18px}
+.intro p.lede{font-size:17px;line-height:1.6;color:#cdd4dc}
+.intro ul{list-style:none;display:grid;gap:8px;margin:22px auto 26px;max-width:460px;text-align:left}
+.intro li{font-size:14px;color:#c4ccd5;display:flex;gap:10px;align-items:flex-start}
+.intro li::before{content:'';flex:none;width:7px;height:7px;border-radius:50%;background:var(--heart);margin-top:7px;box-shadow:0 0 10px var(--heart)}
+.intro .note{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:14px;letter-spacing:.05em}
+#introLine{width:100%;max-width:520px;height:60px;display:block;margin:0 auto}
+@media(max-width:1100px){.grid{grid-template-columns:1fr}.row2{grid-template-columns:1fr}}
+@media(max-width:620px){.wrap{padding:10px 10px 30px}.brand h1{font-size:23px}nav.tabs{width:100%}nav.tabs button{flex:1;padding:8px 6px}.mon-head{padding:14px 14px 8px}.mon-head .rn{font-size:19px}.hr b{font-size:36px}.screen{margin:0 6px}.sitewrap{grid-template-columns:120px 1fr}}
+
+/* ---------- Smart Heart 3.0 additions ---------- */
+:root{--serif:'Fraunces','PT Serif',Georgia,serif}
+.ver{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:#04140c;background:var(--ecg);border-radius:6px;padding:2px 6px;margin-left:8px;vertical-align:middle;font-style:normal;font-weight:700;position:relative;top:-3px}
+.hdr-r{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.lang{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+.lang button{padding:6px 11px;border-radius:999px;font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;color:var(--muted);font-weight:500;transition:.15s}
+.lang button:hover{color:var(--text)}
+.lang button.on{background:var(--ecg);color:#04140c;font-weight:700}
+.intro .lang{margin:0 auto 20px}
+.intro .lang button{padding:7px 14px;font-size:12px}
+/* glossary terms in running text */
+.g{border-bottom:1px dotted rgba(124,196,255,.7);cursor:help;transition:color .12s,border-color .12s,background .12s;border-radius:2px}
+.g:hover,.g:focus-visible,.g.tip-on{color:#fff;border-bottom-color:var(--sky);background:rgba(124,196,255,.12);outline:none}
+.chip[data-g].tip-on,.seg button[data-g].tip-on{box-shadow:0 0 0 2px rgba(124,196,255,.45)}
+/* tooltip */
+#tip{position:fixed;left:0;top:0;z-index:200;width:max-content;max-width:min(340px,calc(100vw - 20px));background:#111821;border:1px solid rgba(124,196,255,.35);border-radius:14px;padding:12px 14px 11px;box-shadow:0 18px 50px rgba(0,0,0,.6);font-size:13px;line-height:1.5;color:#dfe5ec;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;pointer-events:none;visibility:hidden}
+#tip.on{opacity:1;transform:none;visibility:visible}
+#tip .th{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;margin-bottom:4px}
+#tip .tk{font-family:var(--mono);font-weight:700;font-size:15px;color:var(--sky)}
+#tip .tn{font-weight:600;color:#fff;font-size:13.5px}
+#tip .tl{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:8px 0 2px}
+#tip p{margin:0}
+#tip .tx{margin-top:9px;padding-top:8px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);display:grid;gap:2px}
+#tip .tx b{display:inline-block;min-width:22px;font-family:var(--mono);font-size:10px;color:var(--dim);font-weight:500}
+/* monitor legend */
+.legend{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;padding:10px 16px 0;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.legend .lt{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-right:4px}
+.legend span[data-g]{display:inline-flex;align-items:center;gap:5px;cursor:help;padding:3px 7px;border-radius:7px;border:1px solid transparent;transition:.12s}
+.legend span[data-g]:hover,.legend span[data-g].tip-on{background:rgba(255,255,255,.05);border-color:var(--line2);color:#fff}
+.legend i{width:7px;height:7px;border-radius:50%;display:inline-block}
+.lane-lab span[data-g]{pointer-events:auto;cursor:help}
+#heart [data-g]{cursor:help}
+#heart text[data-g]:hover{fill:#fff}
+.hr span[data-g]{cursor:help}
+/* glossary tab */
+.gq{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;color:var(--text);font:inherit;font-size:13.5px;margin:12px 0 2px}
+.gq:focus{outline:none;border-color:var(--sky)}
+.gcat{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--sky);margin:16px 0 8px}
+.gi{display:block;width:100%;text-align:left;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:6px;background:rgba(255,255,255,.015);transition:.12s;cursor:default}
+.gi.demo{cursor:pointer}
+.gi:hover{border-color:var(--line2);background:rgba(255,255,255,.03)}
+.gi.on{border-color:var(--ecg);background:rgba(60,245,160,.06)}
+.gi .gh{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.gi .gk{font-family:var(--mono);font-weight:700;color:var(--sky);font-size:13px}
+.gi .gn{font-weight:600;font-size:13.5px;color:#fff}
+.gi p{font-size:12.5px;color:#c9d0d8;line-height:1.5;margin-top:4px}
+.gi p.gs{color:var(--muted)}
+.gi .gx{font-size:11px;color:var(--dim);margin-top:5px}
+.gi .go{font-family:var(--mono);font-size:10px;color:var(--ecg);letter-spacing:.08em;margin-top:6px;display:inline-block}
+@media(min-width:1101px){#glist{max-height:min(66vh,760px);overflow:auto;padding-right:6px;margin-right:-6px;overscroll-behavior:contain}
+  #glist::-webkit-scrollbar{width:6px}#glist::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:6px}}
+@media(max-width:620px){nav.tabs button{padding:8px 3px;font-size:12.5px}.hdr-r{width:100%;justify-content:space-between}}
+@media (hover:none){.g{border-bottom-style:dashed}}
+
+/* ---------- Smart Heart 3.0: Teardown links ---------- */
+.tdtab{border:1px solid var(--heart);color:var(--heart);border-radius:999px;padding:8px 16px;font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap;transition:.15s}
+.tdtab:hover{background:var(--heart);color:#0a0d12}
+.tdwhy{display:inline-flex;align-items:center;gap:6px;margin-top:14px;border:1px solid var(--heart);color:var(--heart);border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:600;text-decoration:none}
+.tdwhy:hover{background:var(--heart);color:#0a0d12}
+</style>
+</head>
+<body>
+<div class="intro" id="intro">
+  <div class="box">
+    <div class="lang" id="langIntro" role="group" aria-label="Language"></div>
+    <div class="kick" id="iKick"></div>
+    <h2>Smart <em>Heart</em></h2>
+    <svg id="introLine" viewBox="0 0 520 60" fill="none"><path d="M0 34 H150 l10 -6 l10 6 H200 l8 6 l10 -36 l10 42 l8 -12 H300 q18 -14 36 0 H520" stroke="#3cf5a0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/><circle cx="222" cy="52" r="3" fill="#ffb648"/><circle cx="318" cy="52" r="3" fill="#ffb648"/></svg>
+    <p class="lede" id="iLede"></p>
+    <ul id="iList"></ul>
+    <button class="btn" id="go"><span id="goTxt"></span> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    <div class="note" id="iNote"></div>
+  </div>
+</div>
+
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <svg width="40" height="40" viewBox="0 0 40 40"><path d="M20 35 C8 26 3 19 3 12.5 C3 7.5 7 4 11.5 4 C15 4 18 6 20 9 C22 6 25 4 28.5 4 C33 4 37 7.5 37 12.5 C37 19 32 26 20 35Z" fill="rgba(255,77,109,.16)" stroke="#ff4d6d" stroke-width="1.6"/><path d="M6 19 H13 l2 -4 l3 9 l3 -13 l3 8 H34" fill="none" stroke="#3cf5a0" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
+    <div><h1>Smart <em>Heart</em><span class="ver">3.0</span></h1><small id="tagline"></small></div>
+  </div>
+  <div class="hdr-r">
+    <div class="lang" id="langTop" role="group" aria-label="Language"></div>
+    <nav class="tabs" id="tabs">
+      <button data-m="explore" class="on"></button>
+      <button data-m="cases"></button>
+      <button data-m="exam"></button>
+      <button data-m="learn"></button>
+    </nav>
+    <a class="tdtab" href="teardown.html">Teardown <span aria-hidden="true">→</span></a>
+    <a class="tdtab" href="game.html">The Game <span aria-hidden="true">→</span></a>
+  </div>
+</header>
+
+<div class="grid">
+<div class="left">
+  <section class="card">
+    <div class="mon-head">
+      <div><div class="rn" id="rname"></div><div class="sub" id="rsub"></div></div>
+      <div class="hr"><svg id="hicon" viewBox="0 0 24 24"><path d="M12 21C5 16 2 12 2 8.2 2 5.3 4.3 3 7.1 3c1.9 0 3.6 1 4.9 2.6C13.3 4 15 3 16.9 3 19.7 3 22 5.3 22 8.2 22 12 19 16 12 21Z" fill="#ff4d6d"/></svg><b id="hr">--</b><span id="bpm" data-g="bpm">BPM</span></div>
+    </div>
+    <div class="screen">
+      <canvas id="cgrid"></canvas><canvas id="ctrace"></canvas>
+      <div class="lane-lab e" id="elab"></div>
+      <div class="lane-lab p" id="plab"></div>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="mon-foot">
+      <div class="cap" id="cap"></div>
+      <div class="tools">
+        <div class="breath" id="breath"><span id="btxt"></span><i><u id="bbar"></u></i></div>
+        <button class="pill on" id="tLink"></button>
+        <button class="pill" id="tFreeze"></button>
+      </div>
+    </div>
+  </section>
+
+  <div class="row2">
+    <section class="card heart-card" id="heartCard">
+      <div class="ttl"><span id="liveHeart"></span><span id="phase"></span></div>
+      <svg id="heart" viewBox="0 0 260 252">
+        <defs>
+          <radialGradient id="gl" cx="50%" cy="50%" r="60%"><stop offset="0" stop-color="#7cc4ff" stop-opacity=".9"/><stop offset="1" stop-color="#7cc4ff" stop-opacity="0"/></radialGradient>
+        </defs>
+        <g id="atria">
+          <rect id="ra" x="26" y="30" width="96" height="80" rx="24"/>
+          <rect id="la" x="138" y="30" width="96" height="80" rx="24"/>
+        </g>
+        <g id="vent">
+          <path id="rv" d="M26 128 H122 V214 Q110 242 82 238 Q34 228 26 186 Z"/>
+          <path id="lv" d="M138 128 H234 Q242 196 214 228 Q184 254 138 238 Z"/>
+        </g>
+        <g id="cond" fill="none" stroke-width="2.4" stroke-linecap="round">
+          <path id="intern" d="M44 46 Q90 70 130 118"/>
+          <path id="his" data-g="his" d="M130 124 V150"/>
+          <path id="rbb" data-g="his" d="M128 150 Q100 190 74 226"/>
+          <path id="lbb" data-g="his" d="M132 150 Q170 186 196 228"/>
+        </g>
+        <circle id="sa" data-g="sa" cx="44" cy="46" r="6"/>
+        <circle id="avn" data-g="avn" cx="130" cy="120" r="6"/>
+        <g id="leaf" stroke-width="3.4" stroke-linecap="round">
+          <line id="t1" x1="34" y1="120" x2="74" y2="120"/><line id="t2" x1="114" y1="120" x2="74" y2="120"/>
+          <line id="m1" x1="146" y1="120" x2="186" y2="120"/><line id="m2" x1="226" y1="120" x2="186" y2="120"/>
+        </g>
+        <g font-family="JetBrains Mono" font-size="11" fill="rgba(233,237,242,.55)" letter-spacing="1" text-anchor="middle">
+          <text id="tRA" data-g="ra" x="74" y="80"></text><text id="tLA" data-g="la" x="186" y="80"></text><text id="tRV" data-g="rv" x="74" y="186"></text><text id="tLV" data-g="lv" x="186" y="186"></text>
+        </g>
+      </svg>
+      <div class="valves" id="valves"></div>
+      <div class="seal" id="sealHeart"></div>
+    </section>
+    <section class="card find" id="find"><div class="seal" id="sealFind"></div><div id="findBody"></div></section>
+  </div>
+</div>
+
+<aside>
+  <section class="card panel">
+    <div class="sec"><h3><span id="stethT"></span><span id="siteShort"></span></h3>
+      <div class="sitewrap">
+        <svg id="torso" viewBox="0 0 200 175">
+          <path d="M62 10 Q100 24 138 10 Q172 16 184 44 L190 170 H10 L16 44 Q28 16 62 10Z" fill="rgba(255,255,255,.03)" stroke="rgba(255,255,255,.18)" stroke-width="1.2"/>
+          <path d="M100 26 V122" stroke="rgba(255,255,255,.18)" stroke-width="5" stroke-linecap="round"/>
+          <g stroke="rgba(255,255,255,.08)" fill="none" stroke-width="1.2"><path d="M30 46 Q60 40 96 50"/><path d="M104 50 Q140 40 170 46"/><path d="M26 70 Q60 62 96 72"/><path d="M104 72 Q140 62 174 70"/><path d="M24 94 Q60 86 96 96"/><path d="M104 96 Q140 86 176 94"/><path d="M24 118 Q60 110 96 120"/><path d="M104 120 Q140 110 176 118"/></g>
+          <path d="M108 70 Q150 64 158 104 Q156 132 128 140 Q104 132 100 106 Z" fill="rgba(255,77,109,.10)" stroke="rgba(255,77,109,.35)"/>
+          <g class="dot" data-s="aortic"><circle class="ring" cx="84" cy="58" r="7"/><circle class="c" cx="84" cy="58" r="7"/></g>
+          <g class="dot" data-s="pulmonic"><circle class="ring" cx="116" cy="58" r="7"/><circle class="c" cx="116" cy="58" r="7"/></g>
+          <g class="dot" data-s="erb"><circle class="ring" cx="112" cy="84" r="7"/><circle class="c" cx="112" cy="84" r="7"/></g>
+          <g class="dot" data-s="tricuspid"><circle class="ring" cx="108" cy="110" r="7"/><circle class="c" cx="108" cy="110" r="7"/></g>
+          <g class="dot" data-s="mitral"><circle class="ring" cx="150" cy="128" r="7"/><circle class="c" cx="150" cy="128" r="7"/></g>
+        </svg>
+        <div class="sitename" id="siteName"></div>
+      </div>
+      <div style="display:grid;gap:8px;margin-top:12px">
+        <div class="seg" id="segPiece"><button data-v="diaphragm" data-g="diaphragm"></button><button data-v="bell" data-g="bell"></button></div>
+        <div class="seg" id="segOut"><button data-v="headphones"></button><button data-v="speaker"></button></div>
+      </div>
+      <div class="tg" style="margin-top:6px"><span id="breathLbl"></span><button class="sw on" id="swBreath" aria-label="breathing"></button></div>
+      <div class="sl" style="margin-bottom:0"><div class="top"><span id="volLbl"></span><output id="volOut">80%</output></div><input type="range" id="vol" min="0" max="100" value="80"></div>
+    </div>
+  </section>
+  <section class="card panel" id="modePanel"></section>
+</aside>
+</div>
+
+<footer id="foot"></footer>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script>
+/* ================= Smart Heart 3.0 · translations (EN / RU / UZ-Latin) ================= */
+const I18N={
+/* ------------------------------------------------------------------ ENGLISH */
+en:{
+ code:'en',label:'EN',name:'English',
+ ui:{
+  kick:'Electromechanical cardiac trainer · Sunshine 001',
+  tagline:'See the electricity · Hear the valves',
+  lede:'The ECG shows the electricity. The stethoscope hears the valves. Smart Heart runs both from <b>one synthesized heartbeat</b>, so you watch every QRS and hear the S1 it causes 40 milliseconds later.',
+  bullets:['17 rhythms and 6 valve lesions, all generated live from physiology, with no recordings','16 clinical cases that link what the trace shows to what the ear hears','An 8-patient exam: name the rhythm and the sound with the answers sealed','New in 3.0: Teardown opens up one heartbeat to show the pressures, volumes and valves behind each valve lesion','New in 2.0: hover or tap any term (AF, PR, S2…) for a plain-language definition'],
+  go:'Put on headphones and begin',
+  note:'Headphones strongly recommended · S1 and S2 live near 40 Hz',
+  chooseLang:'Language',
+  tabs:{explore:'Explore',cases:'Cases',exam:'Exam',learn:'Glossary'},
+  sub:(site,piece)=>`Lead II · 25 mm/s · listening at the ${site.toLowerCase()} · ${piece}`,
+  ecgLab:'ECG · Lead II',pcgLab:n=>'PCG · '+n,bpm:'BPM',
+  cap:'<b>Read it top to bottom.</b> Every QRS is followed about 40 ms later by S1, the AV valves closing. S2 lands at the end of the T wave, when the semilunar valves shut. The dashed lines mark that coupling.',
+  coupling:'Coupling lines',freeze:'Freeze',frozen:'Frozen · resume',
+  insp:'INSPIRATION ↑',exp:'EXPIRATION ↓',held:'BREATH HELD',
+  legend:'On the monitor · hover or tap a label',
+  liveHeart:'Live heart',sealHeart:'Sealed until you answer',sealFind:'Findings sealed. Listen, look, decide.',unknown:'Unknown patient',
+  steth:'Stethoscope',piece:{diaphragm:'Diaphragm',bell:'Bell'},out:{headphones:'Headphones',speaker:'Phone speaker'},
+  breathing:'Breathing (moves the S2 split)',volume:'Volume',
+  rhythm:'Rhythm',groups:{sinus:'Sinus',atrial:'Atrial',av:'AV conduction',vent:'Ventricular'},rate:'Rate',perMin:' /min',
+  conduction:r=>`Conduction ${r}:1`,noRate:'No organized rate',
+  valves:'Valves',reset:'Reset',ava:'Aortic valve area (cm²)',mva:'Mitral valve area (cm²)',mr:'Mitral regurgitation (/4)',ar:'Aortic regurgitation (/4)',mvp:'Mitral valve prolapse',
+  extra:'Extra sounds',s3:'S3 · rapid filling',s4:'S4 · atrial kick into a stiff ventricle',s4silent:'Silent: no atrial contraction in this rhythm',
+  valveN:{mitral:'Mitral',tricuspid:'Tricuspid',aortic:'Aortic',pulmonic:'Pulmonic'},
+  vstate:{open:'OPEN',closed:'CLOSED',leak:'LEAK'},
+  chambers:{ra:'RA',la:'LA',rv:'RV',lv:'LV'},
+  phase:{dep:'Ventricular depolarization',ivc:'Isovolumetric contraction',ej:'Ejection · systole',ivr:'Isovolumetric relaxation',fill:'Filling · diastole',diast:'Diastole',vf:'No coordinated contraction',asys:'No activity'},
+  casesH:'Clinical cases',casesIntro:'Each case pairs a rhythm with what you should hear. Pick one, then read the trace and listen together.',
+  ex:{title:'The exam',n8:'8 patients',
+   intro1:'Eight unknown hearts. The rhythm name, findings and live heart are sealed. You get the monitor, the sound and your stethoscope: move it, switch bell and diaphragm, listen to the breathing.',
+   intro2:'Each patient asks two things: <b style="color:#fff">name the rhythm</b> and <b style="color:#fff">name the sound</b>. That is 16 points.',
+   begin:'Begin the exam',result:'Result',of8:'8 / 8 patients',again:'Take it again',back:'Back to explore',
+   patient:i=>`Patient ${i} of 8`,score:s=>`Score ${s}`,revealed:'Revealed',
+   hint:'Listen for at least three breaths. Move the stethoscope. Then decide.',
+   q1:'What is the rhythm?',q2:'What do you hear?',why:'Why:',next:'Next patient',see:'See my result',
+   verdicts:['Attending ears','Resident ears','Intern ears','Keep listening']},
+  gl:{title:'Glossary',intro:'Every abbreviation in Smart Heart, explained the way you would explain it to a first-year student. Hover or tap any dotted term anywhere in the app.',
+   search:'Search: AF, PR, murmur…',none:'No match.',what:'What it is',spot:'How to spot it',names:'In three languages',terms:n=>`${n} terms`,show:'Show me ▶',
+   cat:{rhythm:'Rhythms',ecg:'Reading the ECG',sound:'Heart sounds',valve:'Valves & murmurs',anat:'Anatomy & tools',clin:'Clinical terms'}},
+  footer:"<b>Smart Heart 3.0</b> merges PULSE (living ECG) and MURMUR (heart-sound synthesis) into one electromechanical model, now in English, Russian and Uzbek.<br>Timing follows Bazett's QT, Weissler's Q–S2 regression and a ~40 ms electromechanical delay. All sound is generated with Web Audio, with no recordings.<br>An educational simulator for pattern recognition, <b>not a diagnostic device</b>. Built by <b>Tribhuvan Joshi</b> · Sunshine 001."
+ },
+ rh:{
+  nsr:{n:'Normal sinus rhythm',s:'Sinus',lab:'Sinus rate',ecg:'A P wave before every QRS, PR 120–200 ms, narrow QRS, regular.',mech:'Each P wave fires atrial contraction. About 40 ms after the QRS the mitral and tricuspid valves close (S1). At the end of the T wave the aortic and pulmonary valves close (S2).'},
+  brady:{n:'Sinus bradycardia',s:'Brady',lab:'Sinus rate',ecg:'Normal sinus complexes below 60/min.',mech:'Diastole stretches out much more than systole. S3, S4 and diastolic murmurs get more room and become easier to separate.'},
+  tachy:{n:'Sinus tachycardia',s:'Tachy',lab:'Sinus rate',ecg:'Sinus complexes above 100/min. P waves may approach the previous T wave.',mech:'Fast rates shorten diastole most. S3 and S4 crowd together and can fuse into a summation gallop.'},
+  af:{n:'Atrial fibrillation',s:'AF',lab:'Mean ventricular rate',ecg:'No P waves, a fibrillatory baseline and irregularly irregular RR intervals.',mech:'The atria quiver instead of contracting, so no S4 is possible and mitral stenosis loses its presystolic crescendo. S1 loudness changes with every beat because each filling time is different.'},
+  flutter:{n:'Atrial flutter',s:'Flutter',lab:'Ventricular rate (4:1 → 2:1)',ecg:'Sawtooth flutter waves near 300/min with fixed AV conduction.',mech:'The atria flutter rather than contract usefully, so there is no S4. With fixed conduction the sounds stay regular.'},
+  svt:{n:'Supraventricular tachycardia',s:'SVT',lab:'Rate',ecg:'Regular narrow-complex tachycardia, with P waves hidden in the QRS.',mech:'Diastole is almost as short as systole. S1 and S2 become evenly spaced, the "tic-tac" (embryocardia) rhythm.'},
+  avb1:{n:'First-degree AV block',s:'1° AVB',lab:'Sinus rate',ecg:'Every P conducts, but the PR interval is fixed above 200 ms.',mech:'During the long PR the mitral leaflets float back toward closure before the ventricle fires, so they travel less distance and S1 is soft.'},
+  wenck:{n:'Mobitz I (Wenckebach)',s:'Mobitz I',lab:'Atrial rate',ecg:'PR lengthens beat by beat until a P wave is not conducted, giving grouped beating.',mech:'As the PR stretches, S1 softens beat by beat. The dropped beat is a P wave with no QRS, no S1 and no S2: a pause you can hear.'},
+  mobitz2:{n:'Mobitz II',s:'Mobitz II',lab:'Atrial rate',ecg:'Constant PR with sudden non-conducted P waves. The block sits below the AV node, so the QRS is usually wide: about 3 in 4 cases have a bundle branch block (shown here with RBBB).',mech:'S1 stays constant because the PR never changes, then a beat simply vanishes. The sudden silence is the danger sign.'},
+  chb:{n:'Complete heart block',s:'3° AVB',lab:'Escape rate',ecg:'P waves and QRS complexes march independently. A junctional escape (40–60/min) has a narrow QRS; a ventricular escape (below 40/min) is wide. Below 45/min the trainer draws a wide escape.',mech:'The atria and ventricles are dissociated. When a P wave lands just before a QRS, S1 booms (bruit de canon). S4s appear wherever the atria happen to contract in diastole.'},
+  wpw:{n:'Wolff–Parkinson–White',s:'WPW',lab:'Sinus rate',ecg:'Short PR (under 120 ms), a slurred delta wave and a wide-ish QRS.',mech:'Pre-excitation fires the ventricle while the mitral leaflets are still wide open. They slam shut from far away, so S1 is loud.'},
+  pvc:{n:'Sinus rhythm with PVCs',s:'PVCs',lab:'Sinus rate',ecg:'Early, wide, bizarre QRS with no P wave, a discordant T and a full compensatory pause.',mech:'The premature beat has had almost no filling, so it is weak and S2 may nearly vanish. After the pause, the next beat is well filled.'},
+  lbbb:{n:'Left bundle branch block',s:'LBBB',lab:'Sinus rate',ecg:'QRS at least 120 ms with a discordant T. This is Lead II; the classic broad notched R is seen in I, aVL, V5 and V6, with a deep S in V1.',mech:'The left ventricle activates late, so A2 falls after P2. This is paradoxical splitting: the split is wider in expiration and narrows on inspiration.'},
+  rbbb:{n:'Right bundle branch block',s:'RBBB',lab:'Sinus rate',ecg:'QRS at least 120 ms. In this Lead II trace you see a broad terminal S; the classic rSR′ is in V1, with a slurred S in I and V6.',mech:'The right ventricle activates late, so P2 is always late. The S2 split is wide and still widens further on inspiration.'},
+  vt:{n:'Ventricular tachycardia',s:'VT',lab:'Rate',ecg:'Regular wide-complex tachycardia, with independent P waves (AV dissociation).',mech:'Sinus P waves keep marching through. When one lands just before a ventricular beat, S1 changes loudness. Variable S1 in a wide-complex tachycardia supports VT.'},
+  vf:{n:'Ventricular fibrillation',s:'VF',ecg:'Chaotic undulations with no identifiable QRS.',mech:'Without coordinated contraction no valve opens or closes, so there are no heart sounds at all. Silence plus this trace means CPR and defibrillation now.'},
+  asys:{n:'Asystole',s:'Asystole',ecg:'A flat line. Confirm it in two leads with the gain checked.',mech:'No electrical activity and no mechanical activity, so there is nothing to hear. This is not shockable: give CPR and adrenaline.'}
+ },
+ site:{
+  aortic:{n:'Aortic area',d:'2nd right intercostal space',short:'Aortic'},
+  pulmonic:{n:'Pulmonic area',d:'2nd left intercostal space. Best for S2 splitting.',short:'Pulmonic'},
+  erb:{n:"Erb's point",d:'3rd intercostal space at the left sternal border. Best for aortic regurgitation.',short:"Erb's"},
+  tricuspid:{n:'Tricuspid area',d:'4th intercostal space at the left lower sternal border. Best for right-heart sounds.',short:'LLSB'},
+  mitral:{n:'Mitral area (apex)',d:'5th intercostal space, mid-clavicular line',short:'Apex'}
+ },
+ cases:{
+  normal:{t:'The healthy heart',story:'A 21-year-old before a sports medical. Nothing is wrong: this is your reference.',sound:'Normal S1 and S2 with physiological splitting',pearl:'At the pulmonic area, watch S2 on the trace. Its two components drift apart on inspiration and fuse on expiration. Every abnormal split is measured against this.'},
+  ms_sr:{t:'Mitral stenosis in sinus rhythm',story:'A 29-year-old woman, now breathless in the second trimester of pregnancy. Rheumatic fever in childhood.',sound:'Opening snap and diastolic rumble with presystolic accentuation',pearl:'Watch each P wave: right after it, the rumble swells into S1. That presystolic crescendo is atrial contraction you can hear, and it disappears the day she goes into AF.'},
+  ms_af:{t:'Mitral stenosis in atrial fibrillation',story:'A 38-year-old woman with palpitations and breathlessness on the stairs. Rheumatic fever at age 9.',sound:'Opening snap and diastolic rumble without presystolic accentuation',pearl:'Same valve as the previous case, but AF has removed the atrial kick. The rumble fades through diastole with no crescendo, and S1 changes loudness with every irregular beat.'},
+  as:{t:'Severe aortic stenosis',story:'A 74-year-old man with chest tightness and a faint while climbing stairs.',sound:'Late-peaking ejection murmur, soft A2 and S4',pearl:'Severity lives in timing, not loudness. The tighter the valve, the later the murmur peaks and the softer A2 becomes. The S4 is the atrium filling a stiff, hypertrophied ventricle.'},
+  mr:{t:'Severe mitral regurgitation',story:'A 61-year-old, breathless, with the apex displaced to the anterior axillary line.',sound:'Holosystolic murmur with S3',pearl:'The murmur starts with S1 and buries A2, with no gap anywhere in systole. The S3 is regurgitant volume rushing back into the LV in early diastole.'},
+  ar:{t:'Aortic regurgitation',story:'A tall 23-year-old with bounding pulses and a head that nods with each beat.',sound:'Early diastolic decrescendo murmur',pearl:'High-pitched, and it starts the instant A2 closes. Use the diaphragm with the patient sitting forward in held expiration. The extra systolic flow murmur is not AS; it is the extra stroke volume.'},
+  mvp:{t:'Mitral valve prolapse',story:'A 22-year-old woman with palpitations and sharp chest pain unrelated to effort.',sound:'Mid-systolic click and late systolic murmur',pearl:'The click is the leaflet snapping as it billows back. Anything that shrinks the LV (standing, Valsalva) moves the click and murmur earlier.'},
+  chb:{t:'Complete heart block',story:'An 81-year-old woman with two falls this week. Pulse 38 and regular.',sound:'Variable S1 with intermittent cannon sounds and random S4s',pearl:'The atria and ventricles have stopped talking. When a P lands just before a QRS, S1 booms. You can suspect AV dissociation with a stethoscope before you see the ECG.'},
+  lbbb:{t:'Left bundle branch block',story:'A 67-year-old with long-standing hypertension. The GP flagged his ECG.',sound:'Paradoxical (reversed) splitting of S2',pearl:'The LV fires late, so A2 now follows P2. Inspiration delays P2 toward A2 and the split narrows, the opposite of normal.'},
+  rbbb:{t:'Right bundle branch block',story:'A 45-year-old at a routine check-up, with no symptoms.',sound:'Wide splitting of S2 that widens on inspiration',pearl:'P2 is late on every beat, so the split never closes, but it still breathes. A split that does not move at all would point to an ASD instead.'},
+  avb1:{t:'First-degree AV block',story:'A 58-year-old taking a beta-blocker and digoxin.',sound:'Soft S1',pearl:'With a long PR the mitral leaflets have drifted nearly shut before the ventricle contracts. A long PR means a soft S1.'},
+  wpw:{t:'Wolff–Parkinson–White',story:'A 19-year-old with sudden episodes of a racing heart.',sound:'Loud S1',pearl:'The accessory pathway pre-excites the ventricle while the leaflets are still wide open, so they close from far away. A short PR means a loud S1.'},
+  wenck:{t:'Mobitz I (Wenckebach)',story:'A 70-year-old on day 2 in the coronary care unit after an inferior MI.',sound:'S1 softening beat by beat, then a silent dropped beat',pearl:'Follow the PR on the trace and S1 on the audio together: the PR lengthens, S1 fades, then a P wave appears with nothing after it, and you hear the pause.'},
+  vt:{t:'Ventricular tachycardia',story:'A 63-year-old, two weeks after a large anterior MI, now pale and sweaty.',sound:'Rapid regular sounds with variable S1 (AV dissociation)',pearl:'Sinus P waves still march through the VT. When one lands just before a ventricular beat, S1 changes intensity. Variable S1 in a wide-complex tachycardia supports VT over SVT with aberrancy.'},
+  vf:{t:'Ventricular fibrillation',story:'Collapse in the hospital corridor. Unresponsive and not breathing normally.',sound:'No heart sounds at all',pearl:'Chaotic electricity and zero mechanics: nothing closes, so there is nothing to hear. Start CPR and defibrillate.'},
+  hf:{t:'Decompensated heart failure',story:'A 68-year-old with ischaemic cardiomyopathy and orthopnoea. Pulse 112.',sound:'Gallop rhythm with S3 and S4',pearl:'At this rate diastole is short, so S3 and S4 crowd together and can merge into one summation gallop. Slow the rate in Explore and they separate again.'}
+ },
+ sev:{msProg:'Progressive stenosis (MVA over 1.5 cm²)',msVsev:'Very severe stenosis',n:'Normal',scl:'Sclerosis, no real obstruction',mild:'Mild stenosis',mod:'Moderate stenosis',sev:'Severe stenosis',none:'None',gMild:'Mild',gMod:'Moderate',gModSev:'Moderate–severe',gSev:'Severe'},
+ f:{
+  caseK:'Case',rhythmH:'Rhythm · electrical',e2m:'Electrical → mechanical:',soundsH:'Heart sounds · mechanical',
+  s1:{normal:'Normal intensity',absent:'Absent',af:'Varies beat to beat with filling time',dissoc:'Variable, with intermittent loud "cannon" S1',wenck:'Softens beat by beat, then absent on the dropped beat',avb1:'Soft (long PR)',wpw:'Loud (short PR)',ms:'Loud: stiff mitral leaflets slam shut',msAf:', varying with each beat',mr:'Soft, often merging into the murmur'},
+  s2:{phys:'Physiological split: A2 then P2, widening on inspiration (best at the pulmonic area)',absent:'Absent',rbbb:'Wide split that still widens on inspiration',para:'Paradoxical split: P2 before A2, narrowing on inspiration',softA2:'. A2 is soft (calcified, barely mobile valve)',loudP2:'. P2 is loud (pulmonary hypertension)'},
+  ex:{s3:'S3: low-pitched, about 140 ms after S2. Heard at the apex with the bell; it signals volume load.',
+   s4no:'S4 is set, but cannot occur: no coordinated atrial contraction in this rhythm.',
+   s4:'S4: low-pitched, just before S1 and tied to each P wave. It signals a stiff ventricle.',
+   os:ms=>`Opening snap about ${ms} ms after A2. A shorter A2–OS interval means more severe stenosis.`,
+   ec:'Ejection click just after S1: a doming, still-mobile aortic valve.',
+   mvp:'Mid-systolic click: the prolapsing mitral leaflet snapping taut.'},
+  murH:'Murmurs',
+  as:(scl,a)=>`Aortic ${scl?'sclerosis':'stenosis'} · ${a} cm²`,
+  asTxt:(pk,sev,g)=>`Systolic ejection murmur, crescendo–decrescendo and harsh, peaking ${pk} in systole. Best at the aortic area, radiating to the carotids. Severity: ${sev}. Estimated grade ${g}/6.`,
+  peak:{late:'late',mid:'mid',early:'early'},
+  mr:s=>`Mitral regurgitation · ${s}`,mrTxt:'Holosystolic, blowing, high-pitched plateau from S1 into S2. Best at the apex with the diaphragm, radiating to the axilla.',
+  ar:s=>`Aortic regurgitation · ${s}`,arTxt:'Early diastolic decrescendo, high-pitched and blowing, starting at A2. Best at the left sternal border with the patient sitting forward in expiration.',
+  ms:a=>`Mitral stenosis · ${a} cm²`,msTxt:'Low-pitched mid-diastolic rumble after the opening snap. Best at the apex with the bell, patient in the left lateral position. ',
+  msNo:'<b>No presystolic accentuation</b>, because there is no atrial kick in this rhythm.',msYes:'<b>Presystolic accentuation</b> follows each P wave (atrial kick).',
+  mvp:'Mitral valve prolapse',mvpTxt:'Mid-systolic click followed by a late systolic murmur at the apex. Standing or Valsalva moves both earlier.',
+  none:'None. Add a valve lesion in Explore or open a case.',pearlH:'Clinical pearl'
+ }
+},
+/* ------------------------------------------------------------------ RUSSIAN */
+ru:{
+ code:'ru',label:'RU',name:'Русский',
+ ui:{
+  kick:'Электромеханический кардиотренажёр · Sunshine 001',
+  tagline:'Увидеть электричество · Услышать клапаны',
+  lede:'ЭКГ показывает электричество. Стетоскоп слышит клапаны. Smart Heart запускает и то и другое от <b>одного синтезированного сердцебиения</b>: вы видите каждый QRS и слышите S1, который он вызывает через 40 миллисекунд.',
+  bullets:['17 ритмов и 6 клапанных пороков — всё генерируется вживую из физиологии, без записей','16 клинических случаев, связывающих то, что видно на кривой, с тем, что слышит ухо','Экзамен из 8 пациентов: назовите ритм и звук, ответы скрыты','Новое в 3.0: Teardown раскрывает один удар сердца — давления, объёмы и клапаны за каждым клапанным пороком','Новое в 2.0: наведите курсор или нажмите на любой термин (ФП, PR, S2…) — появится простое объяснение'],
+  go:'Наденьте наушники и начните',
+  note:'Настоятельно рекомендуем наушники · S1 и S2 звучат около 40 Гц',
+  chooseLang:'Язык',
+  tabs:{explore:'Обзор',cases:'Случаи',exam:'Экзамен',learn:'Глоссарий'},
+  sub:(site,piece)=>`II отведение · 25 мм/с · аускультация: ${site} · ${piece.toLowerCase()}`,
+  ecgLab:'ЭКГ · II отведение',pcgLab:n=>'ФКГ · '+n,bpm:'уд/мин',
+  cap:'<b>Читайте сверху вниз.</b> Примерно через 40 мс после каждого QRS звучит S1 — закрываются АВ-клапаны. S2 приходится на конец зубца T, когда закрываются полулунные клапаны. Пунктирные линии показывают эту связь.',
+  coupling:'Линии связи',freeze:'Пауза',frozen:'На паузе · продолжить',
+  insp:'ВДОХ ↑',exp:'ВЫДОХ ↓',held:'ДЫХАНИЕ ЗАДЕРЖАНО',
+  legend:'На мониторе · наведите или нажмите на метку',
+  liveHeart:'Живое сердце',sealHeart:'Скрыто до вашего ответа',sealFind:'Данные скрыты. Слушайте, смотрите, решайте.',unknown:'Неизвестный пациент',
+  steth:'Стетоскоп',piece:{diaphragm:'Мембрана',bell:'Воронка'},out:{headphones:'Наушники',speaker:'Динамик телефона'},
+  breathing:'Дыхание (меняет расщепление S2)',volume:'Громкость',
+  rhythm:'Ритм',groups:{sinus:'Синусовые',atrial:'Предсердные',av:'АВ-проведение',vent:'Желудочковые'},rate:'Частота',perMin:' /мин',
+  conduction:r=>`Проведение ${r}:1`,noRate:'Нет организованного ритма',
+  valves:'Клапаны',reset:'Сброс',ava:'Площадь аортального клапана (см²)',mva:'Площадь митрального клапана (см²)',mr:'Митральная регургитация (/4)',ar:'Аортальная регургитация (/4)',mvp:'Пролапс митрального клапана',
+  extra:'Дополнительные тоны',s3:'S3 · быстрое наполнение',s4:'S4 · предсердный толчок в жёсткий желудочек',s4silent:'Не слышен: в этом ритме нет сокращения предсердий',
+  valveN:{mitral:'Митральный',tricuspid:'Трикуспид.',aortic:'Аортальный',pulmonic:'Лёгочный'},
+  vstate:{open:'ОТКРЫТ',closed:'ЗАКРЫТ',leak:'РЕГУРГ.'},
+  chambers:{ra:'ПП',la:'ЛП',rv:'ПЖ',lv:'ЛЖ'},
+  phase:{dep:'Деполяризация желудочков',ivc:'Изоволюмическое сокращение',ej:'Изгнание · систола',ivr:'Изоволюмическое расслабление',fill:'Наполнение · диастола',diast:'Диастола',vf:'Нет согласованного сокращения',asys:'Нет активности'},
+  casesH:'Клинические случаи',casesIntro:'Каждый случай связывает ритм с тем, что вы должны услышать. Выберите случай, затем смотрите на кривую и слушайте одновременно.',
+  ex:{title:'Экзамен',n8:'8 пациентов',
+   intro1:'Восемь неизвестных сердец. Название ритма, данные и живое сердце скрыты. У вас есть монитор, звук и стетоскоп: двигайте его, переключайте воронку и мембрану, слушайте дыхание.',
+   intro2:'К каждому пациенту два вопроса: <b style="color:#fff">назовите ритм</b> и <b style="color:#fff">назовите звук</b>. Всего 16 баллов.',
+   begin:'Начать экзамен',result:'Результат',of8:'8 / 8 пациентов',again:'Пройти ещё раз',back:'Вернуться к обзору',
+   patient:i=>`Пациент ${i} из 8`,score:s=>`Баллы: ${s}`,revealed:'Ответ',
+   hint:'Слушайте минимум три дыхательных цикла. Двигайте стетоскоп. Затем решайте.',
+   q1:'Какой это ритм?',q2:'Что вы слышите?',why:'Почему:',next:'Следующий пациент',see:'Мой результат',
+   verdicts:['Уши заведующего','Уши ординатора','Уши интерна','Продолжайте слушать']},
+  gl:{title:'Глоссарий',intro:'Каждое сокращение в Smart Heart объяснено так, как вы объяснили бы его студенту первого курса. Наведите курсор или нажмите на любой подчёркнутый пунктиром термин в приложении.',
+   search:'Поиск: ФП, PR, шум…',none:'Ничего не найдено.',what:'Что это',spot:'Как распознать',names:'На трёх языках',terms:n=>`Терминов: ${n}`,show:'Показать ▶',
+   cat:{rhythm:'Ритмы',ecg:'Чтение ЭКГ',sound:'Тоны сердца',valve:'Клапаны и шумы',anat:'Анатомия и инструменты',clin:'Клинические термины'}},
+  footer:'<b>Smart Heart 3.0</b> объединяет PULSE (живая ЭКГ) и MURMUR (синтез тонов сердца) в одну электромеханическую модель — теперь на английском, русском и узбекском.<br>Тайминг основан на формуле QT Базетта, регрессии Q–S2 Вейсслера и электромеханической задержке ~40 мс. Весь звук генерируется через Web Audio, без записей.<br>Учебный симулятор для распознавания паттернов, <b>не диагностическое устройство</b>. Автор — <b>Tribhuvan Joshi</b> · Sunshine 001.'
+ },
+ rh:{
+  nsr:{n:'Нормальный синусовый ритм',s:'Синус',lab:'Синусовая частота',ecg:'Зубец P перед каждым QRS, PR 120–200 мс, узкий QRS, ритм регулярный.',mech:'Каждый зубец P запускает сокращение предсердий. Примерно через 40 мс после QRS закрываются митральный и трикуспидальный клапаны (S1). В конце зубца T закрываются аортальный и лёгочный клапаны (S2).'},
+  brady:{n:'Синусовая брадикардия',s:'Бради',lab:'Синусовая частота',ecg:'Нормальные синусовые комплексы с частотой ниже 60 в минуту.',mech:'Диастола удлиняется намного сильнее, чем систола. У S3, S4 и диастолических шумов появляется больше места, их легче различить.'},
+  tachy:{n:'Синусовая тахикардия',s:'Тахи',lab:'Синусовая частота',ecg:'Синусовые комплексы с частотой выше 100 в минуту. Зубец P может приближаться к предыдущему T.',mech:'При высокой частоте укорачивается прежде всего диастола. S3 и S4 сближаются и могут слиться в суммационный галоп.'},
+  af:{n:'Фибрилляция предсердий',s:'ФП',lab:'Средняя частота желудочков',ecg:'Зубцов P нет, на изолинии волны фибрилляции, интервалы RR абсолютно нерегулярны.',mech:'Предсердия не сокращаются, а «дрожат», поэтому S4 невозможен, а при митральном стенозе исчезает пресистолическое усиление. Громкость S1 меняется от удара к удару, потому что время наполнения каждый раз разное.'},
+  flutter:{n:'Трепетание предсердий',s:'ТП',lab:'Частота желудочков (4:1 → 2:1)',ecg:'Пилообразные волны трепетания около 300 в минуту с фиксированным АВ-проведением.',mech:'Предсердия трепещут, а не сокращаются эффективно, поэтому S4 нет. При фиксированном проведении тоны остаются регулярными.'},
+  svt:{n:'Наджелудочковая тахикардия',s:'НЖТ',lab:'Частота',ecg:'Регулярная тахикардия с узкими QRS, зубцы P скрыты в комплексе QRS.',mech:'Диастола почти равна систоле. S1 и S2 следуют через равные промежутки — маятникообразный ритм «тик-так» (эмбриокардия).'},
+  avb1:{n:'АВ-блокада I степени',s:'АВБ I',lab:'Синусовая частота',ecg:'Каждый P проводится, но интервал PR постоянно больше 200 мс.',mech:'За долгий PR створки митрального клапана успевают «всплыть» к закрытию ещё до сокращения желудочка, проходят меньший путь — и S1 ослаблен.'},
+  wenck:{n:'Мобиц I (Венкебах)',s:'Мобиц I',lab:'Частота предсердий',ecg:'PR удлиняется от удара к удару, пока один зубец P не будет проведён; возникают группы сокращений.',mech:'По мере удлинения PR S1 ослабевает от удара к удару. Выпавший удар — это зубец P без QRS, без S1 и без S2: пауза, которую слышно.'},
+  mobitz2:{n:'Мобиц II',s:'Мобиц II',lab:'Частота предсердий',ecg:'Постоянный PR с внезапными непроведёнными зубцами P. Блок ниже АВ-узла, поэтому QRS обычно широкий: примерно в 3 из 4 случаев есть блокада ножки (здесь показана БПНПГ).',mech:'S1 не меняется, потому что PR постоянен, а потом удар просто исчезает. Внезапная тишина — тревожный признак.'},
+  chb:{n:'Полная АВ-блокада (III степени)',s:'АВБ III',lab:'Частота выскальзывающего ритма',ecg:'Зубцы P и комплексы QRS идут независимо. Узловой выскальзывающий ритм (40–60/мин) даёт узкий QRS, желудочковый (меньше 40/мин) — широкий. При частоте ниже 45/мин тренажёр рисует широкий комплекс.',mech:'Предсердия и желудочки разобщены. Когда P попадает прямо перед QRS, S1 звучит очень громко («пушечный» тон Стражеско). S4 появляются там, где предсердия случайно сокращаются в диастолу.'},
+  wpw:{n:'Синдром Вольфа–Паркинсона–Уайта',s:'WPW',lab:'Синусовая частота',ecg:'Короткий PR (меньше 120 мс), пологая дельта-волна и расширенный QRS.',mech:'Предвозбуждение запускает желудочек, пока створки митрального клапана ещё широко открыты. Они захлопываются издалека, поэтому S1 громкий.'},
+  pvc:{n:'Синусовый ритм с желудочковыми экстрасистолами',s:'ЖЭС',lab:'Синусовая частота',ecg:'Преждевременный, широкий, деформированный QRS без зубца P, дискордантный T и полная компенсаторная пауза.',mech:'Внеочередной удар почти не успел наполниться, поэтому он слабый, и S2 может почти исчезнуть. После паузы следующий удар хорошо наполнен.'},
+  lbbb:{n:'Блокада левой ножки пучка Гиса',s:'БЛНПГ',lab:'Синусовая частота',ecg:'QRS не менее 120 мс, дискордантный T. Это II отведение; классический широкий зазубренный R виден в I, aVL, V5–V6, глубокий S — в V1.',mech:'Левый желудочек активируется поздно, поэтому A2 следует после P2. Это парадоксальное расщепление: на выдохе оно шире, на вдохе уже.'},
+  rbbb:{n:'Блокада правой ножки пучка Гиса',s:'БПНПГ',lab:'Синусовая частота',ecg:'QRS не менее 120 мс. Во II отведении — широкий конечный S; классический rSR′ виден в V1, зазубренный S — в I и V6.',mech:'Правый желудочек активируется поздно, поэтому P2 всегда запаздывает. Расщепление S2 широкое и на вдохе ещё больше расширяется.'},
+  vt:{n:'Желудочковая тахикардия',s:'ЖТ',lab:'Частота',ecg:'Регулярная тахикардия с широкими QRS и независимыми зубцами P (АВ-диссоциация).',mech:'Синусовые P продолжают идти своим ходом. Когда P попадает прямо перед желудочковым сокращением, громкость S1 меняется. Переменный S1 при тахикардии с широкими QRS говорит в пользу ЖТ.'},
+  vf:{n:'Фибрилляция желудочков',s:'ФЖ',ecg:'Хаотичные волны без различимых QRS.',mech:'Без согласованного сокращения ни один клапан не открывается и не закрывается — тонов сердца нет вовсе. Тишина плюс такая кривая — немедленно СЛР и дефибрилляция.'},
+  asys:{n:'Асистолия',s:'Асистолия',ecg:'Прямая линия. Подтвердите в двух отведениях и проверьте усиление.',mech:'Нет ни электрической, ни механической активности — слушать нечего. Ритм не подлежит дефибрилляции: СЛР и адреналин.'}
+ },
+ site:{
+  aortic:{n:'Аортальная точка',d:'2-е межреберье справа у края грудины',short:'Аорта'},
+  pulmonic:{n:'Точка лёгочной артерии',d:'2-е межреберье слева у края грудины. Лучше всего для расщепления S2.',short:'Лёг. арт.'},
+  erb:{n:'Точка Боткина–Эрба',d:'3-е межреберье у левого края грудины. Лучше всего для аортальной регургитации.',short:'Боткин–Эрб'},
+  tricuspid:{n:'Трикуспидальная точка',d:'Основание мечевидного отростка / 4-е межреберье у левого края грудины. Лучше всего для звуков правого сердца.',short:'Трикусп.'},
+  mitral:{n:'Митральная точка (верхушка)',d:'5-е межреберье по среднеключичной линии',short:'Верхушка'}
+ },
+ cases:{
+  normal:{t:'Здоровое сердце',story:'21 год, медосмотр перед спортом. Всё в порядке — это ваш эталон.',sound:'Нормальные S1 и S2 с физиологическим расщеплением',pearl:'В точке лёгочной артерии следите за S2 на кривой. Два его компонента расходятся на вдохе и сливаются на выдохе. Любое патологическое расщепление сравнивают с этим.'},
+  ms_sr:{t:'Митральный стеноз при синусовом ритме',story:'Женщина 29 лет, во втором триместре беременности появилась одышка. В детстве перенесла ревматическую лихорадку.',sound:'Щелчок открытия и диастолический рокот с пресистолическим усилением',pearl:'Следите за каждым зубцом P: сразу после него рокот нарастает к S1. Это пресистолическое усиление — сокращение предсердий, которое можно услышать. Оно исчезнет в тот день, когда у неё начнётся ФП.'},
+  ms_af:{t:'Митральный стеноз при фибрилляции предсердий',story:'Женщина 38 лет, сердцебиение и одышка на лестнице. Ревматическая лихорадка в 9 лет.',sound:'Щелчок открытия и диастолический рокот без пресистолического усиления',pearl:'Тот же клапан, что и в предыдущем случае, но ФП убрала предсердный толчок. Рокот угасает к концу диастолы без нарастания, а громкость S1 меняется с каждым нерегулярным ударом.'},
+  as:{t:'Тяжёлый аортальный стеноз',story:'Мужчина 74 лет: сдавление в груди и обморок при подъёме по лестнице.',sound:'Систолический шум изгнания с поздним пиком, ослабленный A2 и S4',pearl:'Тяжесть определяется временем, а не громкостью. Чем уже клапан, тем позже пик шума и тем тише A2. S4 — это предсердие, наполняющее жёсткий гипертрофированный желудочек.'},
+  mr:{t:'Тяжёлая митральная регургитация',story:'Пациент 61 года с одышкой, верхушечный толчок смещён к передней подмышечной линии.',sound:'Пансистолический шум и S3',pearl:'Шум начинается с S1 и поглощает A2, в систоле нет ни одного промежутка. S3 — это регургитирующий объём, устремляющийся обратно в ЛЖ в раннюю диастолу.'},
+  ar:{t:'Аортальная регургитация',story:'Высокий юноша 23 лет со «скачущим» пульсом и покачиванием головы в такт сердцу.',sound:'Ранний диастолический убывающий шум',pearl:'Высокочастотный и начинается сразу, как закрывается A2. Слушайте мембраной, пациент сидит с наклоном вперёд и задерживает дыхание на выдохе. Дополнительный систолический шум — не стеноз, а увеличенный ударный объём.'},
+  mvp:{t:'Пролапс митрального клапана',story:'Девушка 22 лет: сердцебиение и острая боль в груди, не связанная с нагрузкой.',sound:'Мезосистолический щелчок и поздний систолический шум',pearl:'Щелчок — это створка, резко натягивающаяся при выбухании. Всё, что уменьшает ЛЖ (вставание, проба Вальсальвы), сдвигает щелчок и шум раньше.'},
+  chb:{t:'Полная АВ-блокада',story:'Женщина 81 года, дважды падала на этой неделе. Пульс 38, ритмичный.',sound:'Переменный S1 с периодическими «пушечными» тонами и беспорядочными S4',pearl:'Предсердия и желудочки перестали «разговаривать». Когда P попадает прямо перед QRS, S1 гремит. Заподозрить АВ-диссоциацию можно стетоскопом ещё до ЭКГ.'},
+  lbbb:{t:'Блокада левой ножки пучка Гиса',story:'Мужчина 67 лет с многолетней гипертонией. Участковый врач обратил внимание на его ЭКГ.',sound:'Парадоксальное (обратное) расщепление S2',pearl:'ЛЖ возбуждается поздно, поэтому A2 теперь идёт после P2. На вдохе P2 смещается к A2 и расщепление сужается — противоположно норме.'},
+  rbbb:{t:'Блокада правой ножки пучка Гиса',story:'Мужчина 45 лет на профосмотре, жалоб нет.',sound:'Широкое расщепление S2, увеличивающееся на вдохе',pearl:'P2 запаздывает в каждом ударе, поэтому расщепление никогда не закрывается, но всё ещё «дышит». Фиксированное, совсем неподвижное расщепление указывало бы на ДМПП.'},
+  avb1:{t:'АВ-блокада I степени',story:'Пациент 58 лет принимает бета-блокатор и дигоксин.',sound:'Ослабленный S1',pearl:'При длинном PR створки митрального клапана почти закрываются ещё до сокращения желудочка. Длинный PR — тихий S1.'},
+  wpw:{t:'Синдром WPW',story:'Юноша 19 лет с внезапными приступами учащённого сердцебиения.',sound:'Громкий S1',pearl:'Дополнительный путь возбуждает желудочек, пока створки ещё широко открыты, и они закрываются издалека. Короткий PR — громкий S1.'},
+  wenck:{t:'Мобиц I (Венкебах)',story:'Пациент 70 лет, 2-е сутки в кардиореанимации после нижнего инфаркта миокарда.',sound:'S1 ослабевает от удара к удару, затем беззвучный выпавший удар',pearl:'Следите одновременно за PR на кривой и S1 в звуке: PR удлиняется, S1 затихает, затем появляется P, за которым ничего нет, — и вы слышите паузу.'},
+  vt:{t:'Желудочковая тахикардия',story:'Пациент 63 лет, через две недели после обширного переднего ИМ, бледный и потный.',sound:'Частые регулярные тоны с переменным S1 (АВ-диссоциация)',pearl:'Синусовые P продолжают идти сквозь ЖТ. Когда P попадает прямо перед желудочковым сокращением, громкость S1 меняется. Переменный S1 при тахикардии с широкими QRS говорит в пользу ЖТ, а не НЖТ с аберрацией.'},
+  vf:{t:'Фибрилляция желудочков',story:'Падение в больничном коридоре. Без сознания, нормального дыхания нет.',sound:'Тонов сердца нет вовсе',pearl:'Хаотичное электричество и ноль механики: ничего не закрывается — нечего слушать. Начинайте СЛР и дефибрилляцию.'},
+  hf:{t:'Декомпенсированная сердечная недостаточность',story:'Пациент 68 лет с ишемической кардиомиопатией и ортопноэ. Пульс 112.',sound:'Ритм галопа с S3 и S4',pearl:'При такой частоте диастола короткая, S3 и S4 сближаются и могут слиться в один суммационный галоп. Снизьте частоту в «Обзоре» — и они снова разойдутся.'}
+ },
+ sev:{msProg:'Прогрессирующий стеноз (ПМО больше 1,5 см²)',msVsev:'Очень тяжёлый стеноз',n:'Норма',scl:'Склероз без реальной обструкции',mild:'Лёгкий стеноз',mod:'Умеренный стеноз',sev:'Тяжёлый стеноз',none:'Нет',gMild:'Лёгкая',gMod:'Умеренная',gModSev:'Умеренно-тяжёлая',gSev:'Тяжёлая'},
+ f:{
+  caseK:'Случай',rhythmH:'Ритм · электрика',e2m:'Электрика → механика:',soundsH:'Тоны сердца · механика',
+  s1:{normal:'Нормальной громкости',absent:'Отсутствует',af:'Меняется от удара к удару вместе со временем наполнения',dissoc:'Переменный, периодически громкий «пушечный» S1',wenck:'Ослабевает от удара к удару, затем отсутствует в выпавшем ударе',avb1:'Ослаблен (длинный PR)',wpw:'Громкий (короткий PR)',ms:'Громкий, «хлопающий»: жёсткие митральные створки захлопываются',msAf:', меняется с каждым ударом',mr:'Ослаблен, часто сливается с шумом'},
+  s2:{phys:'Физиологическое расщепление: A2, затем P2, расширяется на вдохе (лучше в точке лёгочной артерии)',absent:'Отсутствует',rbbb:'Широкое расщепление, которое ещё расширяется на вдохе',para:'Парадоксальное расщепление: P2 перед A2, сужается на вдохе',softA2:'. A2 ослаблен (кальцинированный, малоподвижный клапан)',loudP2:'. P2 усилен (лёгочная гипертензия)'},
+  ex:{s3:'S3: низкочастотный, примерно через 140 мс после S2. Слышен на верхушке воронкой; признак объёмной перегрузки.',
+   s4no:'S4 задан, но невозможен: в этом ритме нет согласованного сокращения предсердий.',
+   s4:'S4: низкочастотный, прямо перед S1 и привязан к каждому зубцу P. Признак жёсткого желудочка.',
+   os:ms=>`Щелчок открытия примерно через ${ms} мс после A2. Чем короче интервал A2–OS, тем тяжелее стеноз.`,
+   ec:'Щелчок изгнания сразу после S1: куполообразный, ещё подвижный аортальный клапан.',
+   mvp:'Мезосистолический щелчок: пролабирующая митральная створка резко натягивается.'},
+  murH:'Шумы',
+  as:(scl,a)=>`Аортальный ${scl?'склероз':'стеноз'} · ${a} см²`,
+  asTxt:(pk,sev,g)=>`Систолический шум изгнания, нарастающе-убывающий и грубый, с пиком в ${pk} систолы. Лучше всего в аортальной точке, проводится на сонные артерии. Тяжесть: ${sev}. Ориентировочная громкость ${g}/6.`,
+  peak:{late:'конце',mid:'середине',early:'начале'},
+  mr:s=>`Митральная регургитация · ${s}`,mrTxt:'Пансистолический, дующий, высокочастотный шум-плато от S1 до S2. Лучше на верхушке мембраной, проводится в подмышечную область.',
+  ar:s=>`Аортальная регургитация · ${s}`,arTxt:'Ранний диастолический убывающий шум, высокий и дующий, начинается с A2. Лучше у левого края грудины, пациент сидит с наклоном вперёд на выдохе.',
+  ms:a=>`Митральный стеноз · ${a} см²`,msTxt:'Низкочастотный мезодиастолический рокот после щелчка открытия. Лучше на верхушке воронкой, в положении на левом боку. ',
+  msNo:'<b>Пресистолического усиления нет</b>, потому что в этом ритме нет предсердного толчка.',msYes:'<b>Пресистолическое усиление</b> после каждого зубца P (предсердный толчок).',
+  mvp:'Пролапс митрального клапана',mvpTxt:'Мезосистолический щелчок и следующий за ним поздний систолический шум на верхушке. Вставание или проба Вальсальвы сдвигают оба раньше.',
+  none:'Нет. Добавьте поражение клапана в «Обзоре» или откройте случай.',pearlH:'Клиническая жемчужина'
+ }
+},
+/* ------------------------------------------------------------------ UZBEK (Latin) */
+uz:{
+ code:'uz',label:'UZ',name:'Oʻzbekcha',
+ ui:{
+  kick:'Elektromexanik yurak trenajyori · Sunshine 001',
+  tagline:'Elektrni koʻring · Klapanlarni eshiting',
+  lede:'EKG elektrni koʻrsatadi. Stetoskop klapanlarni eshitadi. Smart Heart ikkalasini <b>bitta sintez qilingan yurak urishidan</b> boshqaradi: siz har bir QRS ni koʻrasiz va u 40 millisekunddan keyin keltirib chiqargan S1 ni eshitasiz.',
+  bullets:['17 ta ritm va 6 ta klapan nuqsoni — barchasi yozuvlarsiz, fiziologiyadan jonli yaratiladi','Egri chiziqda koʻringan narsani quloq eshitgan narsa bilan bogʻlaydigan 16 ta klinik holat','8 bemorli imtihon: javoblar yopiq holda ritm va tovushni aniqlang','3.0 dagi yangilik: Teardown bitta yurak urishini ochib, har bir klapan nuqsoni ortidagi bosim, hajm va klapanlarni koʻrsatadi','2.0 dagi yangilik: istalgan atama (AF, PR, S2…) ustiga kursorni olib boring yoki bosing — oddiy tushuntirish chiqadi'],
+  go:'Quloqchinni taqing va boshlang',
+  note:'Quloqchin qatʼiy tavsiya etiladi · S1 va S2 taxminan 40 Gs atrofida',
+  chooseLang:'Til',
+  tabs:{explore:'Oʻrganish',cases:'Holatlar',exam:'Imtihon',learn:'Lugʻat'},
+  sub:(site,piece)=>`II tarmoq · 25 mm/s · tinglash: ${site} · ${piece.toLowerCase()}`,
+  ecgLab:'EKG · II tarmoq',pcgLab:n=>'FKG · '+n,bpm:'zarba/daq',
+  cap:'<b>Yuqoridan pastga oʻqing.</b> Har bir QRS dan taxminan 40 ms keyin S1 eshitiladi — AV klapanlar yopiladi. S2 T tishcha oxiriga toʻgʻri keladi, bunda yarimoysimon klapanlar yopiladi. Punktir chiziqlar shu bogʻliqlikni koʻrsatadi.',
+  coupling:'Bogʻlovchi chiziqlar',freeze:'Toʻxtatish',frozen:'Toʻxtatildi · davom ettirish',
+  insp:'NAFAS OLISH ↑',exp:'NAFAS CHIQARISH ↓',held:'NAFAS USHLANGAN',
+  legend:'Monitorda · belgi ustiga olib boring yoki bosing',
+  liveHeart:'Jonli yurak',sealHeart:'Javob berguningizcha yopiq',sealFind:'Natijalar yopiq. Tinglang, qarang, qaror qiling.',unknown:'Nomaʼlum bemor',
+  steth:'Stetoskop',piece:{diaphragm:'Membrana',bell:'Qoʻngʻiroqcha'},out:{headphones:'Quloqchin',speaker:'Telefon dinamigi'},
+  breathing:'Nafas (S2 ajralishini oʻzgartiradi)',volume:'Ovoz balandligi',
+  rhythm:'Ritm',groups:{sinus:'Sinus',atrial:'Boʻlmacha',av:'AV oʻtkazuvchanlik',vent:'Qorincha'},rate:'Chastota',perMin:' /daq',
+  conduction:r=>`Oʻtkazish ${r}:1`,noRate:'Tartibli ritm yoʻq',
+  valves:'Klapanlar',reset:'Tiklash',ava:'Aortal klapan maydoni (sm²)',mva:'Mitral klapan maydoni (sm²)',mr:'Mitral regurgitatsiya (/4)',ar:'Aortal regurgitatsiya (/4)',mvp:'Mitral klapan prolapsi',
+  extra:'Qoʻshimcha tonlar',s3:'S3 · tez toʻlish',s4:'S4 · boʻlmacha turtkisi qattiq qorinchaga',s4silent:'Eshitilmaydi: bu ritmda boʻlmacha qisqarishi yoʻq',
+  valveN:{mitral:'Mitral',tricuspid:'Trikuspidal',aortic:'Aortal',pulmonic:'Pulmonal'},
+  vstate:{open:'OCHIQ',closed:'YOPIQ',leak:'REGURG.'},
+  chambers:{ra:'OʻB',la:'ChB',rv:'OʻQ',lv:'ChQ'},
+  phase:{dep:'Qorinchalar depolyarizatsiyasi',ivc:'Izovolyumik qisqarish',ej:'Haydash · sistola',ivr:'Izovolyumik boʻshashish',fill:'Toʻlish · diastola',diast:'Diastola',vf:'Muvofiqlashgan qisqarish yoʻq',asys:'Faollik yoʻq'},
+  casesH:'Klinik holatlar',casesIntro:'Har bir holat ritmni siz eshitishingiz kerak boʻlgan narsa bilan bogʻlaydi. Holatni tanlang, soʻng egri chiziqni oʻqing va bir vaqtda tinglang.',
+  ex:{title:'Imtihon',n8:'8 bemor',
+   intro1:'Sakkizta nomaʼlum yurak. Ritm nomi, natijalar va jonli yurak yopiq. Sizda monitor, tovush va stetoskop bor: uni siljiting, qoʻngʻiroqcha va membranani almashtiring, nafasni tinglang.',
+   intro2:'Har bir bemor uchun ikki savol: <b style="color:#fff">ritmni ayting</b> va <b style="color:#fff">tovushni ayting</b>. Jami 16 ball.',
+   begin:'Imtihonni boshlash',result:'Natija',of8:'8 / 8 bemor',again:'Qayta topshirish',back:'Oʻrganishga qaytish',
+   patient:i=>`Bemor ${i} / 8`,score:s=>`Ball: ${s}`,revealed:'Javob',
+   hint:'Kamida uchta nafas siklini tinglang. Stetoskopni siljiting. Keyin qaror qiling.',
+   q1:'Bu qanday ritm?',q2:'Nimani eshityapsiz?',why:'Nega:',next:'Keyingi bemor',see:'Natijamni koʻrish',
+   verdicts:['Professor qulogʻi','Ordinator qulogʻi','Intern qulogʻi','Tinglashda davom eting']},
+  gl:{title:'Lugʻat',intro:'Smart Heart dagi har bir qisqartma birinchi kurs talabasiga tushuntirgandek izohlangan. Ilovadagi nuqtali chiziq bilan belgilangan istalgan atama ustiga kursorni olib boring yoki bosing.',
+   search:'Qidirish: AF, PR, shovqin…',none:'Hech narsa topilmadi.',what:'Bu nima',spot:'Qanday aniqlash mumkin',names:'Uch tilda',terms:n=>`${n} ta atama`,show:'Koʻrsatish ▶',
+   cat:{rhythm:'Ritmlar',ecg:'EKG oʻqish',sound:'Yurak tonlari',valve:'Klapanlar va shovqinlar',anat:'Anatomiya va asboblar',clin:'Klinik atamalar'}},
+  footer:'<b>Smart Heart 3.0</b> PULSE (jonli EKG) va MURMUR (yurak tonlari sintezi) ni bitta elektromexanik modelga birlashtiradi — endi ingliz, rus va oʻzbek tillarida.<br>Vaqt hisobi Bazett QT formulasi, Vaysler Q–S2 regressiyasi va ~40 ms elektromexanik kechikishga asoslangan. Barcha tovush yozuvlarsiz, Web Audio orqali yaratiladi.<br>Patternlarni tanib olish uchun oʻquv simulyatori, <b>tashxis qurilmasi emas</b>. Muallif — <b>Tribhuvan Joshi</b> · Sunshine 001.'
+ },
+ rh:{
+  nsr:{n:'Normal sinus ritmi',s:'Sinus',lab:'Sinus chastotasi',ecg:'Har bir QRS oldidan P tishcha, PR 120–200 ms, tor QRS, ritm muntazam.',mech:'Har bir P tishcha boʻlmachalarni qisqartiradi. QRS dan taxminan 40 ms keyin mitral va trikuspidal klapanlar yopiladi (S1). T tishcha oxirida aortal va oʻpka arteriyasi klapanlari yopiladi (S2).'},
+  brady:{n:'Sinus bradikardiyasi',s:'Bradi',lab:'Sinus chastotasi',ecg:'Daqiqasiga 60 dan kam normal sinus komplekslari.',mech:'Diastola sistolaga qaraganda ancha koʻproq uzayadi. S3, S4 va diastolik shovqinlarga koʻproq joy qoladi, ularni ajratish osonlashadi.'},
+  tachy:{n:'Sinus taxikardiyasi',s:'Taxi',lab:'Sinus chastotasi',ecg:'Daqiqasiga 100 dan ortiq sinus komplekslari. P tishcha oldingi T ga yaqinlashishi mumkin.',mech:'Tez ritmda eng avvalo diastola qisqaradi. S3 va S4 bir-biriga yaqinlashib, summatsion galopga qoʻshilib ketishi mumkin.'},
+  af:{n:'Boʻlmachalar fibrillyatsiyasi',s:'AF',lab:'Qorinchalarning oʻrtacha chastotasi',ecg:'P tishchalar yoʻq, izoliniyada fibrillyatsiya toʻlqinlari, RR oraliqlari mutlaqo notekis.',mech:'Boʻlmachalar qisqarmaydi, faqat titraydi, shuning uchun S4 boʻlishi mumkin emas, mitral stenozda esa presistolik kuchayish yoʻqoladi. Har bir zarbada toʻlish vaqti har xil boʻlgani uchun S1 balandligi ham oʻzgarib turadi.'},
+  flutter:{n:'Boʻlmachalar titrashi',s:'Flutter',lab:'Qorinchalar chastotasi (4:1 → 2:1)',ecg:'Daqiqasiga ~300 ta arrasimon titrash toʻlqinlari, AV oʻtkazuvchanlik barqaror.',mech:'Boʻlmachalar samarali qisqarmay titraydi, shuning uchun S4 yoʻq. Oʻtkazuvchanlik barqaror boʻlsa, tonlar muntazam qoladi.'},
+  svt:{n:'Supraventrikulyar taxikardiya',s:'SVT',lab:'Chastota',ecg:'Tor QRS li muntazam taxikardiya, P tishchalar QRS ichida yashiringan.',mech:'Diastola deyarli sistolaga teng. S1 va S2 bir xil oraliqda eshitiladi — mayatniksimon «tik-tak» ritm (embriokardiya).'},
+  avb1:{n:'I darajali AV blokada',s:'1° AVB',lab:'Sinus chastotasi',ecg:'Har bir P oʻtkaziladi, lekin PR oraligʻi doimo 200 ms dan uzun.',mech:'PR uzun boʻlganda mitral klapan tavaqalari qorincha qisqarguncha yopilishga yaqinlashib qoladi, kamroq yoʻl bosadi — S1 sust eshitiladi.'},
+  wenck:{n:'Mobits I (Venkebax)',s:'Mobits I',lab:'Boʻlmachalar chastotasi',ecg:'PR har zarbada uzayib boradi, oxiri bitta P oʻtkazilmaydi — guruhli zarbalar hosil boʻladi.',mech:'PR uzaygan sari S1 zarbadan zarbaga susayadi. Tushib qolgan zarba — QRS siz, S1 va S2 siz P tishcha: eshitiladigan pauza.'},
+  mobitz2:{n:'Mobits II',s:'Mobits II',lab:'Boʻlmachalar chastotasi',ecg:'PR doimiy, lekin toʻsatdan oʻtkazilmagan P tishchalar paydo boʻladi. Blok AV tugundan pastda, shuning uchun QRS odatda keng: taxminan 4 holatdan 3 tasida oyoqcha blokadasi bor (bu yerda RBBB bilan).',mech:'PR oʻzgarmagani uchun S1 ham bir xil, keyin esa zarba shunchaki yoʻqoladi. Toʻsatdan jimlik — xavf belgisi.'},
+  chb:{n:'Toʻliq AV blokada (III daraja)',s:'3° AVB',lab:'Sirpanuvchi ritm chastotasi',ecg:'P tishchalar va QRS komplekslari mustaqil yuradi. Tugun sirpanuvchi ritmi (40–60/daq) tor QRS beradi, qorincha ritmi (40/daq dan kam) — keng. 45/daq dan past chastotada trenajyor keng kompleks chizadi.',mech:'Boʻlmachalar va qorinchalar ajralib qolgan. P tishcha QRS dan sal oldin tushsa, S1 juda baland eshitiladi (Strajesko «toʻp» toni). Boʻlmachalar diastolada tasodifan qisqargan joyda S4 paydo boʻladi.'},
+  wpw:{n:'Volf–Parkinson–Uayt sindromi',s:'WPW',lab:'Sinus chastotasi',ecg:'Qisqa PR (120 ms dan kam), qiya delta-toʻlqin va kengaygan QRS.',mech:'Erta qoʻzgʻalish qorinchani mitral tavaqalar hali keng ochiq paytda ishga tushiradi. Ular uzoqdan qarsillab yopiladi, shuning uchun S1 baland.'},
+  pvc:{n:'Qorincha ekstrasistolalari bilan sinus ritmi',s:'PVC',lab:'Sinus chastotasi',ecg:'Muddatidan oldin keladigan, keng, shakli buzilgan QRS, oldida P yoʻq, T diskordant, toʻliq kompensator pauza.',mech:'Navbatdan tashqari zarba deyarli toʻlmagan, shuning uchun u kuchsiz va S2 deyarli yoʻqolishi mumkin. Pauzadan keyingi zarba yaxshi toʻladi.'},
+  lbbb:{n:'Gis tutami chap oyoqchasi blokadasi',s:'LBBB',lab:'Sinus chastotasi',ecg:'QRS kamida 120 ms, diskordant T. Bu II tarmoq; klassik keng, tishli R I, aVL, V5–V6 da, chuqur S esa V1 da koʻrinadi.',mech:'Chap qorincha kech qoʻzgʻaladi, shuning uchun A2 P2 dan keyin keladi. Bu paradoksal ajralish: nafas chiqarishda kengroq, nafas olishda torayadi.'},
+  rbbb:{n:'Gis tutami oʻng oyoqchasi blokadasi',s:'RBBB',lab:'Sinus chastotasi',ecg:'QRS kamida 120 ms. II tarmoqda keng yakuniy S tishcha; klassik rSR′ V1 da, I va V6 da esa keng S koʻrinadi.',mech:'Oʻng qorincha kech qoʻzgʻaladi, shuning uchun P2 doim kechikadi. S2 ajralishi keng va nafas olishda yanada kengayadi.'},
+  vt:{n:'Qorinchalar taxikardiyasi',s:'VT',lab:'Chastota',ecg:'Keng QRS li muntazam taxikardiya, P tishchalar mustaqil (AV dissotsiatsiya).',mech:'Sinus P tishchalari oʻz yoʻlida davom etadi. P qorincha zarbasidan sal oldin tushsa, S1 balandligi oʻzgaradi. Keng QRS li taxikardiyada oʻzgaruvchan S1 qorinchalar taxikardiyasi foydasiga dalolat qiladi.'},
+  vf:{n:'Qorinchalar fibrillyatsiyasi',s:'VF',ecg:'Aniq QRS siz tartibsiz toʻlqinlar.',mech:'Muvofiqlashgan qisqarish boʻlmasa, birorta klapan ochilmaydi ham, yopilmaydi ham — yurak tonlari umuman yoʻq. Jimlik va shunday egri chiziq — darhol YOʻR va defibrillyatsiya.'},
+  asys:{n:'Asistoliya',s:'Asistoliya',ecg:'Toʻgʻri chiziq. Ikki tarmoqda tasdiqlang va kuchaytirishni tekshiring.',mech:'Na elektr, na mexanik faollik bor — eshitadigan narsa yoʻq. Defibrillyatsiya qilinmaydigan ritm: YOʻR va adrenalin.'}
+ },
+ site:{
+  aortic:{n:'Aorta nuqtasi',d:'Toʻsh suyagining oʻng chetida 2-qovurgʻalararo oraliq',short:'Aorta'},
+  pulmonic:{n:'Oʻpka arteriyasi nuqtasi',d:'Toʻsh suyagining chap chetida 2-qovurgʻalararo oraliq. S2 ajralishi uchun eng yaxshi joy.',short:'Oʻpka a.'},
+  erb:{n:'Botkin–Erb nuqtasi',d:'Toʻsh suyagining chap chetida 3-qovurgʻalararo oraliq. Aortal regurgitatsiya uchun eng yaxshi joy.',short:'Botkin–Erb'},
+  tricuspid:{n:'Trikuspidal nuqta',d:'Xanjarsimon oʻsimta asosi / toʻsh suyagining chap pastki chetida 4-qovurgʻalararo oraliq. Oʻng yurak tovushlari uchun eng yaxshi joy.',short:'Trikusp.'},
+  mitral:{n:'Mitral nuqta (yurak choʻqqisi)',d:'Oʻrta oʻmrov chizigʻi boʻyicha 5-qovurgʻalararo oraliq',short:'Choʻqqi'}
+ },
+ cases:{
+  normal:{t:'Sogʻlom yurak',story:'21 yoshli yigit, sport oldidan tibbiy koʻrik. Hech qanday muammo yoʻq — bu sizning andozangiz.',sound:'Fiziologik ajralishli normal S1 va S2',pearl:'Oʻpka arteriyasi nuqtasida egri chiziqdagi S2 ni kuzating. Uning ikki komponenti nafas olishda ajraladi, nafas chiqarishda qoʻshiladi. Har qanday patologik ajralish shunga solishtiriladi.'},
+  ms_sr:{t:'Sinus ritmida mitral stenoz',story:'29 yoshli ayol, homiladorlikning ikkinchi trimestrida hansirash paydo boʻlgan. Bolaligida revmatik isitma oʻtkazgan.',sound:'Ochilish toni va presistolik kuchayishli diastolik gʻurillash',pearl:'Har bir P tishchani kuzating: undan keyin gʻurillash S1 tomon kuchayadi. Bu presistolik kuchayish — eshitsa boʻladigan boʻlmachalar qisqarishi. Unda boʻlmachalar fibrillyatsiyasi boshlangan kuni u yoʻqoladi.'},
+  ms_af:{t:'Boʻlmachalar fibrillyatsiyasida mitral stenoz',story:'38 yoshli ayol, yurak urib ketishi va zinadan chiqqanda hansirash. 9 yoshida revmatik isitma.',sound:'Ochilish toni va presistolik kuchayishsiz diastolik gʻurillash',pearl:'Oldingi holatdagi klapanning oʻzi, lekin fibrillyatsiya boʻlmacha turtkisini yoʻq qildi. Gʻurillash diastola davomida kuchaymasdan soʻnadi, S1 balandligi esa har bir notekis zarbada oʻzgaradi.'},
+  as:{t:'Ogʻir aortal stenoz',story:'74 yoshli erkak, zinaga chiqayotganda koʻkrakdagi siqilish va hushdan ketish.',sound:'Kech choʻqqili sistolik haydash shovqini, sust A2 va S4',pearl:'Ogʻirlik balandlikda emas, vaqtda. Klapan qanchalik tor boʻlsa, shovqin shunchalik kech choʻqqiga chiqadi va A2 shunchalik sustlashadi. S4 — qattiq, gipertrofiyalangan qorinchani toʻldirayotgan boʻlmacha.'},
+  mr:{t:'Ogʻir mitral regurgitatsiya',story:'61 yoshli bemor, hansiraydi, choʻqqi turtkisi oldingi qoʻltiq osti chizigʻigacha siljigan.',sound:'Golosistolik shovqin va S3',pearl:'Shovqin S1 bilan boshlanadi va A2 ni yutib yuboradi, sistolada hech qanday boʻshliq yoʻq. S3 — erta diastolada chap qorinchaga qaytib otilayotgan regurgitatsiya hajmi.'},
+  ar:{t:'Aortal regurgitatsiya',story:'23 yoshli baland boʻyli yigit, sakrovchi puls, har zarbada boshi qimirlaydi.',sound:'Erta diastolik pasayuvchi shovqin',pearl:'Yuqori chastotali va A2 yopilishi bilan darhol boshlanadi. Membrana bilan, bemor oldinga engashib, nafas chiqarib ushlab turgan holda eshiting. Qoʻshimcha sistolik shovqin stenoz emas — bu ortiqcha zarb hajmi.'},
+  mvp:{t:'Mitral klapan prolapsi',story:'22 yoshli qiz, yurak urib ketishi va yuklama bilan bogʻliq boʻlmagan oʻtkir koʻkrak ogʻrigʻi.',sound:'Mezosistolik klik va kech sistolik shovqin',pearl:'Klik — orqaga boʻrtib chiqqan tavaqaning keskin taranglashishi. Chap qorinchani kichraytiradigan har narsa (tik turish, Valsalva sinovi) klik va shovqinni oldinroqqa suradi.'},
+  chb:{t:'Toʻliq AV blokada',story:'81 yoshli ayol, shu hafta ikki marta yiqilgan. Puls 38, muntazam.',sound:'Oʻzgaruvchan S1, vaqti-vaqti bilan «toʻp» tonlari va tartibsiz S4',pearl:'Boʻlmachalar va qorinchalar «gaplashishni» toʻxtatgan. P tishcha QRS dan sal oldin tushsa, S1 gumburlaydi. AV dissotsiatsiyani EKG dan oldin ham stetoskop bilan gumon qilish mumkin.'},
+  lbbb:{t:'Gis tutami chap oyoqchasi blokadasi',story:'67 yoshli erkak, uzoq yillik gipertoniya. Oilaviy shifokor uning EKG siga eʼtibor qaratgan.',sound:'S2 ning paradoksal (teskari) ajralishi',pearl:'Chap qorincha kech qoʻzgʻaladi, shuning uchun A2 endi P2 dan keyin keladi. Nafas olishda P2 A2 tomon suriladi va ajralish torayadi — normaga teskari.'},
+  rbbb:{t:'Gis tutami oʻng oyoqchasi blokadasi',story:'45 yoshli erkak, muntazam koʻrikda, shikoyati yoʻq.',sound:'Nafas olishda kengayadigan keng S2 ajralishi',pearl:'P2 har bir zarbada kechikadi, shuning uchun ajralish hech qachon yopilmaydi, lekin baribir «nafas oladi». Umuman qimirlamaydigan ajralish boʻlmachalararo toʻsiq nuqsonini koʻrsatgan boʻlardi.'},
+  avb1:{t:'I darajali AV blokada',story:'58 yoshli bemor beta-blokator va digoksin qabul qiladi.',sound:'Sust S1',pearl:'PR uzun boʻlganda mitral tavaqalar qorincha qisqarguncha deyarli yopilib boʻladi. Uzun PR — sust S1.'},
+  wpw:{t:'WPW sindromi',story:'19 yoshli yigit, toʻsatdan yurak tez urib ketish xurujlari.',sound:'Baland S1',pearl:'Qoʻshimcha yoʻl qorinchani tavaqalar hali keng ochiq paytda qoʻzgʻatadi, ular uzoqdan yopiladi. Qisqa PR — baland S1.'},
+  wenck:{t:'Mobits I (Venkebax)',story:'70 yoshli bemor, pastki miokard infarktidan keyin kardioreanimatsiyada 2-kun.',sound:'S1 zarbadan zarbaga susayadi, soʻng ovozsiz tushib qolgan zarba',pearl:'Egri chiziqdagi PR va tovushdagi S1 ni birga kuzating: PR uzayadi, S1 soʻnadi, keyin ortidan hech narsa kelmaydigan P paydo boʻladi — va siz pauzani eshitasiz.'},
+  vt:{t:'Qorinchalar taxikardiyasi',story:'63 yoshli bemor, katta oldingi miokard infarktidan ikki hafta oʻtib, rangi oqargan va terlagan.',sound:'Oʻzgaruvchan S1 li tez muntazam tonlar (AV dissotsiatsiya)',pearl:'Sinus P tishchalari taxikardiya davomida ham yuraveradi. P qorincha zarbasidan sal oldin tushsa, S1 kuchi oʻzgaradi. Keng QRS li taxikardiyada oʻzgaruvchan S1 aberratsiyali SVT emas, balki qorinchalar taxikardiyasi foydasiga dalolat qiladi.'},
+  vf:{t:'Qorinchalar fibrillyatsiyasi',story:'Kasalxona yoʻlagida yiqilib tushgan. Hushsiz, normal nafas olmayapti.',sound:'Yurak tonlari umuman yoʻq',pearl:'Tartibsiz elektr va nol mexanika: hech narsa yopilmaydi, demak eshitadigan narsa yoʻq. YOʻR ni boshlang va defibrillyatsiya qiling.'},
+  hf:{t:'Dekompensatsiyalangan yurak yetishmovchiligi',story:'68 yoshli bemor, ishemik kardiomiopatiya va ortopnoe. Puls 112.',sound:'S3 va S4 bilan galop ritmi',pearl:'Bu chastotada diastola qisqa, S3 va S4 yaqinlashib, bitta summatsion galopga qoʻshilib ketishi mumkin. «Oʻrganish» boʻlimida chastotani pasaytiring — ular yana ajraladi.'}
+ },
+ sev:{msProg:'Rivojlanuvchi stenoz (MKM 1,5 sm² dan katta)',msVsev:'Juda ogʻir stenoz',n:'Norma',scl:'Skleroz, haqiqiy toʻsiqsiz',mild:'Yengil stenoz',mod:'Oʻrtacha stenoz',sev:'Ogʻir stenoz',none:'Yoʻq',gMild:'Yengil',gMod:'Oʻrtacha',gModSev:'Oʻrtacha-ogʻir',gSev:'Ogʻir'},
+ f:{
+  caseK:'Holat',rhythmH:'Ritm · elektr',e2m:'Elektr → mexanika:',soundsH:'Yurak tonlari · mexanika',
+  s1:{normal:'Normal balandlikda',absent:'Yoʻq',af:'Toʻlish vaqtiga qarab har zarbada oʻzgaradi',dissoc:'Oʻzgaruvchan, vaqti-vaqti bilan baland «toʻp» S1',wenck:'Zarbadan zarbaga susayadi, soʻng tushib qolgan zarbada yoʻqoladi',avb1:'Sust (uzun PR)',wpw:'Baland (qisqa PR)',ms:'Baland, «qarsillovchi»: qattiq mitral tavaqalar keskin yopiladi',msAf:', har zarbada oʻzgarib',mr:'Sust, koʻpincha shovqinga qoʻshilib ketadi'},
+  s2:{phys:'Fiziologik ajralish: avval A2, soʻng P2, nafas olishda kengayadi (oʻpka arteriyasi nuqtasida yaxshi eshitiladi)',absent:'Yoʻq',rbbb:'Keng ajralish, nafas olishda yanada kengayadi',para:'Paradoksal ajralish: P2 A2 dan oldin, nafas olishda torayadi',softA2:'. A2 sust (kalsinozli, kam harakatlanuvchi klapan)',loudP2:'. P2 baland (oʻpka gipertenziyasi)'},
+  ex:{s3:'S3: past chastotali, S2 dan taxminan 140 ms keyin. Choʻqqida qoʻngʻiroqcha bilan eshitiladi; hajm yuklamasi belgisi.',
+   s4no:'S4 yoqilgan, lekin boʻlishi mumkin emas: bu ritmda boʻlmachalarning muvofiqlashgan qisqarishi yoʻq.',
+   s4:'S4: past chastotali, S1 dan sal oldin, har bir P tishchaga bogʻliq. Qattiq qorincha belgisi.',
+   os:ms=>`Ochilish toni A2 dan taxminan ${ms} ms keyin. A2–OS oraligʻi qanchalik qisqa boʻlsa, stenoz shunchalik ogʻir.`,
+   ec:'S1 dan keyin darhol haydash kliki: gumbazsimon, hali harakatchan aortal klapan.',
+   mvp:'Mezosistolik klik: prolapslangan mitral tavaqa keskin taranglashadi.'},
+  murH:'Shovqinlar',
+  as:(scl,a)=>`Aortal ${scl?'skleroz':'stenoz'} · ${a} sm²`,
+  asTxt:(pk,sev,g)=>`Sistolik haydash shovqini, kuchayib-pasayuvchi va dagʻal, sistolaning ${pk} choʻqqiga chiqadi. Aorta nuqtasida yaxshi eshitiladi, uyqu arteriyalariga tarqaladi. Ogʻirligi: ${sev}. Taxminiy darajasi ${g}/6.`,
+  peak:{late:'oxirida',mid:'oʻrtasida',early:'boshida'},
+  mr:s=>`Mitral regurgitatsiya · ${s}`,mrTxt:'Golosistolik, puflovchi, yuqori chastotali, S1 dan S2 gacha tekis shovqin. Choʻqqida membrana bilan yaxshi eshitiladi, qoʻltiq ostiga tarqaladi.',
+  ar:s=>`Aortal regurgitatsiya · ${s}`,arTxt:'Erta diastolik pasayuvchi shovqin, yuqori va puflovchi, A2 dan boshlanadi. Toʻsh suyagining chap chetida, bemor oldinga engashib nafas chiqargan holda yaxshi eshitiladi.',
+  ms:a=>`Mitral stenoz · ${a} sm²`,msTxt:'Ochilish tonidan keyin past chastotali mezodiastolik gʻurillash. Choʻqqida qoʻngʻiroqcha bilan, bemor chap yonboshida yotgan holda yaxshi eshitiladi. ',
+  msNo:'<b>Presistolik kuchayish yoʻq</b>, chunki bu ritmda boʻlmacha turtkisi yoʻq.',msYes:'<b>Presistolik kuchayish</b> har bir P tishchadan keyin (boʻlmacha turtkisi).',
+  mvp:'Mitral klapan prolapsi',mvpTxt:'Choʻqqida mezosistolik klik va undan keyingi kech sistolik shovqin. Tik turish yoki Valsalva sinovi ikkalasini oldinroqqa suradi.',
+  none:'Yoʻq. «Oʻrganish» boʻlimida klapan nuqsonini qoʻshing yoki holatni oching.',pearlH:'Klinik maslahat'
+ }
+}
+};
+
+/* ================= Smart Heart 3.0 · first-year glossary =================
+   k  : id                 c : category (rhythm | ecg | sound | valve | anat | clin)
+   rh : links to a rhythm (name + "how to spot it" come from the rhythm's own ECG text)
+   a  : exact abbreviations, case-sensitive, matched in every language
+   w  : words per language; written lowercase (first letter matches either case);
+        '*' = any letters (inflections: блокад* → блокада, блокадой…)
+   n  : full name   d : what it is (simple)   s : how to spot it
+*/
+const GLOSS=[
+/* ---------- Rhythms ---------- */
+{k:'nsr',c:'rhythm',rh:'nsr',a:['NSR'],w:{en:['normal sinus rhythm'],ru:['нормальн* синусов* ритм*'],uz:['normal sinus ritm*']},
+ d:{en:"The normal heartbeat: the sinus node, the heart's natural pacemaker, starts every beat, 60–100 times a minute.",ru:'Нормальный ритм сердца: каждый удар запускает синусовый узел — естественный водитель ритма — 60–100 раз в минуту.',uz:'Yurakning normal ritmi: har bir zarbani sinus tuguni — tabiiy ritm boshqaruvchisi — daqiqasiga 60–100 marta ishga tushiradi.'}},
+{k:'brady',c:'rhythm',rh:'brady',a:[],w:{en:['sinus bradycardia','bradycardia'],ru:['синусов* брадикарди*','брадикарди*'],uz:['sinus bradikardiya*','bradikardiya*']},
+ d:{en:'A sinus rhythm slower than 60 beats per minute. Normal in athletes and during sleep.',ru:'Синусовый ритм медленнее 60 ударов в минуту. Норма у спортсменов и во сне.',uz:'Daqiqasiga 60 zarbadan sekin sinus ritmi. Sportchilarda va uyquda normal.'}},
+{k:'tachy',c:'rhythm',rh:'tachy',a:[],w:{en:['sinus tachycardia'],ru:['синусов* тахикарди*'],uz:['sinus taxikardiya*']},
+ d:{en:'A sinus rhythm faster than 100 beats per minute: the normal response to exercise, fever, fear or blood loss.',ru:'Синусовый ритм чаще 100 ударов в минуту: нормальная реакция на нагрузку, лихорадку, страх или кровопотерю.',uz:'Daqiqasiga 100 zarbadan tez sinus ritmi: jismoniy yuklama, isitma, qoʻrquv yoki qon yoʻqotishga normal javob.'}},
+{k:'af',c:'rhythm',rh:'af',a:['AF','ФП'],w:{en:['atrial fibrillation'],ru:['фибрилляци* предсерди*'],uz:['boʻlmachalar fibrillyatsiya*']},
+ d:{en:'The atria stop beating and only quiver chaotically. The ventricles respond at random, so the pulse is irregularly irregular.',ru:'Предсердия перестают сокращаться и лишь хаотично «дрожат». Желудочки отвечают случайно, поэтому пульс абсолютно неритмичный.',uz:'Boʻlmachalar qisqarishni toʻxtatib, faqat tartibsiz titraydi. Qorinchalar tasodifiy javob beradi, shuning uchun puls mutlaqo notekis.'}},
+{k:'flutter',c:'rhythm',rh:'flutter',a:['ТП','Flutter'],w:{en:['atrial flutter'],ru:['трепетани* предсерди*'],uz:['boʻlmachalar titrash*']},
+ d:{en:'One fast electrical circuit loops around the right atrium about 300 times a minute. The AV node lets only every 2nd–4th wave through.',ru:'Один быстрый электрический круг вращается в правом предсердии около 300 раз в минуту. АВ-узел пропускает лишь каждую 2–4-ю волну.',uz:'Bitta tez elektr halqasi oʻng boʻlmachada daqiqasiga ~300 marta aylanadi. AV tugun faqat har 2–4-toʻlqinni oʻtkazadi.'}},
+{k:'svt',c:'rhythm',rh:'svt',a:['SVT','НЖТ'],w:{en:['supraventricular tachycardia'],ru:['наджелудочков* тахикарди*'],uz:['supraventrikulyar taxikardiya*']},
+ d:{en:'A fast, regular rhythm that starts above the ventricles, usually a short circuit in or right next to the AV node.',ru:'Частый регулярный ритм, возникающий выше желудочков, — обычно «короткое замыкание» в АВ-узле или рядом с ним.',uz:'Qorinchalardan yuqorida boshlanadigan tez, muntazam ritm — odatda AV tugun ichida yoki yonida «qisqa tutashuv».'}},
+{k:'avb1',c:'rhythm',rh:'avb1',a:['1° AVB','АВБ I'],w:{en:['first-degree av block'],ru:['ав-блокад* i степени'],uz:['i darajali av blokada*']},
+ d:{en:'Every signal from the atria reaches the ventricles, just slowly: the PR interval is longer than 200 ms. Usually harmless.',ru:'Каждый импульс из предсердий доходит до желудочков, но медленно: интервал PR длиннее 200 мс. Обычно безопасна.',uz:'Boʻlmachalardan har bir impuls qorinchalarga yetib boradi, lekin sekin: PR oraligʻi 200 ms dan uzun. Odatda xavfsiz.'}},
+{k:'wenck',c:'rhythm',rh:'wenck',a:['Mobitz I','Мобиц I','Mobits I'],w:{en:['wenckebach'],ru:['венкебах*'],uz:['venkebax*']},
+ d:{en:'Second-degree AV block, type I: the PR gets longer with each beat until one P wave fails to conduct, then the cycle restarts.',ru:'АВ-блокада II степени, тип I: PR удлиняется с каждым ударом, пока один зубец P не будет проведён, затем цикл начинается заново.',uz:'II darajali AV blokada, I tur: PR har zarbada uzayib boradi, oxiri bitta P oʻtkazilmaydi, soʻng sikl qaytadan boshlanadi.'}},
+{k:'mobitz2',c:'rhythm',rh:'mobitz2',a:['Mobitz II','Мобиц II','Mobits II'],w:{en:[],ru:[],uz:[]},
+ d:{en:'Second-degree AV block, type II: the PR stays the same, then a P wave suddenly fails to conduct. It can jump to complete block, so it is dangerous.',ru:'АВ-блокада II степени, тип II: PR не меняется, а затем зубец P внезапно не проводится. Может перейти в полную блокаду, поэтому опасна.',uz:'II darajali AV blokada, II tur: PR oʻzgarmaydi, soʻng P tishcha toʻsatdan oʻtkazilmaydi. Toʻliq blokadaga oʻtishi mumkin, shuning uchun xavfli.'}},
+{k:'chb',c:'rhythm',rh:'chb',a:['3° AVB','АВБ III'],w:{en:['complete heart block'],ru:['полн* ав-блокад*'],uz:['toʻliq av blokada*']},
+ d:{en:'No signal crosses from the atria to the ventricles. A backup pacemaker below the block keeps the ventricles beating slowly on their own.',ru:'Ни один импульс не проходит из предсердий в желудочки. Запасной водитель ритма ниже блока заставляет желудочки медленно сокращаться самостоятельно.',uz:'Boʻlmachalardan qorinchalarga birorta ham impuls oʻtmaydi. Blokadadan pastdagi zaxira ritm boshqaruvchisi qorinchalarni oʻzicha sekin qisqartiradi.'}},
+{k:'wpw',c:'rhythm',rh:'wpw',a:['WPW'],w:{en:['wolff–parkinson–white'],ru:['вольфа–паркинсона–уайта'],uz:['volf–parkinson–uayt']},
+ d:{en:'An extra electrical wire (accessory pathway) joins atria and ventricles, bypassing the AV node, so the ventricles start early.',ru:'Дополнительный «провод» (добавочный путь) соединяет предсердия и желудочки в обход АВ-узла, поэтому желудочки возбуждаются раньше.',uz:'Qoʻshimcha elektr «sim» (qoʻshimcha yoʻl) AV tugunni chetlab boʻlmacha va qorinchalarni bogʻlaydi, shuning uchun qorinchalar erta qoʻzgʻaladi.'}},
+{k:'pvc',c:'rhythm',rh:'pvc',a:['PVCs','PVC','ЖЭС'],w:{en:['premature ventricular'],ru:['экстрасистол*'],uz:['ekstrasistol*']},
+ d:{en:'Premature ventricular contraction: an extra beat fired early by the ventricle itself, not by the sinus node.',ru:'Желудочковая экстрасистола: внеочередное сокращение, запущенное раньше времени самим желудочком, а не синусовым узлом.',uz:'Qorincha ekstrasistolasi: sinus tugunidan emas, qorinchaning oʻzidan muddatidan oldin chiqqan qoʻshimcha zarba.'}},
+{k:'lbbb',c:'rhythm',rh:'lbbb',a:['LBBB','БЛНПГ'],w:{en:['left bundle branch block'],ru:['блокад* левой ножки*'],uz:['gis tutami chap oyoqchasi*']},
+ d:{en:"The left branch of the heart's wiring is blocked, so the left ventricle is activated late and slowly, through the right side.",ru:'Левая ветвь проводящей системы заблокирована, поэтому левый желудочек возбуждается поздно и медленно — «через» правый.',uz:'Yurak oʻtkazuvchi tizimining chap tarmogʻi toʻsilgan, shuning uchun chap qorincha kech va sekin, oʻng tomon orqali qoʻzgʻaladi.'}},
+{k:'rbbb',c:'rhythm',rh:'rbbb',a:['RBBB','БПНПГ'],w:{en:['right bundle branch block'],ru:['блокад* правой ножки*'],uz:['gis tutami oʻng oyoqchasi*']},
+ d:{en:"The right branch of the heart's wiring is blocked, so the right ventricle is activated late. Can be normal in healthy people.",ru:'Правая ветвь проводящей системы заблокирована, поэтому правый желудочек возбуждается поздно. Бывает и у здоровых людей.',uz:'Oʻtkazuvchi tizimning oʻng tarmogʻi toʻsilgan, shuning uchun oʻng qorincha kech qoʻzgʻaladi. Sogʻlom odamlarda ham uchrashi mumkin.'}},
+{k:'vt',c:'rhythm',rh:'vt',a:['VT','ЖТ'],w:{en:['ventricular tachycardia'],ru:['желудочков* тахикарди*'],uz:['qorinchalar taxikardiya*']},
+ d:{en:'A fast rhythm generated inside the ventricles, often around an old scar. Wide QRS. It can collapse into VF.',ru:'Частый ритм, возникающий в самих желудочках, часто вокруг старого рубца. Широкий QRS. Может перейти в ФЖ.',uz:'Qorinchalarning oʻzida, koʻpincha eski chandiq atrofida paydo boʻladigan tez ritm. QRS keng. Qorinchalar fibrillyatsiyasiga oʻtishi mumkin.'}},
+{k:'vf',c:'rhythm',rh:'vf',a:['VF','ФЖ'],w:{en:['ventricular fibrillation'],ru:['фибрилляци* желудоч*'],uz:['qorinchalar fibrillyatsiya*']},
+ d:{en:'Cardiac arrest: the ventricles only quiver, pump no blood, and the patient has no pulse.',ru:'Остановка сердца: желудочки лишь хаотично подёргиваются, кровь не перекачивается, пульса нет.',uz:'Yurak toʻxtashi: qorinchalar faqat titraydi, qon haydalmaydi, puls yoʻq.'}},
+{k:'asys',c:'rhythm',rh:'asys',a:[],w:{en:['asystole'],ru:['асистоли*'],uz:['asistoliya*']},
+ d:{en:'A flat line: no electrical activity at all. A cardiac arrest that a shock cannot fix.',ru:'Прямая линия: электрической активности нет совсем. Остановка сердца, которую нельзя устранить разрядом.',uz:'Toʻgʻri chiziq: elektr faollik umuman yoʻq. Elektr zarbasi bilan tuzatib boʻlmaydigan yurak toʻxtashi.'}},
+
+/* ---------- Reading the ECG ---------- */
+{k:'ecg',c:'ecg',a:['ECG','ЭКГ','EKG'],w:{en:[],ru:[],uz:[]},
+ n:{en:'Electrocardiogram',ru:'Электрокардиограмма',uz:'Elektrokardiogramma'},
+ d:{en:"A recording of the heart's electrical activity from electrodes on the skin. Here it is the green trace.",ru:'Запись электрической активности сердца с кожных электродов. Здесь это зелёная кривая.',uz:'Teridagi elektrodlardan yozib olingan yurak elektr faolligi. Bu yerda — yashil egri chiziq.'},
+ s:{en:'At 25 mm/s one small square = 40 ms and one big square = 200 ms.',ru:'При 25 мм/с одна малая клетка = 40 мс, одна большая = 200 мс.',uz:'25 mm/s da bitta kichik katak = 40 ms, bitta katta katak = 200 ms.'}},
+{k:'pcg',c:'ecg',a:['PCG','ФКГ','FKG'],w:{en:['phonocardiogram'],ru:['фонокардиограмм*'],uz:['fonokardiogramma*']},
+ n:{en:'Phonocardiogram',ru:'Фонокардиограмма',uz:'Fonokardiogramma'},
+ d:{en:'A picture of the heart sounds: how loud the sound is at each moment. Here it is the amber trace under the ECG.',ru:'Изображение звуков сердца: громкость в каждый момент времени. Здесь это янтарная кривая под ЭКГ.',uz:'Yurak tovushlarining tasviri: har lahzadagi balandligi. Bu yerda — EKG ostidagi sariq egri chiziq.'},
+ s:{en:'Tall bursts are S1 and S2. A long fuzzy band between them is a murmur.',ru:'Высокие всплески — S1 и S2. Длинная «размытая» полоса между ними — шум.',uz:'Baland chaqnashlar — S1 va S2. Ular orasidagi uzun «xira» tasma — shovqin.'}},
+{k:'lead2',c:'ecg',a:['Lead II'],w:{en:[],ru:['ii отведени*'],uz:['ii tarmoq']},
+ n:{en:'Lead II',ru:'II стандартное отведение',uz:'II standart tarmoq'},
+ d:{en:"One camera angle on the heart's electricity, from right arm to left leg. It runs along the normal path of the impulse, so P and QRS point upward.",ru:'Один «ракурс» на электричество сердца — от правой руки к левой ноге. Он идёт вдоль нормального пути импульса, поэтому P и QRS направлены вверх.',uz:'Yurak elektriga bitta «kamera burchagi» — oʻng qoʻldan chap oyoqqa. U impulsning normal yoʻli boʻylab ketadi, shuning uchun P va QRS yuqoriga qaragan.'}},
+{k:'speed',c:'ecg',a:['25 mm/s','25 мм/с'],w:{en:[],ru:[],uz:[]},
+ n:{en:'Paper speed',ru:'Скорость записи',uz:'Yozuv tezligi'},
+ d:{en:'How fast the trace moves across the screen. The standard is 25 mm per second.',ru:'Как быстро кривая движется по экрану. Стандарт — 25 мм в секунду.',uz:'Egri chiziq ekranda qanchalik tez harakatlanishi. Standart — sekundiga 25 mm.'},
+ s:{en:'Rate shortcut: 300 ÷ number of big squares between two R waves.',ru:'Быстрый счёт ЧСС: 300 ÷ число больших клеток между двумя зубцами R.',uz:'Chastotani tez hisoblash: 300 ÷ ikki R tishcha orasidagi katta kataklar soni.'}},
+{k:'bpm',c:'ecg',a:['BPM','уд/мин','zarba/daq'],w:{en:['beats per minute'],ru:[],uz:[]},
+ n:{en:'Beats per minute',ru:'Ударов в минуту',uz:'Daqiqadagi zarbalar soni'},
+ d:{en:'The heart rate. A normal adult resting rate is 60–100.',ru:'Частота сердечных сокращений. Норма у взрослого в покое — 60–100.',uz:'Yurak urish chastotasi. Kattalarda tinch holatda norma — 60–100.'}},
+{k:'pwave',c:'ecg',a:[],w:{en:['p wave*'],ru:['зубец p','зубца p','зубцы p','зубцов p','зубцом p'],uz:['p tishcha*']},
+ n:{en:'P wave',ru:'Зубец P',uz:'P tishcha'},
+ d:{en:'The small first bump: both atria being electrically activated (atrial depolarization).',ru:'Первый небольшой зубец: электрическое возбуждение обоих предсердий (деполяризация предсердий).',uz:'Birinchi kichik tishcha: ikkala boʻlmachaning elektr qoʻzgʻalishi (boʻlmachalar depolyarizatsiyasi).'},
+ s:{en:'Upright before every QRS in sinus rhythm. Missing in AF, sawtooth in flutter. On the monitor: blue P = conducted, red P = blocked.',ru:'В синусовом ритме — положительный перед каждым QRS. Нет при ФП, «пила» при трепетании. На мониторе: синий P — проведён, красный — заблокирован.',uz:'Sinus ritmida har bir QRS oldidan musbat. Fibrillyatsiyada yoʻq, titrashda arrasimon. Monitorda: koʻk P — oʻtkazilgan, qizil P — toʻsilgan.'}},
+{k:'qrs',c:'ecg',a:['QRS'],w:{en:[],ru:[],uz:[]},
+ n:{en:'QRS complex',ru:'Комплекс QRS',uz:'QRS kompleksi'},
+ d:{en:'The big spike: the ventricles being electrically activated. It is the trigger for the ventricles to contract.',ru:'Высокий пик: электрическое возбуждение желудочков. Это сигнал к их сокращению.',uz:'Baland choʻqqi: qorinchalarning elektr qoʻzgʻalishi. Bu qorinchalar qisqarishi uchun signal.'},
+ s:{en:'Normal is narrow: under 120 ms (3 small squares). Wide means the impulse is taking a slow route: bundle branch block, PVC or VT.',ru:'В норме узкий: меньше 120 мс (3 малые клетки). Широкий — импульс идёт медленным путём: блокада ножки, ЖЭС или ЖТ.',uz:'Normada tor: 120 ms dan kam (3 kichik katak). Keng boʻlsa, impuls sekin yoʻldan ketmoqda: oyoqcha blokadasi, ekstrasistola yoki qorinchalar taxikardiyasi.'}},
+{k:'twave',c:'ecg',a:[],w:{en:['t wave*'],ru:['зубец t','зубца t','зубцы t'],uz:['t tishcha*']},
+ n:{en:'T wave',ru:'Зубец T',uz:'T tishcha'},
+ d:{en:'The wave after the QRS: the ventricles electrically recovering (repolarization), getting ready for the next beat.',ru:'Волна после QRS: электрическое восстановление желудочков (реполяризация) перед следующим ударом.',uz:'QRS dan keyingi toʻlqin: qorinchalarning elektr tiklanishi (repolyarizatsiya), keyingi zarbaga tayyorgarlik.'},
+ s:{en:'S2, the valves closing, lands near the end of the T wave.',ru:'S2 — закрытие клапанов — приходится примерно на конец зубца T.',uz:'S2 — klapanlar yopilishi — taxminan T tishcha oxiriga toʻgʻri keladi.'}},
+{k:'pr',c:'ecg',a:['PR'],w:{en:[],ru:[],uz:[]},
+ n:{en:'PR interval',ru:'Интервал PR',uz:'PR oraligʻi'},
+ d:{en:'Time from the start of the P wave to the start of the QRS: how long the signal takes to cross the AV node.',ru:'Время от начала P до начала QRS: сколько импульс идёт через АВ-узел.',uz:'P boshidan QRS boshigacha boʻlgan vaqt: impuls AV tugundan qancha vaqtda oʻtishi.'},
+ s:{en:'Normal 120–200 ms (3–5 small squares). Long = AV block. Short = accessory pathway (WPW).',ru:'Норма 120–200 мс (3–5 малых клеток). Длинный — АВ-блокада. Короткий — добавочный путь (WPW).',uz:'Norma 120–200 ms (3–5 kichik katak). Uzun — AV blokada. Qisqa — qoʻshimcha yoʻl (WPW).'}},
+{k:'qt',c:'ecg',a:['QT'],w:{en:[],ru:[],uz:[]},
+ n:{en:'QT interval',ru:'Интервал QT',uz:'QT oraligʻi'},
+ d:{en:'From the start of the QRS to the end of the T wave: the whole electrical systole of the ventricles.',ru:'От начала QRS до конца зубца T: вся электрическая систола желудочков.',uz:'QRS boshidan T tishcha oxirigacha: qorinchalarning butun elektr sistolasi.'},
+ s:{en:'It shortens as heart rate rises. Smart Heart scales it with Bazett\'s formula.',ru:'Укорачивается при учащении ритма. Smart Heart рассчитывает его по формуле Базетта.',uz:'Chastota oshganda qisqaradi. Smart Heart uni Bazett formulasi bilan hisoblaydi.'}},
+{k:'rr',c:'ecg',a:['RR'],w:{en:[],ru:[],uz:[]},
+ n:{en:'RR interval',ru:'Интервал RR',uz:'RR oraligʻi'},
+ d:{en:'The time between two neighbouring QRS spikes: one full heartbeat.',ru:'Время между двумя соседними QRS: один полный сердечный цикл.',uz:'Ikki qoʻshni QRS orasidagi vaqt: bitta toʻliq yurak sikli.'},
+ s:{en:'Equal RR = regular rhythm. Randomly different RR = think AF.',ru:'Одинаковые RR — ритм регулярный. Беспорядочно разные RR — думайте о ФП.',uz:'RR bir xil — ritm muntazam. RR tartibsiz har xil — fibrillyatsiyani oʻylang.'}},
+{k:'delta',c:'ecg',a:[],w:{en:['delta wave'],ru:['дельта-волн*'],uz:['delta-toʻlqin']},
+ n:{en:'Delta wave',ru:'Дельта-волна',uz:'Delta-toʻlqin'},
+ d:{en:'A slurred, slow upstroke at the start of the QRS: part of the ventricle activated early through an accessory pathway (WPW).',ru:'Пологий медленный подъём в начале QRS: часть желудочка возбуждается раньше через добавочный путь (WPW).',uz:'QRS boshidagi qiya, sekin koʻtarilish: qorinchaning bir qismi qoʻshimcha yoʻl orqali erta qoʻzgʻaladi (WPW).'}},
+{k:'rsr',c:'ecg',a:['rSR′'],w:{en:[],ru:[],uz:[]},
+ n:{en:'rSR′ pattern ("M" shape)',ru:'Комплекс rSR′ (форма «М»)',uz:'rSR′ shakli («M» shaklida)'},
+ d:{en:'An M-shaped QRS in lead V1: the late right-ventricle activation of right bundle branch block.',ru:'QRS в форме буквы «М» в отведении V1: позднее возбуждение правого желудочка при блокаде правой ножки.',uz:'V1 tarmoqda «M» shaklidagi QRS: oʻng oyoqcha blokadasida oʻng qorinchaning kech qoʻzgʻalishi.'}},
+{k:'discord',c:'ecg',a:[],w:{en:['discordant'],ru:['дискордантн*'],uz:['diskordant']},
+ n:{en:'Discordant T wave',ru:'Дискордантный зубец T',uz:'Diskordant T tishcha'},
+ d:{en:'A T wave pointing the opposite way to the main QRS deflection. Expected whenever the QRS is wide.',ru:'Зубец T, направленный противоположно основному отклонению QRS. Ожидаем при любом широком QRS.',uz:'Asosiy QRS ogʻishiga teskari yoʻnalgan T tishcha. QRS keng boʻlganda kutiladi.'}},
+
+/* ---------- Heart sounds ---------- */
+{k:'s1',c:'sound',a:['S1'],w:{en:[],ru:[],uz:[]},
+ n:{en:'First heart sound ("lub")',ru:'Первый тон сердца (I тон)',uz:'Birinchi yurak toni (I ton)'},
+ d:{en:'The mitral and tricuspid valves snapping shut as the ventricles start to contract. It marks the start of systole.',ru:'Захлопывание митрального и трикуспидального клапанов в начале сокращения желудочков. Начало систолы.',uz:'Qorinchalar qisqara boshlaganda mitral va trikuspidal klapanlarning yopilishi. Sistola boshlanishi.'},
+ s:{en:'About 40 ms after the QRS, loudest at the apex. Loud with a short PR or mitral stenosis; soft with a long PR.',ru:'Примерно через 40 мс после QRS, громче всего на верхушке. Громкий при коротком PR или митральном стенозе; тихий при длинном PR.',uz:'QRS dan taxminan 40 ms keyin, choʻqqida eng baland. Qisqa PR yoki mitral stenozda baland; uzun PR da sust.'}},
+{k:'s2',c:'sound',a:['S2'],w:{en:[],ru:[],uz:[]},
+ n:{en:'Second heart sound ("dub")',ru:'Второй тон сердца (II тон)',uz:'Ikkinchi yurak toni (II ton)'},
+ d:{en:'The aortic (A2) and pulmonary (P2) valves closing at the end of systole.',ru:'Закрытие аортального (A2) и лёгочного (P2) клапанов в конце систолы.',uz:'Sistola oxirida aortal (A2) va oʻpka arteriyasi (P2) klapanlarining yopilishi.'},
+ s:{en:'Near the end of the T wave, loudest at the base. Listen for its split at the pulmonic area.',ru:'У конца зубца T, громче на основании сердца. Слушайте его расщепление в точке лёгочной артерии.',uz:'T tishcha oxiri yaqinida, yurak asosida baland. Ajralishini oʻpka arteriyasi nuqtasida tinglang.'}},
+{k:'s3',c:'sound',a:['S3'],w:{en:[],ru:[],uz:[]},
+ n:{en:'Third heart sound',ru:'Третий тон сердца (III тон)',uz:'Uchinchi yurak toni (III ton)'},
+ d:{en:'A dull thud in early diastole as blood rushes into an overfilled or failing ventricle. Normal in children and athletes.',ru:'Глухой тон в начале диастолы, когда кровь устремляется в переполненный или слабый желудочек. Норма у детей и спортсменов.',uz:'Erta diastolada qon toʻlib ketgan yoki zaif qorinchaga otilganda paydo boʻladigan boʻgʻiq ton. Bolalar va sportchilarda normal.'},
+ s:{en:'About 140 ms after S2 and low-pitched: bell at the apex. Rhythm: "Ken-TUC-ky".',ru:'Примерно через 140 мс после S2, низкий: воронкой на верхушке.',uz:'S2 dan taxminan 140 ms keyin, past: choʻqqida qoʻngʻiroqcha bilan.'}},
+{k:'s4',c:'sound',a:['S4'],w:{en:[],ru:[],uz:[]},
+ n:{en:'Fourth heart sound',ru:'Четвёртый тон сердца (IV тон)',uz:'Toʻrtinchi yurak toni (IV ton)'},
+ d:{en:'A low sound just before S1: the atrium kicking blood into a stiff ventricle. It needs a real atrial contraction, so it never occurs in AF.',ru:'Низкий тон прямо перед S1: предсердие «вталкивает» кровь в жёсткий желудочек. Нужно настоящее сокращение предсердий, поэтому при ФП его не бывает.',uz:'S1 dan sal oldin past ton: boʻlmacha qonni qattiq qorinchaga itaradi. Haqiqiy boʻlmacha qisqarishi kerak, shuning uchun fibrillyatsiyada boʻlmaydi.'},
+ s:{en:'Tied to each P wave; bell at the apex. Rhythm: "TEN-nes-see".',ru:'Привязан к каждому зубцу P; воронкой на верхушке.',uz:'Har bir P tishchaga bogʻliq; choʻqqida qoʻngʻiroqcha bilan.'}},
+{k:'a2',c:'sound',a:['A2'],w:{en:[],ru:[],uz:[]},
+ n:{en:'A2: aortic part of S2',ru:'A2: аортальный компонент II тона',uz:'A2: II tonning aortal komponenti'},
+ d:{en:'The sound of the aortic valve closing. Normally it is the first and louder half of S2.',ru:'Звук закрытия аортального клапана. В норме — первая и более громкая половина S2.',uz:'Aortal klapan yopilish tovushi. Normada S2 ning birinchi va balandroq yarmi.'},
+ s:{en:'Soft or absent in severe aortic stenosis (the valve barely moves).',ru:'Ослаблен или отсутствует при тяжёлом аортальном стенозе (клапан почти не движется).',uz:'Ogʻir aortal stenozda sust yoki yoʻq (klapan deyarli qimirlamaydi).'}},
+{k:'p2',c:'sound',a:['P2'],w:{en:[],ru:[],uz:[]},
+ n:{en:'P2: pulmonary part of S2',ru:'P2: лёгочный компонент II тона',uz:'P2: II tonning pulmonal komponenti'},
+ d:{en:'The sound of the pulmonary valve closing, normally just after A2.',ru:'Звук закрытия клапана лёгочной артерии, в норме сразу после A2.',uz:'Oʻpka arteriyasi klapanining yopilish tovushi, normada A2 dan keyin.'},
+ s:{en:'A loud P2 suggests pulmonary hypertension.',ru:'Громкий P2 (акцент II тона на лёгочной артерии) говорит о лёгочной гипертензии.',uz:'Baland P2 oʻpka gipertenziyasidan dalolat beradi.'}},
+{k:'split',c:'sound',a:[],w:{en:['physiological split*','splitting','split'],ru:['физиологическ* расщеплени*','расщеплени*'],uz:['fiziologik ajralish*','ajralish*']},
+ n:{en:'Splitting of S2',ru:'Расщепление II тона',uz:'II ton ajralishi'},
+ d:{en:'Hearing S2 as two sounds, A2 then P2. Breathing in delays P2, so a normal split widens on inspiration and closes on expiration.',ru:'II тон слышен как два звука: A2, затем P2. Вдох задерживает P2, поэтому нормальное расщепление на вдохе расширяется, а на выдохе исчезает.',uz:'II ton ikki tovush boʻlib eshitiladi: avval A2, soʻng P2. Nafas olish P2 ni kechiktiradi, shuning uchun normal ajralish nafas olishda kengayadi, nafas chiqarishda yopiladi.'},
+ s:{en:'Wide and still moving: RBBB. Reversed: LBBB or severe AS. Fixed, not moving at all: ASD.',ru:'Широкое и «дышащее» — БПНПГ. Обратное — БЛНПГ или тяжёлый аортальный стеноз. Фиксированное — ДМПП.',uz:'Keng va harakatchan — oʻng oyoqcha blokadasi. Teskari — chap oyoqcha blokadasi yoki ogʻir aortal stenoz. Qotib qolgan — boʻlmachalararo toʻsiq nuqsoni.'}},
+{k:'paradox',c:'sound',a:[],w:{en:['paradoxical split*','paradoxical (reversed) split*'],ru:['парадоксальн* расщеплени*','парадоксальн* (обратн*) расщеплени*'],uz:['paradoksal ajralish*','paradoksal (teskari) ajralish*']},
+ n:{en:'Paradoxical (reversed) splitting',ru:'Парадоксальное расщепление',uz:'Paradoksal ajralish'},
+ d:{en:'A2 comes after P2 because the left ventricle is late (LBBB, severe aortic stenosis). The split narrows on inspiration: the opposite of normal.',ru:'A2 идёт после P2, потому что левый желудочек запаздывает (БЛНПГ, тяжёлый аортальный стеноз). На вдохе расщепление сужается — наоборот по сравнению с нормой.',uz:'Chap qorincha kechikkani uchun A2 P2 dan keyin keladi (chap oyoqcha blokadasi, ogʻir aortal stenoz). Nafas olishda ajralish torayadi — normaga teskari.'}},
+{k:'os',c:'sound',a:['OS'],w:{en:['opening snap'],ru:['щелч* открытия'],uz:['ochilish ton*']},
+ n:{en:'Opening snap',ru:'Щелчок открытия митрального клапана',uz:'Mitral klapan ochilish toni'},
+ d:{en:'A sharp click in early diastole when a stiff, narrowed mitral valve is forced open.',ru:'Резкий щелчок в начале диастолы, когда жёсткий суженный митральный клапан распахивается.',uz:'Erta diastolada qattiq, torayib qolgan mitral klapan majburan ochilganda chiqadigan keskin shiqillash.'},
+ s:{en:'Shortly after S2. The closer it is to A2, the tighter the stenosis.',ru:'Вскоре после S2. Чем ближе к A2, тем тяжелее стеноз.',uz:'S2 dan keyin tez orada. A2 ga qanchalik yaqin boʻlsa, stenoz shunchalik ogʻir.'}},
+{k:'ec',c:'sound',a:['EC'],w:{en:['ejection click'],ru:['щелч* изгнания'],uz:['haydash klik*']},
+ n:{en:'Ejection click',ru:'Щелчок изгнания',uz:'Haydash kliki'},
+ d:{en:'A high-pitched click just after S1 as a domed but still mobile aortic valve snaps open.',ru:'Высокий щелчок сразу после S1, когда куполообразный, но ещё подвижный аортальный клапан резко открывается.',uz:'S1 dan keyin darhol, gumbazsimon, lekin hali harakatchan aortal klapan keskin ochilganda chiqadigan baland klik.'}},
+{k:'click',c:'sound',a:[],w:{en:['mid-systolic click'],ru:['мезосистолическ* щелч*'],uz:['mezosistolik klik*']},
+ n:{en:'Mid-systolic click',ru:'Мезосистолический щелчок',uz:'Mezosistolik klik'},
+ d:{en:'The floppy mitral leaflet snapping tight in mid-systole, like a sail suddenly filling with wind (mitral valve prolapse).',ru:'Провисающая митральная створка резко натягивается в середине систолы, как парус, внезапно наполненный ветром (пролапс митрального клапана).',uz:'Boʻshashgan mitral tavaqa sistola oʻrtasida keskin taranglashadi, xuddi shamol toʻsatdan toʻldirgan yelkan kabi (mitral klapan prolapsi).'}},
+{k:'murmur',c:'sound',a:[],w:{en:['murmur*'],ru:['шум','шума','шумы','шумом','шумов','шуму'],uz:['shovqin*']},
+ n:{en:'Heart murmur',ru:'Шум сердца',uz:'Yurak shovqini'},
+ d:{en:'A whooshing sound from turbulent blood flow: through a narrowed valve (stenosis) or backwards through a leaky one (regurgitation).',ru:'Шелестящий звук турбулентного кровотока: через суженный клапан (стеноз) или обратно через негерметичный (регургитация).',uz:'Turbulent qon oqimining shuvillagan tovushi: torayib qolgan klapan orqali (stenoz) yoki zich yopilmaydigan klapan orqali teskari (regurgitatsiya).'},
+ s:{en:'Ask three questions: systolic or diastolic? Where is it loudest? Where does it spread? Loudness is graded 1–6.',ru:'Задайте три вопроса: систолический или диастолический? Где громче всего? Куда проводится? Громкость оценивают по шкале 1–6.',uz:'Uch savol bering: sistolikmi yoki diastolikmi? Qayerda eng baland? Qayerga tarqaladi? Balandligi 1–6 shkala boʻyicha baholanadi.'}},
+{k:'gallop',c:'sound',a:[],w:{en:['summation gallop','gallop'],ru:['суммационн* галоп*','галоп*'],uz:['summatsion galop*','galop*']},
+ n:{en:'Gallop rhythm',ru:'Ритм галопа',uz:'Galop ritmi'},
+ d:{en:'Three sounds per beat (S1, S2 plus S3 and/or S4) like a galloping horse: a classic sign of heart failure.',ru:'Три звука на удар (S1, S2 и S3 и/или S4), как стук копыт скачущей лошади: классический признак сердечной недостаточности.',uz:'Har zarbada uchta tovush (S1, S2 va S3 va/yoki S4), xuddi chopayotgan ot dupuri: yurak yetishmovchiligining klassik belgisi.'},
+ s:{en:'At fast rates S3 and S4 can fuse into one "summation gallop".',ru:'При высокой частоте S3 и S4 могут слиться в один «суммационный галоп».',uz:'Tez ritmda S3 va S4 bitta «summatsion galop»ga qoʻshilib ketishi mumkin.'}},
+{k:'cannon',c:'sound',a:[],w:{en:['bruit de canon','cannon'],ru:['пушечн*'],uz:['«toʻp»']},
+ n:{en:'Cannon S1 (bruit de canon)',ru:'«Пушечный» тон Стражеско',uz:'Strajesko «toʻp» toni'},
+ d:{en:'A very loud S1 when the atria happen to contract just before the ventricles, leaving the AV valves wide open. A sign of AV dissociation.',ru:'Очень громкий S1, когда предсердия случайно сокращаются прямо перед желудочками и АВ-клапаны остаются широко открытыми. Признак АВ-диссоциации.',uz:'Boʻlmachalar tasodifan qorinchalardan sal oldin qisqarib, AV klapanlar keng ochiq qolganda juda baland S1. AV dissotsiatsiya belgisi.'}},
+{k:'embryo',c:'sound',a:[],w:{en:['embryocardia'],ru:['эмбриокарди*'],uz:['embriokardiya*']},
+ n:{en:'Embryocardia (tic-tac rhythm)',ru:'Эмбриокардия (маятникообразный ритм)',uz:'Embriokardiya (mayatniksimon ritm)'},
+ d:{en:'S1 and S2 evenly spaced like a fetal heartbeat, because diastole has shrunk to the length of systole.',ru:'S1 и S2 следуют через равные промежутки, как у плода, потому что диастола укоротилась до длины систолы.',uz:'S1 va S2 homila yuragidagidek teng oraliqda, chunki diastola sistola uzunligigacha qisqargan.'}},
+{k:'presys',c:'sound',a:[],w:{en:['presystolic accentuation','presystolic crescendo'],ru:['пресистолическ* усилени*'],uz:['presistolik kuchayish*']},
+ n:{en:'Presystolic accentuation',ru:'Пресистолическое усиление',uz:'Presistolik kuchayish'},
+ d:{en:'The rumble of mitral stenosis getting louder just before S1, because the atria contract and push extra blood through the narrow valve. It disappears in AF.',ru:'Рокот митрального стеноза усиливается прямо перед S1: предсердия сокращаются и проталкивают кровь через узкий клапан. При ФП исчезает.',uz:'Mitral stenoz gʻurillashi S1 dan sal oldin kuchayadi: boʻlmachalar qisqarib, qonni tor klapan orqali itaradi. Fibrillyatsiyada yoʻqoladi.'}},
+{k:'rumble',c:'sound',a:[],w:{en:['rumble'],ru:['рокот*'],uz:['gʻurillash*']},
+ n:{en:'Diastolic rumble',ru:'Диастолический рокот',uz:'Diastolik gʻurillash'},
+ d:{en:'A low-pitched, rolling diastolic murmur, like distant thunder: blood squeezing through a narrow mitral valve.',ru:'Низкий раскатистый диастолический шум, как далёкий гром: кровь протискивается через узкий митральный клапан.',uz:'Uzoqdagi momaqaldiroqqa oʻxshash past, dumalovchi diastolik shovqin: qon tor mitral klapandan siqilib oʻtadi.'},
+ s:{en:'Easy to miss: bell, apex, patient turned onto the left side.',ru:'Легко пропустить: воронка, верхушка, пациент на левом боку.',uz:'Oʻtkazib yuborish oson: qoʻngʻiroqcha, choʻqqi, bemor chap yonboshida.'}},
+
+/* ---------- Valves & murmurs ---------- */
+{k:'as',c:'valve',a:['AS'],w:{en:['aortic stenosis'],ru:['аортальн* стеноз*'],uz:['aortal stenoz*']},
+ n:{en:'Aortic stenosis',ru:'Аортальный стеноз',uz:'Aortal stenoz'},
+ d:{en:'The aortic valve is narrowed, usually calcified with age, so the left ventricle must squeeze hard to push blood out.',ru:'Аортальный клапан сужен, чаще всего из-за возрастного кальциноза, и левому желудочку приходится сильно сжиматься, чтобы вытолкнуть кровь.',uz:'Aortal klapan torayib qolgan, koʻpincha yosh bilan kalsinoz tufayli, chap qorincha qonni chiqarish uchun kuchli qisqarishi kerak.'},
+ s:{en:'Harsh diamond-shaped systolic murmur at the aortic area, spreading to the neck. Later peak and softer A2 = more severe.',ru:'Грубый ромбовидный систолический шум в аортальной точке с проведением на шею. Чем позже пик и тише A2, тем тяжелее стеноз.',uz:'Aorta nuqtasida dagʻal, rombsimon sistolik shovqin, boʻyinga tarqaladi. Choʻqqi qanchalik kech va A2 qanchalik sust boʻlsa, shunchalik ogʻir.'}},
+{k:'ms',c:'valve',a:['MS'],w:{en:['mitral stenosis'],ru:['митральн* стеноз*'],uz:['mitral stenoz*']},
+ n:{en:'Mitral stenosis',ru:'Митральный стеноз',uz:'Mitral stenoz'},
+ d:{en:'The mitral valve is narrowed, almost always after rheumatic fever, so blood struggles to fill the left ventricle.',ru:'Митральный клапан сужен, почти всегда после ревматической лихорадки, и крови трудно наполнить левый желудочек.',uz:'Mitral klapan torayib qolgan, deyarli har doim revmatik isitmadan keyin, shuning uchun qon chap qorinchani qiyinchilik bilan toʻldiradi.'},
+ s:{en:'Loud S1, an opening snap, then a low diastolic rumble at the apex: bell, patient on the left side.',ru:'Громкий S1, щелчок открытия, затем низкий диастолический рокот на верхушке: воронка, пациент на левом боку.',uz:'Baland S1, ochilish toni, soʻng choʻqqida past diastolik gʻurillash: qoʻngʻiroqcha, bemor chap yonboshida.'}},
+{k:'mr',c:'valve',a:['MR'],w:{en:['mitral regurgitation'],ru:['митральн* регургитаци*','митральн* недостаточност*'],uz:['mitral regurgitatsiya*']},
+ n:{en:'Mitral regurgitation',ru:'Митральная регургитация (недостаточность)',uz:'Mitral regurgitatsiya (yetishmovchilik)'},
+ d:{en:'The mitral valve leaks: with every contraction some blood shoots backwards into the left atrium.',ru:'Митральный клапан негерметичен: при каждом сокращении часть крови выбрасывается обратно в левое предсердие.',uz:'Mitral klapan zich yopilmaydi: har qisqarishda qonning bir qismi chap boʻlmachaga teskari otiladi.'},
+ s:{en:'Blowing murmur through the whole of systole at the apex, spreading to the armpit.',ru:'Дующий шум на протяжении всей систолы на верхушке, проводится в подмышечную область.',uz:'Choʻqqida butun sistola davomida puflovchi shovqin, qoʻltiq ostiga tarqaladi.'}},
+{k:'ar',c:'valve',a:['AR'],w:{en:['aortic regurgitation'],ru:['аортальн* регургитаци*','аортальн* недостаточност*'],uz:['aortal regurgitatsiya*']},
+ n:{en:'Aortic regurgitation',ru:'Аортальная регургитация (недостаточность)',uz:'Aortal regurgitatsiya (yetishmovchilik)'},
+ d:{en:'The aortic valve leaks: in diastole blood falls back from the aorta into the left ventricle.',ru:'Аортальный клапан негерметичен: в диастолу кровь возвращается из аорты в левый желудочек.',uz:'Aortal klapan zich yopilmaydi: diastolada qon aortadan chap qorinchaga qaytib tushadi.'},
+ s:{en:'High-pitched fading murmur starting right at S2, left sternal border, patient leaning forward.',ru:'Высокий убывающий шум, начинающийся сразу с S2, у левого края грудины, пациент наклонён вперёд.',uz:'S2 bilan darhol boshlanadigan baland, pasayuvchi shovqin, toʻsh suyagining chap chetida, bemor oldinga engashgan.'}},
+{k:'mvp',c:'valve',a:['MVP'],w:{en:['mitral valve prolapse'],ru:['пролапс* митральн*'],uz:['mitral klapan prolaps*']},
+ n:{en:'Mitral valve prolapse',ru:'Пролапс митрального клапана',uz:'Mitral klapan prolapsi'},
+ d:{en:'A floppy mitral leaflet bulges back into the left atrium during systole.',ru:'Провисающая митральная створка выбухает в левое предсердие во время систолы.',uz:'Boʻshashgan mitral tavaqa sistola paytida chap boʻlmachaga boʻrtib chiqadi.'},
+ s:{en:'Mid-systolic click, then a late systolic murmur. Standing up moves both earlier.',ru:'Мезосистолический щелчок, затем поздний систолический шум. При вставании оба смещаются раньше.',uz:'Mezosistolik klik, soʻng kech sistolik shovqin. Tik turganda ikkalasi oldinroqqa suriladi.'}},
+{k:'sclerosis',c:'valve',a:[],w:{en:['aortic sclerosis'],ru:['аортальн* склероз*'],uz:['aortal skleroz*']},
+ n:{en:'Aortic sclerosis',ru:'Склероз аортального клапана',uz:'Aortal klapan sklerozi'},
+ d:{en:'A thickened, stiff aortic valve that still opens well. It makes a murmur but does not block the flow.',ru:'Утолщённый жёсткий аортальный клапан, который всё ещё хорошо открывается. Даёт шум, но не мешает кровотоку.',uz:'Qalinlashgan, qattiq, lekin hali yaxshi ochiladigan aortal klapan. Shovqin beradi, ammo oqimga toʻsqinlik qilmaydi.'}},
+{k:'holo',c:'valve',a:[],w:{en:['holosystolic'],ru:['пансистолическ*'],uz:['golosistolik']},
+ n:{en:'Holosystolic (pansystolic)',ru:'Пансистолический',uz:'Golosistolik'},
+ d:{en:'Lasting through the whole of systole, from S1 right into S2. Typical of mitral regurgitation.',ru:'Длящийся всю систолу, от S1 до S2. Типичен для митральной регургитации.',uz:'Butun sistola davomida, S1 dan S2 gacha davom etadi. Mitral regurgitatsiya uchun xos.'}},
+{k:'cresc',c:'valve',a:[],w:{en:['crescendo–decrescendo'],ru:['нарастающе-убывающ*'],uz:['kuchayib-pasayuvchi']},
+ n:{en:'Crescendo–decrescendo',ru:'Нарастающе-убывающий (ромбовидный)',uz:'Kuchayib-pasayuvchi (rombsimon)'},
+ d:{en:'Diamond-shaped: the murmur gets louder, peaks, then fades. Typical of aortic stenosis.',ru:'Ромбовидный: шум нарастает, достигает пика и затихает. Типичен для аортального стеноза.',uz:'Rombsimon: shovqin kuchayadi, choʻqqiga chiqadi, soʻng soʻnadi. Aortal stenoz uchun xos.'}},
+{k:'area',c:'valve',a:['cm²','см²','sm²'],w:{en:['valve area'],ru:['площадь'],uz:['maydon*']},
+ n:{en:'Valve area',ru:'Площадь клапана',uz:'Klapan maydoni'},
+ d:{en:'How wide the valve opens. Normal aortic about 3–4 cm², normal mitral about 4–6 cm².',ru:'Насколько широко открывается клапан. Норма: аортальный около 3–4 см², митральный около 4–6 см².',uz:'Klapan qanchalik keng ochilishi. Norma: aortal taxminan 3–4 sm², mitral taxminan 4–6 sm².'},
+ s:{en:'Aortic below 1.0 cm² is severe stenosis. Mitral at or below 1.0–1.5 cm² is severe.',ru:'Аортальный меньше 1,0 см² — тяжёлый стеноз. Митральный 1,0–1,5 см² и меньше — тяжёлый.',uz:'Aortal 1,0 sm² dan kam — ogʻir stenoz. Mitral 1,0–1,5 sm² va undan kam — ogʻir.'}},
+{k:'bell',c:'anat',a:[],w:{en:['bell'],ru:['воронк*'],uz:['qoʻngʻiroqcha*']},
+ n:{en:'Bell of the stethoscope',ru:'Воронка стетоскопа',uz:'Stetoskop qoʻngʻiroqchasi'},
+ d:{en:'The cup-shaped side. Rest it lightly on the skin to hear LOW sounds: S3, S4 and the rumble of mitral stenosis.',ru:'Чашеобразная сторона. Прикладывайте легко, чтобы слышать НИЗКИЕ звуки: S3, S4 и рокот митрального стеноза.',uz:'Kosachasimon tomoni. PAST tovushlarni (S3, S4, mitral stenoz gʻurillashi) eshitish uchun teriga yengil qoʻying.'}},
+{k:'diaphragm',c:'anat',a:[],w:{en:['diaphragm'],ru:['мембран*'],uz:['membrana*']},
+ n:{en:'Diaphragm of the stethoscope',ru:'Мембрана стетоскопа',uz:'Stetoskop membranasi'},
+ d:{en:'The flat side. Press it firmly to hear HIGH sounds: S1, S2, clicks and regurgitant murmurs.',ru:'Плоская сторона. Прижимайте плотно, чтобы слышать ВЫСОКИЕ звуки: S1, S2, щелчки и шумы регургитации.',uz:'Yassi tomoni. BALAND tovushlarni (S1, S2, kliklar, regurgitatsiya shovqinlari) eshitish uchun mahkam bosing.'}},
+
+/* ---------- Anatomy ---------- */
+{k:'ra',c:'anat',a:['RA','ПП','OʻB'],w:{en:['right atrium'],ru:['прав* предсерди*'],uz:['oʻng boʻlmacha*']},
+ n:{en:'Right atrium',ru:'Правое предсердие',uz:'Oʻng boʻlmacha'},
+ d:{en:'Collects blood returning from the body and passes it to the right ventricle. The sinus node lives here.',ru:'Собирает кровь, возвращающуюся от тела, и передаёт её в правый желудочек. Здесь находится синусовый узел.',uz:'Tanadan qaytgan qonni yigʻib, oʻng qorinchaga uzatadi. Sinus tuguni shu yerda joylashgan.'}},
+{k:'la',c:'anat',a:['LA','ЛП','ChB'],w:{en:['left atrium'],ru:['лев* предсерди*'],uz:['chap boʻlmacha*']},
+ n:{en:'Left atrium',ru:'Левое предсердие',uz:'Chap boʻlmacha'},
+ d:{en:'Collects oxygen-rich blood from the lungs and passes it through the mitral valve.',ru:'Собирает богатую кислородом кровь из лёгких и передаёт её через митральный клапан.',uz:'Oʻpkadan kislorodga boy qonni yigʻib, mitral klapan orqali uzatadi.'}},
+{k:'rv',c:'anat',a:['RV','ПЖ','OʻQ'],w:{en:['right ventricle'],ru:['прав* желудоч*'],uz:['oʻng qorincha*']},
+ n:{en:'Right ventricle',ru:'Правый желудочек',uz:'Oʻng qorincha'},
+ d:{en:'Pumps blood to the lungs through the pulmonary valve.',ru:'Перекачивает кровь в лёгкие через клапан лёгочной артерии.',uz:'Qonni oʻpka arteriyasi klapani orqali oʻpkaga haydaydi.'}},
+{k:'lv',c:'anat',a:['LV','ЛЖ','ChQ'],w:{en:['left ventricle'],ru:['лев* желудоч*'],uz:['chap qorincha*']},
+ n:{en:'Left ventricle',ru:'Левый желудочек',uz:'Chap qorincha'},
+ d:{en:'The main pump: pushes blood through the aortic valve to the whole body. The thickest-walled chamber.',ru:'Главный насос: выталкивает кровь через аортальный клапан ко всему телу. Самая толстостенная камера.',uz:'Asosiy nasos: qonni aortal klapan orqali butun tanaga haydaydi. Devori eng qalin boʻlim.'}},
+{k:'sa',c:'anat',a:['SA'],w:{en:['sinus node','sinoatrial node'],ru:['синусов* узл*','синусов* узел'],uz:['sinus tugun*']},
+ n:{en:'Sinoatrial (sinus) node',ru:'Синоатриальный (синусовый) узел',uz:'Sinoatrial (sinus) tugun'},
+ d:{en:"The heart's natural pacemaker, in the wall of the right atrium. Every normal beat starts here.",ru:'Естественный водитель ритма сердца в стенке правого предсердия. Здесь начинается каждый нормальный удар.',uz:'Yurakning tabiiy ritm boshqaruvchisi, oʻng boʻlmacha devorida. Har bir normal zarba shu yerdan boshlanadi.'}},
+{k:'avn',c:'anat',a:[],w:{en:['av node'],ru:['ав-узл*','ав-узел'],uz:['av tugun*']},
+ n:{en:'Atrioventricular (AV) node',ru:'Атриовентрикулярный (АВ) узел',uz:'Atrioventrikulyar (AV) tugun'},
+ d:{en:'The gatekeeper between atria and ventricles. It holds the signal about 0.1 s so the atria can finish emptying first.',ru:'«Привратник» между предсердиями и желудочками. Задерживает импульс примерно на 0,1 с, чтобы предсердия успели опорожниться.',uz:'Boʻlmacha va qorinchalar orasidagi «darvozabon». Boʻlmachalar boʻshab ulgurishi uchun impulsni taxminan 0,1 s ushlab turadi.'}},
+{k:'his',c:'anat',a:[],w:{en:['bundle of his','bundle branch*'],ru:['пучк* гиса','ножк* пучка гиса'],uz:['gis tutami']},
+ n:{en:'Bundle of His and bundle branches',ru:'Пучок Гиса и его ножки',uz:'Gis tutami va uning oyoqchalari'},
+ d:{en:'The wiring that carries the signal down the wall between the ventricles, then splits into a right and a left branch.',ru:'«Проводка», несущая импульс вниз по перегородке между желудочками и делящаяся на правую и левую ножки.',uz:'Impulsni qorinchalararo toʻsiq boʻylab pastga olib boradigan, soʻng oʻng va chap oyoqchalarga boʻlinadigan «sim».'}},
+{k:'av',c:'anat',a:['AV','АВ'],w:{en:[],ru:[],uz:[]},
+ n:{en:'Atrioventricular (AV)',ru:'Атриовентрикулярный (АВ)',uz:'Atrioventrikulyar (AV)'},
+ d:{en:'"Between the atria and the ventricles": AV node, AV block, AV valves (mitral and tricuspid).',ru:'«Между предсердиями и желудочками»: АВ-узел, АВ-блокада, АВ-клапаны (митральный и трикуспидальный).',uz:'«Boʻlmacha va qorinchalar orasida»: AV tugun, AV blokada, AV klapanlar (mitral va trikuspidal).'}},
+{k:'apex',c:'anat',a:[],w:{en:['apex'],ru:['верхушк*','верхушечн*'],uz:['yurak choʻqqisi','choʻqqi turtkisi']},
+ n:{en:'Apex of the heart',ru:'Верхушка сердца',uz:'Yurak choʻqqisi'},
+ d:{en:'The tip of the heart, felt at the 5th intercostal space in the mid-clavicular line. The best spot for mitral sounds.',ru:'Кончик сердца, пальпируется в 5-м межреберье по среднеключичной линии. Лучшее место для митральных звуков.',uz:'Yurak uchi, oʻrta oʻmrov chizigʻi boʻyicha 5-qovurgʻalararo oraliqda paypaslanadi. Mitral tovushlar uchun eng yaxshi joy.'}},
+{k:'erb',c:'anat',a:['LLSB'],w:{en:["erb's point",'left lower sternal border','left sternal border'],ru:['боткина–эрба','боткин–эрб','левого края грудины','левый нижний край грудины'],uz:['botkin–erb*']},
+ n:{en:"Erb's point",ru:'Точка Боткина–Эрба',uz:'Botkin–Erb nuqtasi'},
+ d:{en:'The 3rd intercostal space at the left edge of the breastbone. The best place for aortic regurgitation. It is not the tricuspid area, which sits lower, at the 4th space (left lower sternal border).',ru:'3-е межреберье у левого края грудины. Лучшее место для аортальной регургитации. Это не трикуспидальная точка, которая расположена ниже.',uz:'Toʻsh suyagining chap chetida 3-qovurgʻalararo oraliq. Aortal regurgitatsiya uchun eng yaxshi joy. Bu trikuspidal nuqta emas — u pastroqda joylashgan.'}},
+
+/* ---------- Clinical terms ---------- */
+{k:'systole',c:'clin',a:[],w:{en:['systole','systolic'],ru:['систол*'],uz:['sistola*','sistolik']},
+ n:{en:'Systole',ru:'Систола',uz:'Sistola'},
+ d:{en:'The ventricles contracting and pushing blood out: the time from S1 to S2.',ru:'Сокращение желудочков и изгнание крови: время от S1 до S2.',uz:'Qorinchalarning qisqarishi va qonni haydashi: S1 dan S2 gacha boʻlgan vaqt.'}},
+{k:'diastole',c:'clin',a:[],w:{en:['diastole','diastolic'],ru:['диастол*'],uz:['diastola*','diastolik']},
+ n:{en:'Diastole',ru:'Диастола',uz:'Diastola'},
+ d:{en:'The ventricles relaxing and filling: from S2 to the next S1. This is the part that shrinks most when the heart speeds up.',ru:'Расслабление и наполнение желудочков: от S2 до следующего S1. Именно она укорачивается сильнее всего при учащении ритма.',uz:'Qorinchalarning boʻshashishi va toʻlishi: S2 dan keyingi S1 gacha. Yurak tezlashganda aynan u eng koʻp qisqaradi.'}},
+{k:'isovol',c:'clin',a:[],w:{en:['isovolumetric'],ru:['изоволюмическ*'],uz:['izovolyumik']},
+ n:{en:'Isovolumetric phase',ru:'Изоволюмическая фаза',uz:'Izovolyumik faza'},
+ d:{en:'A brief moment when all four valves are closed: pressure in the ventricle changes, but its volume does not.',ru:'Короткий момент, когда все четыре клапана закрыты: давление в желудочке меняется, а объём — нет.',uz:'Toʻrttala klapan yopiq boʻlgan qisqa lahza: qorinchadagi bosim oʻzgaradi, hajmi esa yoʻq.'}},
+{k:'depol',c:'clin',a:[],w:{en:['depolarization'],ru:['деполяризаци*'],uz:['depolyarizatsiya*']},
+ n:{en:'Depolarization',ru:'Деполяризация',uz:'Depolyarizatsiya'},
+ d:{en:'The electrical "switch-on" of heart cells that triggers them to contract. P wave = atria, QRS = ventricles.',ru:'Электрическое «включение» клеток сердца, запускающее их сокращение. Зубец P — предсердия, QRS — желудочки.',uz:'Yurak hujayralarining elektr «yoqilishi», ularni qisqartiradi. P tishcha — boʻlmachalar, QRS — qorinchalar.'}},
+{k:'dissoc',c:'clin',a:[],w:{en:['av dissociation'],ru:['ав-диссоциаци*'],uz:['av dissotsiatsiya*']},
+ n:{en:'AV dissociation',ru:'АВ-диссоциация',uz:'AV dissotsiatsiya'},
+ d:{en:'Atria and ventricles beat independently, each following its own pacemaker (complete heart block, VT).',ru:'Предсердия и желудочки сокращаются независимо, каждый в своём ритме (полная АВ-блокада, ЖТ).',uz:'Boʻlmacha va qorinchalar mustaqil, har biri oʻz ritm boshqaruvchisiga boʻysunib qisqaradi (toʻliq AV blokada, qorinchalar taxikardiyasi).'}},
+{k:'comp',c:'clin',a:[],w:{en:['compensatory pause'],ru:['компенсаторн* пауз*'],uz:['kompensator pauza']},
+ n:{en:'Compensatory pause',ru:'Компенсаторная пауза',uz:'Kompensator pauza'},
+ d:{en:'After a PVC the next normal beat comes late, so the two cycles around the PVC add up to exactly two normal cycles.',ru:'После ЖЭС следующий нормальный удар приходит с опозданием: два цикла вокруг экстрасистолы в сумме равны ровно двум нормальным.',uz:'Ekstrasistoladan keyin navbatdagi normal zarba kechikadi: uning atrofidagi ikki sikl yigʻindisi aynan ikki normal siklga teng.'}},
+{k:'aberr',c:'clin',a:[],w:{en:['aberrancy'],ru:['аберраци*'],uz:['aberratsiya*']},
+ n:{en:'Aberrant conduction',ru:'Аберрантное проведение',uz:'Aberrant oʻtkazuvchanlik'},
+ d:{en:'An SVT whose QRS becomes wide because one bundle branch is temporarily "tired". It can imitate VT.',ru:'НЖТ, при которой QRS расширяется, потому что одна из ножек временно «устала». Может имитировать ЖТ.',uz:'Bitta oyoqcha vaqtincha «charchagani» uchun QRS kengaygan SVT. Qorinchalar taxikardiyasiga oʻxshab ketishi mumkin.'}},
+{k:'mi',c:'clin',a:['MI','ИМ'],w:{en:['myocardial infarction'],ru:['инфаркт*'],uz:['miokard infarkt*']},
+ n:{en:'Myocardial infarction (heart attack)',ru:'Инфаркт миокарда',uz:'Miokard infarkti'},
+ d:{en:'Death of heart muscle from a blocked coronary artery. The scar it leaves can later cause VT.',ru:'Гибель участка сердечной мышцы из-за закупорки коронарной артерии. Оставшийся рубец позже может вызывать ЖТ.',uz:'Koronar arteriya bekilib qolishi tufayli yurak mushagi qismining nobud boʻlishi. Qolgan chandiq keyinchalik qorinchalar taxikardiyasiga sabab boʻlishi mumkin.'}},
+{k:'cpr',c:'clin',a:['CPR','СЛР','YOʻR'],w:{en:[],ru:[],uz:[]},
+ n:{en:'Cardiopulmonary resuscitation',ru:'Сердечно-лёгочная реанимация',uz:'Yurak-oʻpka reanimatsiyasi'},
+ d:{en:'Chest compressions plus breaths that keep blood moving to the brain while the heart is stopped.',ru:'Компрессии грудной клетки и вдохи, которые поддерживают кровоток к мозгу, пока сердце остановлено.',uz:'Yurak toʻxtaganda miyaga qon oqimini saqlab turadigan koʻkrak qafasini bosish va nafas berish.'}},
+{k:'asd',c:'clin',a:['ASD','ДМПП'],w:{en:['atrial septal defect'],ru:[],uz:['boʻlmachalararo toʻsiq nuqson*']},
+ n:{en:'Atrial septal defect',ru:'Дефект межпредсердной перегородки',uz:'Boʻlmachalararo toʻsiq nuqsoni'},
+ d:{en:'A hole between the two atria. Classic sign: a fixed split of S2 that does not change with breathing.',ru:'Отверстие между двумя предсердиями. Классический признак — фиксированное расщепление S2, не меняющееся при дыхании.',uz:'Ikki boʻlmacha orasidagi teshik. Klassik belgisi — nafas bilan oʻzgarmaydigan qotgan S2 ajralishi.'}},
+{k:'valsalva',c:'clin',a:[],w:{en:['valsalva'],ru:['вальсальв*'],uz:['valsalva']},
+ n:{en:'Valsalva manoeuvre',ru:'Проба Вальсальвы',uz:'Valsalva sinovi'},
+ d:{en:'Straining against a closed throat, like blowing into a blocked straw. Less blood returns to the heart, so the LV gets smaller.',ru:'Натуживание при закрытой голосовой щели, как будто дуете в заткнутую трубочку. К сердцу возвращается меньше крови, и ЛЖ уменьшается.',uz:'Ovoz yorigʻi yopiq holda kuchanish, xuddi berk naychaga puflagandek. Yurakka kamroq qon qaytadi, chap qorincha kichrayadi.'}},
+{k:'ortho',c:'clin',a:[],w:{en:['orthopnoea','orthopnea'],ru:['ортопноэ'],uz:['ortopnoe']},
+ n:{en:'Orthopnoea',ru:'Ортопноэ',uz:'Ortopnoe'},
+ d:{en:'Breathlessness when lying flat, relieved by sitting up. A sign of left heart failure.',ru:'Одышка в положении лёжа, проходящая сидя. Признак левожелудочковой недостаточности.',uz:'Yotganda hansirash, oʻtirganda yengillashadi. Chap qorincha yetishmovchiligi belgisi.'}},
+{k:'rheum',c:'clin',a:[],w:{en:['rheumatic fever'],ru:['ревматическ* лихорадк*'],uz:['revmatik isitma*']},
+ n:{en:'Rheumatic fever',ru:'Ревматическая лихорадка',uz:'Revmatik isitma'},
+ d:{en:'An immune reaction after a streptococcal throat infection that can scar heart valves years later, especially the mitral valve.',ru:'Иммунная реакция после стрептококковой ангины, которая через годы может рубцевать клапаны сердца, особенно митральный.',uz:'Streptokokk angina dan keyingi immun reaksiya, yillar oʻtib yurak klapanlarini, ayniqsa mitral klapanni chandiqlashi mumkin.'}},
+{k:'bp',c:'clin',a:[],w:{en:['pulmonary hypertension'],ru:['лёгочн* гипертензи*'],uz:['oʻpka gipertenziya*']},
+ n:{en:'Pulmonary hypertension',ru:'Лёгочная гипертензия',uz:'Oʻpka gipertenziyasi'},
+ d:{en:'High blood pressure in the lung arteries. The pulmonary valve shuts harder, so P2 becomes loud.',ru:'Повышенное давление в лёгочных артериях. Клапан лёгочной артерии захлопывается сильнее, поэтому P2 становится громким.',uz:'Oʻpka arteriyalarida yuqori bosim. Oʻpka arteriyasi klapani kuchliroq yopiladi, shuning uchun P2 baland boʻladi.'}}
+];
+
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const jit=s=>(Math.random()*2-1)*s;
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------------- Language ---------------- */
+const LANGS=['en','ru','uz'];
+let LANG=(()=>{
+  let q=null;try{q=new URLSearchParams(location.search).get('lang')}catch(e){}
+  if(LANGS.includes(q))return q;
+  try{const s=localStorage.getItem('smartheart-lang');if(LANGS.includes(s))return s}catch(e){}
+  const n=((navigator.languages&&navigator.languages[0])||navigator.language||'en').toLowerCase();
+  return n.startsWith('ru')?'ru':n.startsWith('uz')?'uz':'en';
+})();
+const L=()=>I18N[LANG], ui=()=>I18N[LANG].ui;
+const pick=(sec,k)=>Object.assign({},I18N.en[sec][k],I18N[LANG][sec][k]||{});
+const rhT=k=>pick('rh',k), siteT=k=>pick('site',k), caseT=k=>pick('cases',k);
+
+/* ---------------- Knowledge (numbers only; words live in I18N) ---------------- */
+const RH={
+ nsr:{g:'sinus',r:72,min:60,max:100},
+ brady:{g:'sinus',r:48,min:30,max:59},
+ tachy:{g:'sinus',r:115,min:101,max:160},
+ af:{g:'atrial',r:100,min:50,max:170},
+ flutter:{g:'atrial',r:75,min:75,max:150},
+ svt:{g:'atrial',r:185,min:150,max:230},
+ avb1:{g:'av',r:66,min:45,max:100},
+ wenck:{g:'av',r:80,min:60,max:110},
+ mobitz2:{g:'av',r:80,min:60,max:110},
+ chb:{g:'av',r:38,min:25,max:55},
+ wpw:{g:'av',r:74,min:55,max:110},
+ pvc:{g:'vent',r:76,min:55,max:100},
+ lbbb:{g:'vent',r:70,min:50,max:100},
+ rbbb:{g:'vent',r:70,min:50,max:100},
+ vt:{g:'vent',r:165,min:120,max:220},
+ vf:{g:'vent',r:0},
+ asys:{g:'vent',r:0},
+};
+const GROUPS=['sinus','atrial','av','vent'];
+const NO_ATRIAL_KICK=['af','flutter','svt','vf','asys'];
+
+const SITE={
+ aortic:{S1:.6,A2:1,P2:.45,S3:.25,S4:.25,AS:1,AR:.7,MR:.3,MS:.1,MVP:.35},
+ pulmonic:{S1:.6,A2:.85,P2:1,S3:.3,S4:.3,AS:.7,AR:.75,MR:.35,MS:.15,MVP:.4},
+ erb:{S1:.75,A2:.9,P2:.75,S3:.4,S4:.4,AS:.8,AR:1,MR:.45,MS:.25,MVP:.5},
+ tricuspid:{S1:.9,A2:.7,P2:.6,S3:.6,S4:.6,AS:.6,AR:.8,MR:.55,MS:.4,MVP:.6},
+ mitral:{S1:1,A2:.6,P2:.25,S3:1,S4:1,AS:.5,AR:.45,MR:1,MS:1,MVP:1},
+};
+
+const CASES=[
+ {id:'normal',set:{rhythm:'nsr',rate:72},site:'pulmonic',piece:'diaphragm'},
+ {id:'ms_sr',set:{rhythm:'nsr',rate:84,mva:1.2},site:'mitral',piece:'bell'},
+ {id:'ms_af',set:{rhythm:'af',rate:92,mva:1.0},site:'mitral',piece:'bell'},
+ {id:'as',set:{rhythm:'nsr',rate:66,ava:.7,s4:55},site:'aortic',piece:'diaphragm'},
+ {id:'mr',set:{rhythm:'tachy',rate:104,mr:3.5,s3:40},site:'mitral',piece:'diaphragm'},
+ {id:'ar',set:{rhythm:'nsr',rate:72,ar:3},site:'erb',piece:'diaphragm'},
+ {id:'mvp',set:{rhythm:'nsr',rate:78,mvp:true},site:'mitral',piece:'diaphragm'},
+ {id:'chb',set:{rhythm:'chb',rate:38,s4:45},site:'mitral',piece:'bell'},
+ {id:'lbbb',set:{rhythm:'lbbb',rate:66},site:'pulmonic',piece:'diaphragm'},
+ {id:'rbbb',set:{rhythm:'rbbb',rate:66},site:'pulmonic',piece:'diaphragm'},
+ {id:'avb1',set:{rhythm:'avb1',rate:62},site:'mitral',piece:'diaphragm'},
+ {id:'wpw',set:{rhythm:'wpw',rate:76},site:'mitral',piece:'diaphragm'},
+ {id:'wenck',set:{rhythm:'wenck',rate:84},site:'mitral',piece:'diaphragm'},
+ {id:'vt',set:{rhythm:'vt',rate:160},site:'mitral',piece:'diaphragm'},
+ {id:'vf',set:{rhythm:'vf'},site:'mitral',piece:'diaphragm'},
+ {id:'hf',set:{rhythm:'tachy',rate:112,s3:70,s4:55},site:'mitral',piece:'bell'},
+];
+const TDWHY={en:'See why in Teardown',ru:'Посмотреть механизм в Teardown',uz:'Teardownʼda sababini koʻrish'};
+/* glossary entries that can be demonstrated on the live heart */
+const DEMO={as:'as',ms:'ms_sr',mr:'mr',ar:'ar',mvp:'mvp',s3:'hf',s4:'as',gallop:'hf',os:'ms_sr',presys:'ms_sr',rumble:'ms_sr',paradox:'lbbb',split:'normal',cannon:'chb',click:'mvp',holo:'mr',cresc:'as',dissoc:'chb',a2:'as',p2:'normal',s1:'normal',s2:'normal',cpr:'vf',mi:'vt',delta:'wpw',rsr:'rbbb',comp:'pvc'};
+
+/* ======== v1 synthesis engine (unchanged) ======== */
+/* ---------------- State ---------------- */
+const NORMAL_VALVES={ava:3.5,mva:4.5,mr:0,ar:0,mvp:false,s3:0,s4:0};
+const S=Object.assign({rhythm:'nsr',rate:72,site:'mitral',piece:'diaphragm',out:'headphones',breath:true,vol:.8,link:true,mode:'explore',caseId:null,sealed:false},NORMAL_VALVES);
+
+/* ---------------- Audio ---------------- */
+let AC=null,chestA=null,chestB=null,master=null,BANDS={},bandFm=0;
+const fm=()=>S.out==='speaker'?4:1;
+function startAudio(){
+  AC=new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});
+  chestA=AC.createBiquadFilter();chestB=AC.createBiquadFilter();master=AC.createGain();
+  const comp=AC.createDynamicsCompressor();comp.threshold.value=-12;comp.ratio.value=5;comp.attack.value=.002;comp.release.value=.15;
+  chestA.connect(chestB);chestB.connect(master);master.connect(comp);comp.connect(AC.destination);
+  makeBands();applyChest();applyVol();
+}
+function applyChest(){
+  if(!AC)return;const f=fm(),t=AC.currentTime;
+  if(S.piece==='bell'){chestA.type='lowpass';chestA.frequency.setTargetAtTime(Math.min(230*f,16000),t,.03);chestA.Q.value=.6;chestB.type='lowshelf';chestB.frequency.value=90*f;chestB.gain.value=5;}
+  else{chestA.type='highpass';chestA.frequency.setTargetAtTime(80*f,t,.03);chestA.Q.value=.55;chestB.type='highshelf';chestB.frequency.value=300*f;chestB.gain.value=4;}
+}
+function applyVol(){if(master)master.gain.setTargetAtTime(S.vol*S.vol*1.6,AC.currentTime,.03)}
+const BDEF={low:[[68,1.0]],harsh:[[170,.8],[360,1.1]],blow:[[330,1.7]],hiss:[[480,2.0]]};
+function bp(x,sr,fc,Q){const w=2*Math.PI*fc/sr,al=Math.sin(w)/(2*Q),c=Math.cos(w),a0=1+al,b0=al/a0,b2=-al/a0,a1=-2*c/a0,a2=(1-al)/a0;const y=new Float32Array(x.length);let x1=0,x2=0,y1=0,y2=0;for(let i=0;i<x.length;i++){const v=b0*x[i]+b2*x2-a1*y1-a2*y2;x2=x1;x1=x[i];y2=y1;y1=v;y[i]=v}return y}
+function makeBands(){
+  const sr=AC.sampleRate,n=Math.floor(sr*3),f=fm();bandFm=f;
+  for(const k in BDEF){const out=new Float32Array(n);
+    for(const [fc0,Q] of BDEF[k]){const fc=Math.min(fc0*f,sr*.45);const w=new Float32Array(n);for(let i=0;i<n;i++)w[i]=Math.random()*2-1;const y=bp(bp(w,sr,fc,Q),sr,fc,Q);for(let i=0;i<n;i++)out[i]+=y[i]}
+    let rms=0;for(let i=0;i<n;i++)rms+=out[i]*out[i];rms=Math.sqrt(rms/n)||1;for(let i=0;i<n;i++)out[i]*=.35/rms;BANDS[k]=out}
+}
+const MS1=[[1,1],[1.9,.55],[3.1,.28],[4.9,.12]],MS2=[[1,1],[2.05,.6],[3.5,.3],[5.4,.14]],MLOW=[[1,1],[1.85,.35],[2.9,.12]];
+function tone(b,sr,t,amp,f,dec,modes){
+  if(amp<=.003)return;const n0=Math.round(t*sr);if(n0>=b.length)return;
+  const len=Math.min(b.length-n0,Math.ceil(dec*6*sr));let ws=0;for(const m of modes)ws+=m[1];
+  const ph=modes.map(()=>Math.random()*.6);
+  for(let i=0;i<len;i++){const tt=i/sr,idx=n0+i;if(idx<0)continue;
+    const env=(1-Math.exp(-tt/.0018))*Math.exp(-tt/dec),g=1-.16*Math.min(1,tt/(dec*4));
+    let s=0;for(let m=0;m<modes.length;m++)s+=modes[m][1]*Math.sin(2*Math.PI*f*modes[m][0]*g*tt+ph[m]);
+    b[idx]+=amp*env*s/ws}
+}
+function murmur(b,sr,t0,t1,band,amp,shape,trem){
+  const n0=Math.max(0,Math.floor(t0*sr)),n1=Math.min(b.length,Math.floor(t1*sr)),L=n1-n0;if(L<=8||amp<=.002)return;
+  const src=BANDS[band],off=Math.floor(Math.random()*(src.length-1)),rp=.007*sr;
+  for(let i=0;i<L;i++){const x=i/L,ramp=Math.min(1,i/rp,(L-i)/rp);let m=amp*shape(x)*ramp;if(trem)m*=1+.35*Math.sin(2*Math.PI*trem*i/sr);b[n0+i]+=m*src[(off+i)%src.length]}
+}
+
+/* ---------------- Beat generator (one clock for ECG + sound) ---------------- */
+const G={atr:[],ven:[],snd:[],src:[],tA:0,tV:0,k:0,base:''};
+const BREATH=5;
+const insp=t=>S.breath?.5-.5*Math.cos(2*Math.PI*t/BREATH):.3;
+const inspiring=t=>S.breath&&Math.sin(2*Math.PI*t/BREATH)>0;
+function pushV(t,kind,extra){const p=G.ven[G.ven.length-1];const rr=p?t-p.t:60/(S.rate||70);const v=Object.assign({t,kind,rr,built:false},extra||{});v.qt=.40*Math.sqrt(clamp(rr,.3,1.6))+((kind==='pvc'||kind==='vt'||kind==='lbbb'||(extra&&extra.wide))?.04:0);G.ven.push(v);return v}
+function pushA(t,cond){G.atr.push({t,cond})}
+function baseFor(r){return r==='af'?'af':r==='flutter'?'flutter':r==='vf'?'vf':''}
+function gen(until){
+  const r=S.rhythm,rate=S.rate;
+  if(r==='vf'||r==='asys'){G.tA=Math.max(G.tA,until);G.tV=Math.max(G.tV,until);return}
+  if(r==='chb'||r==='vt'){
+    while(G.tA<until){G.tA+=60/78*(1+jit(.02));pushA(G.tA,false)}
+    while(G.tV<until){G.tV+=60/rate*(1+jit(r==='vt'?.008:.012));pushV(G.tV,r==='vt'?'vt':'esc',r==='chb'&&rate<45?{wide:true}:null)}
+    return}
+  if(r==='af'){while(G.tV<until){G.tV+=60/rate*(.55+Math.random()*.9);pushV(G.tV,'n',{af:true})}return}
+  if(r==='flutter'){const ratio=clamp(Math.round(300/rate),2,4);while(G.tV<until){G.tV+=.2*ratio;pushV(G.tV,'n')}return}
+  if(r==='svt'){while(G.tV<until){G.tV+=60/rate;pushV(G.tV,'n')}return}
+  while(G.tA<until){
+    const rsa=S.breath?1-.06*(insp(G.tA)-.5):1;
+    const pp=60/rate*rsa*(1+jit(.008));const tP=G.tA+pp;G.tA=tP;
+    let pr=r==='tachy'?.14:.16,cond=true,kind='n';
+    if(r==='avb1')pr=.30;if(r==='wpw'){pr=.10;kind='wpw'}if(r==='lbbb')kind='lbbb';if(r==='rbbb')kind='rbbb';
+    if(r==='wenck'){const seq=[.16,.25,.31,null],s=seq[G.k%4];G.k++;if(s===null)cond=false;else pr=s}
+    if(r==='mobitz2'){kind='rbbb';G.k++;if(G.k%4===0)cond=false}
+    if(r==='pvc'){G.k++;const lv=G.ven[G.ven.length-1];
+      if(lv&&G.k>2&&Math.random()<.22&&!lv.pvcNext){const tv=lv.t+.6*pp;pushV(tv,'pvc');if(tP-tv<.45){pushA(tP,false);continue}}}
+    pushA(tP,cond);if(cond)pushV(tP+pr,kind,{pr});
+    if(G.ven.length>1000)break;
+  }
+}
+function retime(){
+  if(!AC)return;const now=AC.currentTime,cut=now+.12;
+  G.atr=G.atr.filter(a=>a.t<=cut);G.ven=G.ven.filter(v=>v.t<=cut);
+  G.src=G.src.filter(s=>{if(s.t0>now+.02){try{s.node.stop()}catch(e){}return false}return true});
+  G.snd=G.snd.filter(s=>s.t0<=now+.02);
+  G.ven.forEach(v=>{if(v.t>now+.02)v.built=false});
+  const la=G.atr[G.atr.length-1],lv=G.ven[G.ven.length-1];
+  let base=lv?lv.t:now;if(base<now-1.2)base=now-.1;
+  G.tV=base;G.tA=Math.max(la&&la.t>now-1.2?la.t:-1,base-.16);G.k=0;G.base=baseFor(S.rhythm);
+}
+function findPR(v){if(v.pr!=null)return v.pr;for(let i=G.atr.length-1;i>=0;i--){const a=G.atr[i];if(a.t>=v.t)continue;const d=v.t-a.t;return d<=.4?d:null}return null}
+
+/* Render one cardiac cycle (QRS k → QRS k+1) into audio */
+function build(i){
+  const v=G.ven[i],nv=G.ven[i+1];v.built=true;
+  if(bandFm!==fm())makeBands();
+  const sr=AC.sampleRate,f=fm(),P=SITE[S.site],r=S.rhythm;
+  const T=Math.min(nv.t-v.t,3),dur=T+.35,b=new Float32Array(Math.ceil(dur*sr)),ev=[];
+  const rr=clamp(v.rr,.25,2.4),hr=60/rr,wide=v.kind==='pvc'||v.kind==='vt'||v.kind==='lbbb';
+  const asSev=S.ava<3?clamp((3-S.ava)/2.4,0,1):0,msSev=S.mva<2.5?clamp((2.5-S.mva)/1.7,0,1):0;
+  const m1=.035+(wide?.035:0)+(v.kind==='esc'?.01:0);
+  let s1=1;const pr=findPR(v);
+  if(v.af)s1=clamp(1.55-.9*rr,.5,1.4);
+  else if(pr!=null)s1=clamp(1-3.4*(pr-.16),.42,1.55);
+  else if(v.kind==='vt'||v.kind==='esc')s1=.55+Math.random()*.15;
+  else if(r==='svt')s1=1.15;
+  if(v.kind==='pvc')s1*=.75;
+  s1*=(1+.55*msSev)*(1-.1*S.mr);
+  let a2=clamp((546-2.1*hr)/1000,.22,.6)-.04+(wide?.03:0)+(v.kind==='lbbb'?.02:0)+.035*asSev;
+  a2=Math.min(a2,T*.6);
+  const I=insp(v.t+a2);
+  let sp=.012+.038*I;if(v.kind==='rbbb')sp=.045+.028*I;if(v.kind==='lbbb')sp=-(.048-.038*I);sp-=.035*asSev;
+  const p2=a2+sp,early=v.kind==='pvc'&&v.rr<.8*60/(S.rate||70),s2m=early?.3:1;
+  const A2=.8*P.A2*s2m*(1-.85*clamp((asSev-.45)/.55,0,1))*(1-.13*S.mr),P2=.5*P.P2*s2m*(1+.9*msSev);
+  tone(b,sr,m1,s1*P.S1,44*f,.022,MS1);
+  tone(b,sr,m1+(v.kind==='rbbb'?.04:.022),s1*.5*(S.site==='tricuspid'?1.3:.7),52*f,.018,MS1);
+  tone(b,sr,a2,A2,64*f,.014,MS2);tone(b,sr,p2,P2,58*f,.013,MS2);
+  const s2t=Math.min(a2,p2);v.m1=m1;v.a2=Math.max(a2,p2);
+  ev.push({t:v.t+m1,l:'S1',k:v.t});ev.push({t:v.t+s2t,l:'S2',k:v.t+v.qt-.035});
+  if(asSev>0){const pk=.3+.45*asSev;murmur(b,sr,m1+.05,a2-.015,'harsh',(.1+.6*asSev)*P.AS,x=>x<pk?Math.pow(x/pk,1.4):Math.pow((1-x)/(1-pk),1.1),0);
+    if(S.ava>1.1&&S.ava<2.6){tone(b,sr,m1+.05,.35*P.AS,150*f,.006,MS2);ev.push({t:v.t+m1+.05,l:'EC'})}}
+  if(S.mr>0)murmur(b,sr,m1+.004,a2+.015,'blow',.085*S.mr*P.MR,()=>1,0);
+  if(S.mvp){const ck=m1+.55*(a2-m1);tone(b,sr,ck,.45*P.MVP,170*f,.005,MS2);ev.push({t:v.t+ck,l:'click'});murmur(b,sr,ck+.015,a2,'blow',.2*P.MVP,x=>.3+.7*Math.pow(x,.7),0)}
+  if(S.ar>0){const L=Math.min(T-a2-.06,.12+.11*S.ar);if(L>.03)murmur(b,sr,a2+.004,a2+.004+L,'hiss',.075*S.ar*P.AR,x=>Math.exp(-2.4*x),0);
+    if(S.ar>=3)murmur(b,sr,m1+.05,a2-.03,'harsh',.05*P.AS,x=>Math.sin(Math.PI*x),0)}
+  if(msSev>0){const os=a2+(.12-.065*msSev);
+    if(os<T-.06){tone(b,sr,os,(.38+.3*msSev)*P.MS,115*f,.007,MS2);ev.push({t:v.t+os,l:'OS'});
+      const rs=os+.025,re=T-.01,k=1/(.07+.28*msSev),fl=.12+.3*msSev,len=re-rs;
+      if(len>.04)murmur(b,sr,rs,re,'low',(.14+.36*msSev)*P.MS,x=>Math.exp(-x*len*k)*(1-fl)+fl,7)}
+    for(const a of G.atr){const tp=a.t-v.t;if(tp>os+.04&&tp<T-.05){murmur(b,sr,tp+.05,T+m1-.004,'low',(.12+.36*msSev)*P.MS,x=>Math.pow(x,1.6),8);break}}}
+  const e3=S.s3/100+(S.mr>=3?.35:0),t3=a2+.14;
+  if(e3>0&&t3<T-.05){tone(b,sr,t3,.75*Math.min(1.2,e3)*P.S3,36*f,.032,MLOW);ev.push({t:v.t+t3,l:'S3'})}
+  if(S.s4>0&&!NO_ATRIAL_KICK.includes(r)){for(const a of G.atr){const t4=a.t-v.t+.13;if(t4>a2+.1&&t4<T+m1-.025&&t4<dur-.05){tone(b,sr,t4,.6*(S.s4/100)*P.S4,32*f,.03,MLOW);ev.push({t:v.t+t4,l:'S4'})}}}
+  // envelope for the phonocardiogram + schedule
+  const st=.002,E=new Float32Array(Math.ceil(dur/st)+1),per=sr*st;
+  for(let n=0;n<b.length;n++){b[n]*=.5;const k=Math.floor(n/per),a=Math.abs(b[n]);if(a>E[k])E[k]=a}
+  const buf=AC.createBuffer(1,b.length,sr);buf.copyToChannel?buf.copyToChannel(b,0):buf.getChannelData(0).set(b);
+  const node=AC.createBufferSource();node.buffer=buf;node.connect(chestA);
+  const t0=Math.max(v.t,AC.currentTime+.005);node.start(t0,t0-v.t);
+  G.src.push({node,t0:v.t});G.snd.push({t0:v.t,dur,E,st,ev});
+}
+function tick(){
+  if(!AC)return;const now=AC.currentTime;gen(now+2.2);
+  for(let i=0;i<G.ven.length-1;i++){const v=G.ven[i];if(v.built)continue;if(v.t<now-.02){v.built=true;continue}if(v.t<now+.35)build(i)}
+  const old=now-12;
+  while(G.atr.length&&G.atr[0].t<old)G.atr.shift();
+  while(G.ven.length>2&&G.ven[0].t<old)G.ven.shift();
+  while(G.snd.length&&G.snd[0].t0<old)G.snd.shift();
+  while(G.src.length&&G.src[0].t0<old)G.src.shift();
+}
+
+/* ---------------- ECG synthesis ---------------- */
+function gs(t,c,w,a){const x=(t-c)/w;return x*x>50?0:a*Math.exp(-.5*x*x)}
+function qrsAt(t,v){
+  const R=v.t,tp=R+v.qt-.1;
+  switch(v.kind){
+    case 'n':case 'esc':{if(v.kind==='esc'&&v.wide)return gs(t,R,.034,1.2)+gs(t,R+.075,.032,-.35)+gs(t,R+.32,.07,-.45);const w=v.kind==='esc'?1.35:1;return gs(t,R-.028*w,.009*w,-.12)+gs(t,R,.011*w,1.05)+gs(t,R+.027*w,.011*w,-.28)+gs(t,tp,.048,.28)}
+    case 'wpw':return gs(t,R-.036,.02,.3)+gs(t,R,.012,1)+gs(t,R+.03,.012,-.22)+gs(t,tp,.05,.18);
+    case 'lbbb':return gs(t,R-.012,.024,.72)+gs(t,R+.034,.022,.82)+gs(t,R+.07,.02,.12)+gs(t,tp+.03,.06,-.3);
+    case 'rbbb':return gs(t,R-.024,.009,-.08)+gs(t,R,.012,.88)+gs(t,R+.05,.026,-.34)+gs(t,tp,.05,.2);
+    case 'pvc':return gs(t,R,.034,1.45)+gs(t,R+.07,.03,-.3)+gs(t,R+.31,.07,-.55);
+    case 'vt':return gs(t,R,.042,1.25)+gs(t,R+.09,.045,-.75)+gs(t,R+.2,.05,-.15);
+  }return 0
+}
+function ecgAt(t){
+  let y=.02*Math.sin(2*Math.PI*.21*t)+.006*Math.sin(2*Math.PI*29*t+t*.7);
+  if(G.base==='af')y+=.045*(Math.sin(2*Math.PI*5.6*t)+.7*Math.sin(2*Math.PI*7.3*t+1.3)+.5*Math.sin(2*Math.PI*9.4*t+2.1))*(.65+.35*Math.sin(.8*t));
+  else if(G.base==='flutter'){const ph=(t*5)%1;y+=.17*(ph<.78?.5-ph/.78:-.5+(ph-.78)/.22)}
+  else if(G.base==='vf')y+=.45*Math.sin(2*Math.PI*4.8*t+1.6*Math.sin(.9*t))*(.55+.45*Math.sin(1.1*t+.5))+.18*Math.sin(2*Math.PI*7.1*t+.7)+.1*Math.sin(2*Math.PI*2.3*t);
+  for(let i=G.atr.length-1;i>=0;i--){const a=G.atr[i];if(a.t<t-.2)break;if(a.t>t+.2)continue;y+=gs(t,a.t,.024,.13)}
+  for(let i=G.ven.length-1;i>=0;i--){const v=G.ven[i];if(v.t<t-.8)break;if(v.t>t+.15)continue;y+=qrsAt(t,v)}
+  return y
+}
+function pcgAt(t,dt){let m=0;for(let i=G.snd.length-1;i>=0;i--){const s=G.snd[i];if(t<s.t0||t>s.t0+s.dur)continue;const k0=Math.floor((t-s.t0)/s.st),k1=Math.floor((t+dt-s.t0)/s.st);for(let k=k0;k<=k1&&k<s.E.length;k++)if(s.E[k]>m)m=s.E[k]}return m}
+
+/* ---------------- Monitor drawing ---------------- */
+const TR={};let lastT=null,prevX=null,prevY=null,frozen=false;
+const ECGC='#3cf5a0',PCGC='#ffb648';
+function setupCanvas(){
+  const cg=$('#cgrid'),ct=$('#ctrace'),r=ct.getBoundingClientRect(),d=window.devicePixelRatio||1;
+  for(const c of [cg,ct]){c.width=r.width*d;c.height=r.height*d;c.getContext('2d').setTransform(d,0,0,d,0,0)}
+  Object.assign(TR,{w:r.width,h:r.height,win:r.width<560?2.6:r.width<900?3.4:4.4,ctx:ct.getContext('2d')});
+  TR.pps=TR.w/TR.win;TR.ecgMid=TR.h*.31;TR.ecgS=TR.h*.2;TR.sep=TR.h*.57;TR.pcgMid=TR.h*.79;TR.pcgS=TR.h*.15;
+  $('#plab').style.top=(TR.sep+8)+'px';
+  const g=cg.getContext('2d');g.clearRect(0,0,TR.w,TR.h);
+  const small=.04*TR.pps;
+  for(let i=0,x=0;x<TR.w;i++,x=i*small){g.strokeStyle=i%5===0?'rgba(60,245,160,.10)':'rgba(60,245,160,.04)';g.lineWidth=1;g.beginPath();g.moveTo(x+.5,0);g.lineTo(x+.5,TR.sep);g.stroke()}
+  for(let i=0,y=TR.sep;y>0;i++,y=TR.sep-i*small){g.strokeStyle=i%5===0?'rgba(60,245,160,.10)':'rgba(60,245,160,.04)';g.beginPath();g.moveTo(0,y+.5);g.lineTo(TR.w,y+.5);g.stroke()}
+  g.fillStyle='rgba(255,182,72,.025)';g.fillRect(0,TR.sep,TR.w,TR.h-TR.sep);
+  g.strokeStyle='rgba(255,255,255,.10)';g.beginPath();g.moveTo(0,TR.sep+.5);g.lineTo(TR.w,TR.sep+.5);g.stroke();
+  for(let i=0;i*.2*TR.pps<TR.w;i++){const x=i*.2*TR.pps;g.strokeStyle=i%5===0?'rgba(255,182,72,.10)':'rgba(255,182,72,.04)';g.beginPath();g.moveTo(x+.5,TR.sep);g.lineTo(x+.5,TR.h);g.stroke()}
+  lastT=null;
+}
+const xOf=t=>((t%TR.win)/TR.win)*TR.w;
+const PEND=[];
+function label(c,x,y,txt,col){PEND.push({x,y,txt,col,w:0})}
+function flushLabels(c,x){for(let i=PEND.length-1;i>=0;i--){const L=PEND[i];const d=x>=L.x?x-L.x:x+TR.w-L.x;if(d>26){c.font='600 10px JetBrains Mono, monospace';c.fillStyle=L.col;c.textAlign='center';c.fillText(L.txt,L.x,L.y);PEND.splice(i,1)}}}
+function drawSweep(now){
+  if(frozen||!TR.ctx)return;const c=TR.ctx;
+  if(lastT===null||now-lastT>1){lastT=now-.02;prevX=null;c.clearRect(0,0,TR.w,TR.h);PEND.length=0}
+  const dt=1/TR.pps,showLinks=S.link;
+  c.lineJoin='round';c.lineCap='round';
+  while(lastT<now){
+    const t=lastT+dt,x=xOf(t);
+    const gx=x+1.5;c.clearRect(gx,0,18,TR.h);if(gx+18>TR.w)c.clearRect(0,0,gx+18-TR.w,TR.h);
+    const y=TR.ecgMid-ecgAt(t)*TR.ecgS;
+    if(prevX!==null&&x>prevX){c.save();c.strokeStyle=ECGC;c.lineWidth=2;c.shadowColor='rgba(60,245,160,.7)';c.shadowBlur=6;c.beginPath();c.moveTo(prevX,prevY);c.lineTo(x,y);c.stroke();c.restore()}
+    prevX=x;prevY=y;
+    const a=pcgAt(t,dt);
+    if(a>.006){const hh=Math.min(TR.pcgS*1.25,Math.pow(a,.75)*TR.pcgS*1.7);c.fillStyle=PCGC;c.globalAlpha=.9;c.fillRect(x-.6,TR.pcgMid-hh,1.4,hh*2);c.globalAlpha=1}
+    else{c.fillStyle='rgba(255,182,72,.35)';c.fillRect(x-.6,TR.pcgMid-.5,1.4,1)}
+    if(showLinks&&!S.sealed)markers(c,lastT,t,x);
+    if(PEND.length)flushLabels(c,x);
+    lastT=t;
+  }
+}
+function markers(c,t0,t1,x){
+  const top=12;
+  for(let i=G.atr.length-1;i>=0&&i>G.atr.length-6;i--){const a=G.atr[i];if(a.t>=t0&&a.t<t1)label(c,x,TR.ecgMid-TR.ecgS*.55,'P',a.cond?'rgba(124,196,255,.85)':'rgba(255,93,115,.9)')}
+  for(let i=G.ven.length-1;i>=0&&i>G.ven.length-8;i--){const v=G.ven[i];
+    if(v.t>=t0&&v.t<t1)label(c,x,top+12,v.kind==='pvc'?'PVC':'QRS','rgba(233,237,242,.6)');
+    const tp=v.t+v.qt-.1;if(v.kind!=='vt'&&tp>=t0&&tp<t1)label(c,x,TR.ecgMid-TR.ecgS*.75,'T','rgba(233,237,242,.4)')}
+  for(let i=G.snd.length-1;i>=0&&i>G.snd.length-5;i--){for(const e of G.snd[i].ev){if(e.t>=t0&&e.t<t1){
+    const col=e.l==='S1'||e.l.startsWith('S2')?'rgba(255,182,72,.95)':'rgba(255,120,140,.95)';
+    label(c,x,(e.l==='S1'||e.l==='S2')?TR.h-8:TR.h-21,e.l,col);
+    if(e.k!=null){const xk=xOf(e.k);if(xk<=x&&x-xk<120){c.save();c.setLineDash([3,4]);c.strokeStyle='rgba(233,237,242,.28)';c.lineWidth=1;c.beginPath();c.moveTo(xk,TR.ecgMid+TR.ecgS*.55);c.lineTo(x,TR.pcgMid-TR.pcgS*1.1);c.stroke();c.restore()}}}}}
+}
+
+
+/* ======== v2 interface ======== */
+/* ---------------- Live heart ---------------- */
+function lastBefore(arr,t){for(let i=arr.length-1;i>=0;i--)if(arr[i].t<=t)return arr[i];return null}
+let lastBeatShown=null;
+function heartUpdate(now){
+  const a=lastBefore(G.atr,now),v=lastBefore(G.ven,now),r=S.rhythm;
+  let ae=0,ac=0,ve=0,vc=0,av=1,sl=0,phase='diast';
+  if(a){const d=now-a.t;ae=d>=0&&d<.12?1-d/.12:0;const d2=d-.07;ac=d2>0&&d2<.16?Math.sin(Math.PI*d2/.16):0}
+  if(v){const d=now-v.t,m1=v.m1??.04,a2=v.a2??.3;ve=d>=0&&d<.1?1-d/.1:0;
+    if(d>=m1&&d<a2+.07)av=0;else if(d>=a2+.07&&d<a2+.13)av=(d-a2-.07)/.06;else if(d<m1&&d>m1-.03)av=(m1-d)/.03;
+    if(d>=m1+.035&&d<a2)sl=Math.min(1,(d-m1-.035)/.03,(a2-d)/.02);
+    if(d>=m1&&d<a2+.05)vc=Math.sin(Math.PI*clamp((d-m1)/(a2+.05-m1),0,1));
+    phase=d<m1?'dep':d<m1+.035?'ivc':d<a2?'ej':d<a2+.07?'ivr':'fill';
+    if(v!==lastBeatShown&&d<.15){lastBeatShown=v;const h=$('#hicon');h.classList.add('beat');setTimeout(()=>h.classList.remove('beat'),140)}}
+  if(NO_ATRIAL_KICK.includes(r)){ac=0;if(r==='af'||r==='flutter')ae=.18+.12*Math.sin(now*40)}
+  if(r==='vf'){ve=.25+.25*Math.random();vc=.15*Math.random();av=.6;sl=0;phase='vf'}
+  if(r==='asys'){ve=0;vc=0;av=.6;sl=0;phase='asys'}
+  const fill=(e,c)=>`rgba(${Math.round(255*(1-e)+124*e)},${Math.round(77*(1-e)+196*e)},${Math.round(109*(1-e)+255*e)},${.10+.32*e+.12*c})`;
+  for(const id of ['ra','la']){const el=H[id];el.style.fill=fill(ae,ac);el.style.stroke=`rgba(255,77,109,${.45+.4*ac})`}
+  for(const id of ['rv','lv']){const el=H[id];el.style.fill=fill(ve,vc);el.style.stroke=`rgba(255,77,109,${.45+.45*vc})`}
+  const s=1-.075*vc;H.vent.setAttribute('transform',`translate(130 ${180}) scale(${1-.05*vc} ${s}) translate(-130 -180)`);
+  H.atria.setAttribute('transform',`translate(130 70) scale(${1-.05*ac}) translate(-130 -70)`);
+  H.sa.style.fill=`rgba(124,196,255,${.25+.75*ae})`;H.avn.style.fill=`rgba(124,196,255,${.25+.75*Math.max(ve,ae*.5)})`;
+  H.intern.style.stroke=`rgba(124,196,255,${.12+.7*ae})`;for(const id of ['his','rbb','lbb'])H[id].style.stroke=`rgba(124,196,255,${.12+.8*ve})`;
+  if(r==='lbbb')H.lbb.style.strokeDasharray='4 5';else H.lbb.style.strokeDasharray='';
+  if(r==='rbbb'||r==='mobitz2')H.rbb.style.strokeDasharray='4 5';else H.rbb.style.strokeDasharray='';
+  const msOpen=clamp(S.mva/4.5,.2,1),Ln=40;
+  const leaf=(el,hx,dir,open)=>{const th=open*1.25;el.setAttribute('x2',hx+dir*Ln*Math.cos(th));el.setAttribute('y2',120+Ln*Math.sin(th))};
+  leaf(H.t1,34,1,av);leaf(H.t2,114,-1,av);leaf(H.m1,146,1,av*msOpen);leaf(H.m2,226,-1,av*msOpen);
+  const leakM=S.mr>0&&av<.2&&v&&r!=='vf'&&r!=='asys',leakA=S.ar>0&&sl<.05&&av>.2;
+  H.m1.style.stroke=H.m2.style.stroke=leakM?'#ff5d73':S.mva<2.5?'#ffb648':'#e9edf2';H.t1.style.stroke=H.t2.style.stroke='#e9edf2';
+  const asOpen=clamp(S.ava/3.5,.15,1);
+  setValve('mitral',av*msOpen,leakM?'leak':av>.15?'open':'closed');setValve('tricuspid',av,av>.15?'open':'closed');
+  setValve('aortic',sl*asOpen,leakA?'leak':sl>.15?'open':'closed');setValve('pulmonic',sl,sl>.15?'open':'closed');
+  if(H.phaseTxt!==phase){H.phaseTxt=phase;$('#phase').textContent=ui().phase[phase]}
+}
+const H={};const VR={};
+function setValve(n,w,st){const o=VR[n];o.u.style.width=(w*100).toFixed(0)+'%';if(o.st!==st){o.st=st;o.em.textContent=ui().vstate[st];o.em.className=st==='leak'?'leak':st==='open'?'open':''}}
+
+/* ---------------- Findings ---------------- */
+const sevAVA=a=>a>=3?'n':a>=2?'scl':a>=1.5?'mild':a>=1?'mod':'sev';
+/* 2020 ACC/AHA: MVA >1.5 progressive, ≤1.5 severe, ≤1.0 very severe */
+const sevMVA=a=>a>=2.5?'n':a>1.5?'msProg':a>1.0?'sev':'msVsev';
+const sevG=g=>g<=0?'none':g<1.5?'gMild':g<2.5?'gMod':g<3.5?'gModSev':'gSev';
+const sevCls=k=>(k==='sev'||k==='gSev'||k==='msVsev')?'s':(k==='n'||k==='none')?'':'w';
+const sevTxt=k=>L().sev[k];
+const lc=s=>s.toLocaleLowerCase(LANG);
+function findings(){
+  const F=L().f,r=S.rhythm,R=rhT(r),c=CASES.find(x=>x.id===S.caseId),C=c?caseT(c.id):null;let h='';
+  if(c&&S.mode!=='exam')h+=`<div class="casebar"><div class="k">${F.caseK}</div><div class="t">${C.t}</div><p>${C.story}</p></div>`;
+  h+=`<h4>${F.rhythmH}</h4><p><b>${R.n}.</b> ${R.ecg}</p><div class="lk"><b>${F.e2m}</b> ${R.mech}</div>`;
+  const silent=r==='vf'||r==='asys',asS=S.ava<3?clamp((3-S.ava)/2.4,0,1):0,msS=S.mva<2.5?clamp((2.5-S.mva)/1.7,0,1):0;
+  let s1=F.s1.normal;
+  if(silent)s1=F.s1.absent;else if(r==='af')s1=F.s1.af;else if(r==='chb'||r==='vt')s1=F.s1.dissoc;else if(r==='wenck')s1=F.s1.wenck;else if(r==='avb1')s1=F.s1.avb1;else if(r==='wpw')s1=F.s1.wpw;
+  if(!silent&&msS>0)s1=F.s1.ms+(r==='af'?F.s1.msAf:'');
+  if(!silent&&S.mr>=2)s1=F.s1.mr;
+  let s2=F.s2.phys;
+  if(silent)s2=F.s2.absent;else if(r==='rbbb'||r==='mobitz2')s2=F.s2.rbbb;else if(r==='lbbb'||asS>.7)s2=F.s2.para;
+  if(!silent&&asS>.6)s2+=F.s2.softA2;
+  if(!silent&&msS>.5)s2+=F.s2.loudP2;
+  const ex=[];
+  if(!silent){if(S.s3>0||S.mr>=3)ex.push(F.ex.s3);
+    if(S.s4>0)ex.push(NO_ATRIAL_KICK.includes(r)?F.ex.s4no:F.ex.s4);
+    if(msS>0)ex.push(F.ex.os(Math.round((.12-.065*msS)*1000)));
+    if(S.ava>1.1&&S.ava<2.6)ex.push(F.ex.ec);
+    if(S.mvp)ex.push(F.ex.mvp)}
+  h+=`<h4>${F.soundsH}</h4><dl class="kv"><dt>S1</dt><dd>${s1}</dd><dt>S2</dt><dd>${s2}</dd>${ex.map(e=>`<dt>+</dt><dd>${e}</dd>`).join('')}</dl>`;
+  const mur=[];
+  if(asS>0)mur.push([F.as(S.ava>=2,S.ava.toFixed(1)),F.asTxt(F.peak[asS>.6?'late':asS>.3?'mid':'early'],lc(sevTxt(sevAVA(S.ava))),Math.min(5,1+Math.round(asS*3.4)))]);
+  if(S.mr>0)mur.push([F.mr(lc(sevTxt(sevG(S.mr)))),F.mrTxt]);
+  if(S.ar>0)mur.push([F.ar(lc(sevTxt(sevG(S.ar)))),F.arTxt]);
+  if(msS>0)mur.push([F.ms(S.mva.toFixed(1)),F.msTxt+(NO_ATRIAL_KICK.includes(r)?F.msNo:F.msYes)]);
+  if(S.mvp)mur.push([F.mvp,F.mvpTxt]);
+  if(mur.length)h+=`<h4>${F.murH}</h4>`+mur.map(m=>`<div class="mur"><b>${m[0]}</b><p>${m[1]}</p></div>`).join('');
+  else if(!silent)h+=`<h4>${F.murH}</h4><p class="muted">${F.none}</p>`;
+  if(c&&S.mode!=='exam')h+=`<h4>${F.pearlH}</h4><div class="lk">${C.pearl}</div>`;
+  if(S.mode!=='exam'){const td=S.ava<1.5?'as':S.mva<2.5?'ms':S.mr>=1.5?'mr':S.ar>=1.5?'ar':S.mvp?'mvp':S.caseId==='normal'?'normal':'';if(td)h+=`<a class="tdwhy" href="teardown.html#${td}">${TDWHY[LANG]} →</a>`}
+  const fb=$('#findBody');fb.innerHTML=h;glossify(fb);
+  tipCheck();
+}
+
+/* ---------------- UI ---------------- */
+function sliderRow(id,lab,min,max,step,val){return `<div class="sl"><div class="top"><span class="slab">${lab}</span><output id="${id}Out"></output></div><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}"><div class="st" id="${id}St"></div></div>`}
+function renderMode(){
+  const p=$('#modePanel'),U=ui();
+  $$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.m===S.mode));
+  if(S.mode==='explore'){
+    p.innerHTML=`<div class="sec"><h3><span>${U.rhythm}</span><span>${Object.keys(RH).length}</span></h3>${GROUPS.map(g=>`<div class="glab">${U.groups[g]}</div><div class="chips">${Object.entries(RH).filter(([,v])=>v.g===g).map(([k])=>`<button class="chip" data-r="${k}" data-g="${k}">${esc(rhT(k).s)}</button>`).join('')}</div>`).join('')}
+      <div id="rateRow">${sliderRow('rate',U.rate,60,100,1,72)}</div></div>
+      <div class="sec"><h3><span>${U.valves}</span><button class="pill" id="resetV" style="padding:3px 10px;font-size:11px">${U.reset}</button></h3>
+      ${sliderRow('ava',U.ava,.5,3.5,.1,S.ava)}${sliderRow('mva',U.mva,.8,4.5,.1,S.mva)}${sliderRow('mr',U.mr,0,4,.5,S.mr)}${sliderRow('ar',U.ar,0,4,.5,S.ar)}
+      <div class="tg"><span>${U.mvp}</span><button class="sw" id="swMvp" aria-label="MVP"></button></div></div>
+      <div class="sec"><h3><span>${U.extra}</span></h3>${sliderRow('s3',U.s3,0,100,5,S.s3)}${sliderRow('s4',U.s4,0,100,5,S.s4)}</div>`;
+    $$('#modePanel .chip').forEach(b=>b.onclick=()=>{S.caseId=null;setRhythm(b.dataset.r)});
+    $('#rate').oninput=e=>{S.rate=+e.target.value;syncControls();retime();findings()};
+    for(const k of ['ava','mva','mr','ar','s3','s4'])$('#'+k).oninput=e=>{S[k]=+e.target.value;syncControls();findings()};
+    $('#swMvp').onclick=()=>{S.mvp=!S.mvp;syncControls();findings()};
+    $('#resetV').onclick=()=>{Object.assign(S,NORMAL_VALVES);S.caseId=null;syncControls();findings()};
+    $$('#modePanel .sl .slab, #modePanel .tg > span').forEach(el=>{if(!el.closest('#rateRow'))glossify(el)});
+  }else if(S.mode==='cases'){
+    p.innerHTML=`<div class="sec"><h3><span>${U.casesH}</span><span>${CASES.length}</span></h3><p class="muted" style="margin-bottom:12px">${U.casesIntro}</p><div class="cases">${CASES.map(c=>{const C=caseT(c.id);return `<button class="case" data-c="${c.id}"><div class="ct">${C.t}</div><div class="cs">${C.story}</div><div class="tags"><i>${esc(rhT(c.set.rhythm).s)}</i><i class="s">${esc(siteT(c.site).short)} · ${U.piece[c.piece].toLocaleLowerCase(LANG)}</i></div></button>`}).join('')}</div></div>`;
+    $$('#modePanel .case').forEach(b=>{glossify(b);b.onclick=()=>{applyCase(CASES.find(c=>c.id===b.dataset.c));$$('#modePanel .case').forEach(x=>x.classList.toggle('on',x===b))}});
+    $$('#modePanel .case').forEach(x=>x.classList.toggle('on',x.dataset.c===S.caseId));
+  }else if(S.mode==='learn')renderLearn();
+  else renderExam();
+  syncControls();tipCheck();
+}
+function syncControls(){
+  const R=RH[S.rhythm],RT=rhT(S.rhythm),U=ui();
+  $$('#modePanel .chip').forEach(b=>b.classList.toggle('on',b.dataset.r===S.rhythm));
+  const rate=$('#rate');
+  if(rate){const dis=!R.max;rate.disabled=dis;if(!dis){rate.min=R.min;rate.max=R.max;rate.value=S.rate}
+    $('#rateOut').textContent=dis?'—':S.rate+U.perMin;rate.closest('.sl').querySelector('.top span').textContent=RT.lab||U.rate;
+    $('#rateSt').textContent=S.rhythm==='flutter'?U.conduction(clamp(Math.round(300/S.rate),2,4)):dis?U.noRate:'';
+    const set=(id,txt,st,cls)=>{const el=$('#'+id);el.value=S[id];el.style.setProperty('--p',((S[id]-el.min)/(el.max-el.min)*100)+'%');$('#'+id+'Out').textContent=txt;const s=$('#'+id+'St');s.textContent=st;s.className='st'+(cls?' '+cls:'')};
+    const sv=(id,val,k)=>set(id,val,sevTxt(k),sevCls(k));
+    sv('ava',S.ava.toFixed(1),sevAVA(S.ava));sv('mva',S.mva.toFixed(1),sevMVA(S.mva));
+    sv('mr',S.mr.toFixed(1),sevG(S.mr));sv('ar',S.ar.toFixed(1),sevG(S.ar));
+    set('s3',S.s3+'%','','');set('s4',S.s4+'%',S.s4>0&&NO_ATRIAL_KICK.includes(S.rhythm)?U.s4silent:'','w');
+    rate.style.setProperty('--p',dis?'0%':((S.rate-R.min)/(R.max-R.min)*100)+'%');
+    $('#swMvp').classList.toggle('on',S.mvp)}
+  $$('#torso .dot').forEach(d=>d.classList.toggle('on',d.dataset.s===S.site));
+  const st=siteT(S.site);$('#siteName').innerHTML=`<b>${st.n}</b><small>${st.d}</small>`;$('#siteShort').textContent=st.short;glossify($('#siteName'));
+  $$('#segPiece button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.piece));
+  $$('#segOut button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.out));
+  $('#swBreath').classList.toggle('on',S.breath);
+  const rn=$('#rname');rn.textContent=S.sealed?U.unknown:RT.n;
+  if(S.sealed){rn.removeAttribute('data-g');rn.classList.remove('g');rn.removeAttribute('tabindex')}else{rn.dataset.g=S.rhythm;rn.classList.add('g');rn.tabIndex=0}
+  const sub=$('#rsub');sub.textContent=U.sub(st.n,U.piece[S.piece]);glossify(sub);
+  $('#plab').innerHTML=`<span data-g="pcg">${esc(U.pcgLab(st.n))}</span>`;
+  $('#heartCard').classList.toggle('sealed',S.sealed);$('#find').classList.toggle('sealed',S.sealed);
+}
+function setRhythm(r,rate){S.rhythm=r;S.rate=rate||RH[r].r||S.rate;G.base=baseFor(r);retime();syncControls();findings();if(S.mode==='learn')markLearn()}
+function applyCase(c){Object.assign(S,NORMAL_VALVES);S.caseId=c.id;S.site=c.site;S.piece=c.piece;for(const k in c.set)if(k!=='rhythm'&&k!=='rate')S[k]=c.set[k];applyChest();setRhythm(c.set.rhythm,c.set.rate)}
+
+/* ---------------- Exam (answers are keys, so it works in every language) ---------------- */
+let EX=null;
+function examStart(){EX={i:0,pool:shuffle(CASES.slice()).slice(0,8),score:0,res:[]};examLoad()}
+function examLoad(){const c=EX.pool[EX.i];S.sealed=true;applyCase(c);
+  const rk=c.set.rhythm,others=shuffle(Object.keys(RH).filter(k=>k!==rk)).slice(0,3);
+  const so=shuffle(CASES.map(x=>x.id).filter(id=>id!==c.id)).slice(0,3);
+  EX.q=[{q:'q1',t:'rh',o:shuffle([rk,...others]),a:rk},{q:'q2',t:'snd',o:shuffle([c.id,...so]),a:c.id}];EX.ans=[null,null];renderExam()}
+const optLabel=(t,k)=>t==='rh'?rhT(k).n:caseT(k).sound;
+function renderExam(){
+  const p=$('#modePanel'),E=ui().ex;
+  if(!EX){p.innerHTML=`<div class="sec"><h3><span>${E.title}</span><span>${E.n8}</span></h3><p class="muted">${E.intro1}</p><p class="muted" style="margin:10px 0 16px">${E.intro2}</p><button class="btn full" id="exGo">${E.begin}</button></div>`;$('#exGo').onclick=examStart;return}
+  if(EX.i>=EX.pool.length){const pct=EX.score/16,vi=pct>=.875?0:pct>=.625?1:pct>=.375?2:3;
+    p.innerHTML=`<div class="sec score"><h3><span>${E.result}</span><span>${E.of8}</span></h3><div class="big">${EX.score}<small> / 16</small></div><div class="verdict">${E.verdicts[vi]}</div><div class="rl">${EX.res.map(r=>`<div>${r.ok===2?'✅':r.ok===1?'🟡':'❌'} ${caseT(r.id).t}</div>`).join('')}</div><button class="btn full" id="exAgain">${E.again}</button><button class="btn ghost full" id="exOut" style="margin-top:8px">${E.back}</button></div>`;
+    $('#exAgain').onclick=examStart;$('#exOut').onclick=()=>{EX=null;S.sealed=false;S.mode='explore';renderMode();findings()};return}
+  const c=EX.pool[EX.i],C=caseT(c.id),done=EX.ans[0]!=null&&EX.ans[1]!=null;
+  p.innerHTML=`<div class="sec exq"><h3><span>${E.patient(EX.i+1)}</span><span>${E.score(EX.score)}</span></h3><div class="prog">${EX.pool.map((_,k)=>`<i class="${k<EX.i?'d':k===EX.i?'c':''}"></i>`).join('')}</div>
+    ${done?`<div class="casebar"><div class="k">${E.revealed}</div><div class="t">${C.t}</div><p>${C.story}</p></div>`:`<p class="muted">${E.hint}</p>`}
+    ${EX.q.map((q,qi)=>`<h5>${qi+1}. ${E[q.q]}</h5>${q.o.map(o=>{let cl='';if(EX.ans[qi]!=null){if(o===q.a)cl='ok';else if(o===EX.ans[qi])cl='no'}return `<button class="opt ${cl}" data-q="${qi}" data-o="${o}" ${EX.ans[qi]!=null?'disabled':''}>${optLabel(q.t,o)}</button>`}).join('')}`).join('')}
+    ${done?`<div class="reveal"><b>${E.why}</b> ${C.pearl}</div><button class="btn full" id="exNext" style="margin-top:12px">${EX.i<7?E.next:E.see}</button>`:''}</div>`;
+  $$('#modePanel .opt').forEach(b=>glossify(b));
+  if(done){const rv=$('#modePanel .reveal');if(rv)glossify(rv)}
+  $$('#modePanel .opt').forEach(b=>b.onclick=()=>{const qi=+b.dataset.q;if(EX.ans[qi]!=null)return;EX.ans[qi]=b.dataset.o;if(b.dataset.o===EX.q[qi].a)EX.score++;
+    if(EX.ans[0]!=null&&EX.ans[1]!=null){const ok=(EX.ans[0]===EX.q[0].a)+(EX.ans[1]===EX.q[1].a);EX.res.push({id:c.id,ok});S.sealed=false;syncControls();findings()}hideTip();renderExam()});
+  const nx=$('#exNext');if(nx)nx.onclick=()=>{EX.i++;if(EX.i<EX.pool.length)examLoad();else{S.sealed=false;syncControls();renderExam()}};
+}
+
+/* ---------------- Glossary engine ---------------- */
+const GK={};GLOSS.forEach(e=>GK[e.k]=e);
+const rxEsc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+let GRX=null;
+function buildGloss(){
+  const ab=[],wd=[];
+  for(const e of GLOSS){for(const a of e.a)ab.push([a,e.k]);for(const w of (e.w[LANG]||[]))wd.push([w,e.k])}
+  ab.sort((x,y)=>y[0].length-x[0].length);wd.sort((x,y)=>y[0].replace(/\*/g,'').length-x[0].replace(/\*/g,'').length);
+  const B0='(?<![\\p{L}\\p{N}])',B1='(?![\\p{L}\\p{N}])';
+  try{
+    GRX={
+      ab:{re:new RegExp(B0+'(?:'+ab.map(([a])=>'('+rxEsc(a)+')').join('|')+')'+B1,'gu'),keys:ab.map(x=>x[1])},
+      wd:wd.length?{re:new RegExp(B0+'(?:'+wd.map(([w])=>'('+rxEsc(w).replace(/\\\*/g,'\\p{L}*')+')').join('|')+')'+B1,'giu'),keys:wd.map(x=>x[1])}:null
+    };
+  }catch(err){GRX=null}
+}
+function nextHit(text,from){
+  let best=null;
+  for(const k of ['ab','wd']){const g=GRX[k];if(!g)continue;g.re.lastIndex=from;const m=g.re.exec(text);if(!m)continue;
+    let gi=1;while(gi<m.length&&m[gi]===undefined)gi++;
+    const hit={i:m.index,len:m[0].length,key:g.keys[gi-1]};
+    if(!best||hit.i<best.i||(hit.i===best.i&&hit.len>best.len))best=hit}
+  return best;
+}
+function glossify(root,seen){
+  if(!GRX||!root)return;seen=seen||new Set();
+  const nodes=[],tw=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(n){const p=n.parentElement;if(!p||p.closest('.g,[data-g],script,style,svg,canvas,textarea,input,output,.nog'))return NodeFilter.FILTER_REJECT;return n.nodeValue.trim()?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_SKIP}});
+  while(tw.nextNode())nodes.push(tw.currentNode);
+  for(const n of nodes){
+    const text=n.nodeValue;let pos=0,last=0,frag=null;
+    while(pos<text.length){const h=nextHit(text,pos);if(!h)break;pos=h.i+h.len;
+      if(seen.has(h.key)||!GK[h.key])continue;seen.add(h.key);
+      frag=frag||document.createDocumentFragment();
+      if(h.i>last)frag.appendChild(document.createTextNode(text.slice(last,h.i)));
+      const sp=document.createElement('span');sp.className='g';sp.dataset.g=h.key;sp.textContent=text.slice(h.i,h.i+h.len);
+      if(!n.parentElement.closest('button'))sp.tabIndex=0;
+      frag.appendChild(sp);last=pos}
+    if(frag){if(last<text.length)frag.appendChild(document.createTextNode(text.slice(last)));n.parentNode.replaceChild(frag,n)}
+  }
+}
+const isCyr=s=>/[Ѐ-ӿ]/.test(s);
+function gTok(e){
+  if(e.rh)return rhT(e.rh).s;
+  if(e.a.length){const want=LANG==='ru';const a=e.a.find(x=>isCyr(x)===want)||e.a[0];return a}
+  return '';
+}
+function gName(e,l){l=l||LANG;return e.rh?pick2('rh',e.rh,l).n:(e.n[l]||e.n.en)}
+function gSpot(e){return e.rh?rhT(e.rh).ecg:(e.s?(e.s[LANG]||e.s.en):'')}
+function pick2(sec,k,l){return Object.assign({},I18N.en[sec][k],I18N[l][sec][k]||{})}
+function tipHTML(e){
+  const G=ui().gl,tok=gTok(e),nm=gName(e),sp=gSpot(e);
+  const head=tok&&lc(tok)!==lc(nm)?`<span class="tk">${esc(tok)}</span><span class="tn">${esc(nm)}</span>`:`<span class="tn">${esc(nm)}</span>`;
+  return `<div class="th">${head}</div><div class="tl">${G.what}</div><p>${esc(e.d[LANG]||e.d.en)}</p>`+
+    (sp&&!S.sealed?`<div class="tl">${G.spot}</div><p>${esc(sp)}</p>`:'')+
+    `<div class="tx">${LANGS.map(l=>`<div><b>${I18N[l].label}</b>${esc(gName(e,l))}</div>`).join('')}</div>`;
+}
+/* tooltip */
+const TIP={el:null,anchor:null,timer:0,touch:false};
+function showTip(anchor){
+  const e=GK[anchor.dataset.g];if(!e)return;
+  clearTimeout(TIP.timer);
+  if(TIP.anchor&&TIP.anchor!==anchor)TIP.anchor.classList.remove('tip-on');
+  TIP.anchor=anchor;anchor.classList.add('tip-on');
+  const t=TIP.el;t.innerHTML=tipHTML(e);t.classList.add('on');
+  const r=anchor.getBoundingClientRect(),vw=innerWidth,vh=innerHeight,tw=t.offsetWidth,th=t.offsetHeight;
+  let x=r.left+r.width/2-tw/2;x=clamp(x,10,vw-tw-10);
+  let y=r.bottom+8;if(y+th>vh-10&&r.top-th-8>10)y=r.top-th-8;y=clamp(y,10,Math.max(10,vh-th-10));
+  t.style.transform='none';t.style.left=x+'px';t.style.top=y+'px';
+}
+function hideTip(){clearTimeout(TIP.timer);if(TIP.anchor)TIP.anchor.classList.remove('tip-on');TIP.anchor=null;if(TIP.el)TIP.el.classList.remove('on')}
+function tipCheck(){if(TIP.anchor&&!TIP.anchor.isConnected)hideTip()}
+function initTips(){
+  TIP.el=$('#tip');
+  document.addEventListener('pointerover',ev=>{if(ev.pointerType==='touch')return;const a=ev.target.closest&&ev.target.closest('[data-g]');if(a)showTip(a)});
+  document.addEventListener('pointerout',ev=>{if(ev.pointerType==='touch')return;const a=ev.target.closest&&ev.target.closest('[data-g]');if(a&&!a.contains(ev.relatedTarget)){clearTimeout(TIP.timer);TIP.timer=setTimeout(hideTip,90)}});
+  document.addEventListener('pointerdown',ev=>{if(ev.pointerType==='mouse')return;const a=ev.target.closest&&ev.target.closest('[data-g]');
+    if(a){if(TIP.anchor===a&&!a.matches('button')){hideTip();return}showTip(a);clearTimeout(TIP.timer);TIP.timer=setTimeout(hideTip,6000)}else if(!ev.target.closest('#tip'))hideTip()},{passive:true});
+  document.addEventListener('focusin',ev=>{const a=ev.target.closest&&ev.target.closest('[data-g]');if(a&&a.matches(':focus-visible'))showTip(a)});
+  document.addEventListener('focusout',()=>{clearTimeout(TIP.timer);TIP.timer=setTimeout(hideTip,60)});
+  document.addEventListener('keydown',ev=>{if(ev.key==='Escape')hideTip()});
+  addEventListener('scroll',hideTip,{passive:true});addEventListener('resize',hideTip);
+}
+
+/* ---------------- Glossary tab ---------------- */
+const CATS=['rhythm','ecg','sound','valve','anat','clin'];
+function renderLearn(){
+  const p=$('#modePanel'),G=ui().gl;
+  p.innerHTML=`<div class="sec"><h3><span>${G.title}</span><span>${G.terms(GLOSS.length)}</span></h3><p class="muted">${G.intro}</p><input id="gq" class="gq" type="search" autocomplete="off" spellcheck="false" placeholder="${esc(G.search)}"><div id="glist"></div></div>`;
+  const q=$('#gq');q.value=LEARNQ;q.oninput=()=>{LEARNQ=q.value;drawLearn()};drawLearn();
+}
+let LEARNQ='';
+function drawLearn(){
+  const G=ui().gl,q=lc(LEARNQ.trim()),box=$('#glist');if(!box)return;
+  /* match at the start of any word, so "PR" finds the PR interval, not "supraventricular" */
+  const words=e=>lc([gTok(e),...e.a,...LANGS.map(l=>gName(e,l)),e.d[LANG]||''].join(' ')).split(/[^\p{L}\p{N}°′²]+/u);
+  const hit=e=>{if(!q)return true;const qs=q.split(/\s+/);const w=words(e);return qs.every(t=>w.some(x=>x.startsWith(t)))};
+  let html='',n=0;
+  for(const c of CATS){const items=GLOSS.filter(e=>e.c===c&&hit(e));if(!items.length)continue;
+    html+=`<div class="gcat">${G.cat[c]}</div>`;
+    for(const e of items){n++;const tok=gTok(e),nm=gName(e),sp=gSpot(e),demo=e.rh||DEMO[e.k];
+      const others=LANGS.filter(l=>l!==LANG).map(l=>`${I18N[l].label} ${esc(gName(e,l))}`).join(' · ');
+      html+=`<button class="gi${demo?' demo':''}" data-k="${e.k}"><div class="gh">${tok&&lc(tok)!==lc(nm)?`<span class="gk">${esc(tok)}</span>`:''}<span class="gn">${esc(nm)}</span></div><p>${esc(e.d[LANG]||e.d.en)}</p>${sp?`<p class="gs">${esc(sp)}</p>`:''}<div class="gx">${others}</div>${demo?`<span class="go">${G.show}</span>`:''}</button>`}}
+  box.innerHTML=n?html:`<p class="muted" style="margin-top:12px">${G.none}</p>`;
+  $$('#glist .gi.demo').forEach(b=>b.onclick=()=>{const e=GK[b.dataset.k];
+    if(e.rh){S.caseId=null;setRhythm(e.rh)}else{const d=DEMO[e.k],c=CASES.find(x=>x.id===d);if(c)applyCase(c);else if(RH[d]){S.caseId=null;setRhythm(d)}}
+    $$('#glist .gi').forEach(x=>x.classList.toggle('on',x===b));
+    const mon=$('.screen').getBoundingClientRect();if(mon.bottom<60||mon.top>innerHeight-60)$('.screen').closest('.card').scrollIntoView({behavior:'smooth',block:'start'})});
+  markLearn();
+}
+function markLearn(){}
+
+/* ---------------- Static text + language ---------------- */
+function renderLangSwitch(){
+  for(const id of ['#langIntro','#langTop']){const box=$(id);if(!box)continue;box.innerHTML=LANGS.map(l=>`<button data-l="${l}" class="${l===LANG?'on':''}" title="${I18N[l].name}" aria-pressed="${l===LANG}">${I18N[l].label}</button>`).join('');
+    box.querySelectorAll('button').forEach(b=>b.onclick=()=>setLang(b.dataset.l))}
+}
+function renderStatic(){
+  const U=ui();
+  document.documentElement.lang=LANG==='uz'?'uz-Latn':LANG;
+  renderLangSwitch();
+  if($('#intro')){$('#iKick').textContent=U.kick;$('#iLede').innerHTML=U.lede;$('#iList').innerHTML=U.bullets.map(b=>`<li>${b}</li>`).join('');
+    $('#goTxt').textContent=U.go;$('#iNote').textContent=U.note;glossify($('#iLede'))}
+  $('#tagline').textContent=U.tagline;
+  $$('#tabs button').forEach(b=>b.textContent=U.tabs[b.dataset.m]);
+  $('#bpm').textContent=U.bpm;
+  $('#elab').innerHTML=`<span data-g="ecg">${esc(U.ecgLab)}</span>`;
+  $('#cap').innerHTML=U.cap;glossify($('#cap'));
+  $('#tLink').textContent=U.coupling;$('#tFreeze').textContent=frozen?U.frozen:U.freeze;
+  const LG=[['pwave','P','#7cc4ff'],['qrs','QRS','#e9edf2'],['twave','T','#8d97a6'],['s1','S1','#ffb648'],['s2','S2','#ffb648'],['s3','S3','#ff788c'],['s4','S4','#ff788c'],['os','OS','#ff788c'],['ec','EC','#ff788c'],['click','click','#ff788c']];
+  $('#legend').innerHTML=`<span class="lt">${U.legend}</span>`+LG.map(([k,t,c])=>`<span data-g="${k}"><i style="background:${c}"></i>${t}</span>`).join('');
+  $('#liveHeart').textContent=U.liveHeart;$('#sealHeart').textContent=U.sealHeart;$('#sealFind').textContent=U.sealFind;
+  $('#tRA').textContent=U.chambers.ra;$('#tLA').textContent=U.chambers.la;$('#tRV').textContent=U.chambers.rv;$('#tLV').textContent=U.chambers.lv;
+  $('#stethT').textContent=U.steth;
+  $$('#segPiece button').forEach(b=>b.textContent=U.piece[b.dataset.v]);
+  $$('#segOut button').forEach(b=>b.textContent=U.out[b.dataset.v]);
+  $('#breathLbl').textContent=U.breathing;glossify($('#breathLbl'));
+  $('#volLbl').textContent=U.volume;
+  $$('#valves .vrow').forEach(r=>{r.querySelector('.vn').textContent=U.valveN[r.dataset.v];const o=VR[r.dataset.v];if(o.st)o.em.textContent=U.vstate[o.st]});
+  $('#foot').innerHTML=U.footer;
+  H.phaseTxt=null;$('#phase').textContent=U.phase.diast;
+}
+function setLang(l){
+  if(!LANGS.includes(l)||l===LANG&&GRX)return;
+  LANG=l;try{localStorage.setItem('smartheart-lang',l)}catch(e){}
+  try{const u=new URL(location.href);if(u.searchParams.has('lang')){u.searchParams.set('lang',l);history.replaceState(null,'',u)}}catch(e){}
+  hideTip();buildGloss();renderStatic();renderMode();findings();
+}
+
+/* ---------------- Wiring ---------------- */
+function setMode(m){if(S.mode==='exam'&&m!=='exam'){EX=null;S.sealed=false}S.mode=m;hideTip();renderMode();findings()}
+function initUI(){
+  ['ra','la','rv','lv','vent','atria','sa','avn','intern','his','rbb','lbb','t1','t2','m1','m2'].forEach(id=>H[id]=$('#'+id));
+  $('#valves').innerHTML=['mitral','tricuspid','aortic','pulmonic'].map(n=>`<div class="vrow" data-v="${n}"><span class="vn"></span><em></em><div class="vb"><u></u></div></div>`).join('');
+  $$('#valves .vrow').forEach(r=>VR[r.dataset.v]={u:r.querySelector('u'),em:r.querySelector('em'),st:''});
+  initTips();buildGloss();renderStatic();
+  ['mitral','tricuspid','aortic','pulmonic'].forEach(n=>setValve(n,0,'closed'));
+  $$('#tabs button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+  $$('#torso .dot').forEach(d=>d.onclick=()=>{S.site=d.dataset.s;syncControls();findings()});
+  $$('#segPiece button').forEach(b=>b.onclick=()=>{S.piece=b.dataset.v;applyChest();syncControls()});
+  $$('#segOut button').forEach(b=>b.onclick=()=>{S.out=b.dataset.v;if(AC){makeBands();applyChest();retime()}syncControls()});
+  $('#swBreath').onclick=()=>{S.breath=!S.breath;syncControls()};
+  $('#vol').oninput=e=>{S.vol=e.target.value/100;$('#volOut').textContent=e.target.value+'%';e.target.style.setProperty('--p',e.target.value+'%');applyVol()};$('#vol').style.setProperty('--p','80%');
+  $('#tLink').onclick=e=>{S.link=!S.link;e.currentTarget.classList.toggle('on',S.link)};
+  const fz=()=>{frozen=!frozen;$('#tFreeze').classList.toggle('on',frozen);$('#tFreeze').textContent=frozen?ui().frozen:ui().freeze;if(!frozen)lastT=null};
+  $('#tFreeze').onclick=fz;
+  document.addEventListener('keydown',e=>{if(e.code==='Space'&&e.target===document.body){e.preventDefault();fz()}});
+  $('#go').onclick=()=>{hideTip();startAudio();G.tA=G.tV=AC.currentTime+.05;G.base=baseFor(S.rhythm);$('#intro').classList.add('gone');setTimeout(()=>$('#intro').remove(),600);setupCanvas();setInterval(tick,40);tick();requestAnimationFrame(frame)};
+  let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(AC)setupCanvas()},150)});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AC&&AC.state==='suspended')AC.resume()});
+  renderMode();findings();
+  try{const q=new URLSearchParams(location.search).get('case'),c0=CASES.find(x=>x.id===q);if(c0){S.mode='cases';applyCase(c0);renderMode();findings()}}catch(e){}
+}
+let hrT=0;
+function frame(){
+  const now=AC.currentTime;drawSweep(now);heartUpdate(now);
+  if(now-hrT>.25){hrT=now;const r=S.rhythm;let txt='--';
+    if(r==='asys')txt='0';else if(r!=='vf'){const vs=G.ven.filter(v=>v.t<=now).slice(-4);if(vs.length>=2){const span=vs[vs.length-1].t-vs[0].t;txt=Math.round(60*(vs.length-1)/span)}}
+    $('#hr').textContent=txt;
+    const I=insp(now),up=inspiring(now),U=ui();$('#bbar').style.width=(I*100).toFixed(0)+'%';$('#btxt').textContent=S.breath?(up?U.insp:U.exp):U.held;}
+  requestAnimationFrame(frame);
+}
+initUI();
+
+</script>
+</body>
+</html>

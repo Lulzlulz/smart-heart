@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Smart Heart: The Game</title>
+<meta name="description" content="One trace, fourteen tools. Read the rhythm, pick from the crash cart, draw the dose. Five cardiac emergencies on European guideline doses.">
+<meta property="og:title" content="Smart Heart: The Game">
+<meta property="og:description" content="The ECG is your patient and your health bar. Read it, pick from the cart, draw the dose.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout idea: the monitor is the whole game. One luminous trace on top, one fixed crash cart below, giant numerals when you draw a dose. Single dark theme by choice. */
+  color-scheme:dark;
+  --bg:#06080b;
+  --panel:#0e1319;
+  --line:#1f2832;
+  --text:#e9edf2;
+  --muted:#8792a0;
+  --ok:#3cf5a0;      /* stable trace */
+  --warn:#ffb648;    /* deteriorating */
+  --bad:#ff4d6d;     /* critical */
+  /* Oswald only steps in for Cyrillic, which Big Shoulders does not carry. */
+  --display:"Big Shoulders Display","Oswald","Arial Narrow",Impact,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+
+#app{max-width:520px;margin:0 auto;min-height:100%;min-height:100dvh;display:flex;flex-direction:column;gap:10px;padding:12px 16px 18px;padding-bottom:max(18px,env(safe-area-inset-bottom));position:relative}
+#app.shake{animation:shake .32s}
+@keyframes shake{20%{transform:translate(-7px,3px)}40%{transform:translate(6px,-4px)}60%{transform:translate(-4px,2px)}80%{transform:translate(3px,-1px)}}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:40}
+#flash.go{animation:flash .45s ease-out}
+@keyframes flash{0%{opacity:.95}100%{opacity:0}}
+
+.bar{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{white-space:nowrap;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-decoration:none}
+.brand b{color:var(--bad);font-weight:600}
+.hud{display:flex;align-items:center;gap:10px}
+.prog{font-family:var(--mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.lives{display:flex;gap:4px}
+.lives svg{width:16px;height:16px;fill:var(--bad);transition:.3s}
+.lives svg.gone{fill:#2a323d;transform:scale(.8)}
+.score{font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:.02em;font-variant-numeric:tabular-nums;min-width:56px;text-align:right}
+.mult{font-family:var(--mono);font-size:11px;color:var(--warn);min-width:34px;text-align:right}
+.mute{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);font-family:var(--mono);font-size:10px;color:var(--muted)}
+.mute[aria-pressed="true"]{color:var(--text);border-color:#3a4654}
+
+.monitor{position:relative;border-radius:16px;background:#080b0f;border:1px solid var(--line);overflow:hidden;--c:var(--ok)}
+.monitor::before{content:"";position:absolute;inset:0;background:linear-gradient(#ffffff08 1px,transparent 1px) 0 0/100% 24px,linear-gradient(90deg,#ffffff08 1px,transparent 1px) 0 0/24px 100%;pointer-events:none}
+.monitor.ring{border-color:var(--warn);box-shadow:0 0 0 2px var(--warn)}
+.monitor.rosc{animation:rosc 1.5s ease-out}
+@keyframes rosc{0%{box-shadow:0 0 0 0 #3cf5a0cc,inset 0 0 70px #3cf5a066}100%{box-shadow:0 0 0 28px #3cf5a000,inset 0 0 0 #3cf5a000}}
+#ecg{display:block;width:100%;height:170px}
+.vitals{position:absolute;left:12px;right:12px;top:8px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+.hr{font-family:var(--display);font-weight:900;font-size:56px;line-height:.9;color:var(--c);font-variant-numeric:tabular-nums;text-shadow:0 0 22px color-mix(in srgb,var(--c) 45%,transparent)}
+.hr small{font-family:var(--mono);font-weight:500;font-size:10px;letter-spacing:.14em;color:var(--muted);margin-left:6px;text-shadow:none}
+.side{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+.side span{color:var(--muted);font-size:9.5px;letter-spacing:.14em;margin-right:6px}
+.side b.chg{animation:chg .9s ease-out}
+@keyframes chg{0%{color:#fff;text-shadow:0 0 12px #fff}100%{color:inherit;text-shadow:none}}
+.stab{height:6px;background:#141b23}
+.stab i{display:block;height:100%;width:100%;background:var(--c);box-shadow:0 0 12px var(--c);transition:width .12s linear,background .3s}
+.ff{position:absolute;inset:0;display:none;align-items:flex-end;justify-content:center;padding-bottom:18px;font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.08em;color:var(--warn);pointer-events:none}
+.ff.on{display:flex}
+
+.case{min-height:104px;display:flex;flex-direction:column;gap:6px}
+.vig{font-family:var(--display);font-weight:800;font-size:23px;line-height:1.08;letter-spacing:.01em;text-transform:uppercase;margin:0;text-wrap:balance}
+html:not([lang=en]) .vig{font-size:19px;line-height:1.14}
+.msg{margin:0;font-size:14px;color:var(--muted);min-height:2.9em}
+.msg.good{color:var(--ok)}.msg.poor{color:var(--bad)}.msg.flat{color:#cfd5dd}
+.coach{display:none;border:1px solid var(--warn);background:#191307;border-radius:12px;padding:10px 12px;font-size:14.5px;line-height:1.4}
+.coach.on{display:block}
+.coach.on + .msg{display:none}
+.coach p{margin:0}
+.coach .row{display:flex;align-items:center;gap:12px;margin-top:8px}
+.coach .nx{height:40px;padding:0 20px;border-radius:10px;background:var(--warn);color:#1a1004;font-family:var(--display);font-weight:800;font-size:17px;letter-spacing:.05em;text-transform:uppercase}
+.coach .sk{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted);text-decoration:underline;padding:8px 0}
+
+.cart{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:auto}
+.tool{position:relative;height:58px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.04em;text-transform:uppercase;line-height:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:4px;overflow:hidden;transition:transform .06s,border-color .15s,background .15s}
+html:not([lang=en]) .tool{font-size:13px;letter-spacing:.02em;line-height:1.05}
+.tool:active{transform:scale(.95);background:#151c25}
+.tool.hand{color:#cfd5dd}
+.tool.elec{color:var(--warn);border-color:#4a3a1c}
+.tool.drug{color:var(--text)}
+.tool.drug::after{content:"";position:absolute;right:7px;top:7px;width:10px;height:3px;border-radius:2px;background:var(--bad);box-shadow:-5px 0 0 -1px var(--bad)}
+.tool.wide{grid-column:span 2}
+.tool.lock{opacity:.28;pointer-events:none}
+.cart[aria-disabled="true"] .tool{opacity:.35;pointer-events:none}
+.pulse{animation:pulse 1.05s ease-out infinite;border-color:var(--warn)!important}
+@keyframes pulse{0%{box-shadow:0 0 0 0 #ffb648aa}100%{box-shadow:0 0 0 13px #ffb64800}}
+
+.sheet,.card{position:fixed;inset:0;z-index:30;display:none;align-items:flex-end;justify-content:center;background:rgba(3,5,8,.72)}
+/* The sheet leaves the monitor uncovered: the trace is still the health bar while you draw a dose. */
+.sheet{background:linear-gradient(to bottom,rgba(3,5,8,0) 0,rgba(3,5,8,0) 236px,rgba(3,5,8,.82) 300px)}
+.card{backdrop-filter:blur(3px)}
+.sheet.on,.card.on{display:flex}
+.card{align-items:flex-start;padding:16px;overflow:auto}
+.sheet-in{width:100%;max-width:520px;background:#0b1016;border:1px solid var(--line);border-bottom:0;border-radius:22px 22px 0 0;padding:16px 18px 20px;padding-bottom:max(20px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;animation:upS .12s ease-out}
+@keyframes upS{from{transform:translateY(10px);opacity:.4}}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.sh-top{display:flex;justify-content:space-between;align-items:center}
+.sh-name{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.x{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);color:var(--muted);font-size:18px;line-height:1}
+.dose{font-family:var(--display);font-weight:900;font-size:clamp(84px,30vw,132px);line-height:.82;letter-spacing:-.01em;font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:10px}
+.dose small{font-size:.26em;font-weight:800;color:var(--muted);letter-spacing:.06em}
+.syr{position:relative;height:76px;touch-action:none;cursor:ew-resize;user-select:none;-webkit-user-select:none}
+.barrel{position:absolute;left:0;right:26px;top:20px;height:36px;border:2px solid #53606f;border-radius:6px 3px 3px 6px;overflow:hidden;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),#2c3642 calc(10% - 1px) 10%)}
+.barrel i{display:block;height:100%;width:0;background:linear-gradient(180deg,#ff8ea1,var(--bad));opacity:.9}
+.needle{position:absolute;right:0;top:36px;width:26px;height:3px;background:#8b97a5;border-radius:0 2px 2px 0}
+.plunger{position:absolute;top:8px;width:12px;height:60px;margin-left:-6px;border-radius:4px;background:var(--text);box-shadow:0 0 14px #fff6}
+.fine-row{display:grid;grid-template-columns:72px 1fr 72px;gap:10px;align-items:center}
+.nud{height:54px;border-radius:14px;border:2px solid #3a4654;background:var(--panel);font-family:var(--display);font-weight:900;font-size:34px;line-height:1;user-select:none;-webkit-user-select:none;touch-action:none}
+.nud:active{background:#18212b;transform:scale(.96)}
+.sh-hint{font-family:var(--mono);font-size:11px;color:var(--muted);margin:0;text-align:center;line-height:1.35}
+.sh-hint.tut{font-family:var(--body);font-size:13.5px;color:var(--warn)}
+.sh-hint b{display:block;font-weight:500;color:#5d6875;margin-top:2px}
+.push{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.push button{height:60px;border-radius:14px;font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:.05em;text-transform:uppercase;line-height:1}
+html:not([lang=en]) .push button{font-size:15px;letter-spacing:.02em;line-height:1.1}
+.push .fast{background:var(--bad);color:#19060a}
+.push .slow{background:transparent;border:2px solid var(--text)}
+.push button:disabled{opacity:.3}
+
+.card-in{width:100%;max-width:460px;margin:auto;background:#0b1016;border:1px solid var(--line);border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:14px;animation:up .2s ease-out}
+.verdict{font-family:var(--display);font-weight:900;font-size:54px;line-height:.9;text-transform:uppercase;margin:0}
+html:not([lang=en]) .verdict{font-size:40px;line-height:1}
+.verdict.saved{color:var(--ok)}.verdict.lost{color:var(--bad)}
+.pts{font-family:var(--mono);font-size:13px;color:var(--warn)}
+.why{margin:0;font-size:14.5px;line-height:1.4;color:var(--bad)}
+.dx{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:0}
+.teach{margin:0;font-size:16px;line-height:1.5}
+.src{margin:0;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.shot[hidden]{display:none}
+.shot{display:block;width:min(100%,230px);margin:0 auto;border-radius:12px;border:1px solid var(--line)}
+.go{height:58px;border-radius:14px;background:var(--text);color:#07090c;font-family:var(--display);font-weight:900;font-size:22px;letter-spacing:.06em;text-transform:uppercase;line-height:1}
+.go small{display:block;margin-top:5px;font-family:var(--mono);font-weight:500;font-size:10.5px;letter-spacing:.04em;text-transform:none;opacity:.72}
+.go.tall{height:68px}
+.go.ghost{background:transparent;color:var(--text);border:2px solid var(--line);font-size:17px;height:48px}
+html:not([lang=en]) .go{font-size:18px;letter-spacing:.03em}
+html:not([lang=en]) .go.ghost{font-size:14.5px}
+
+#title{position:absolute;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;gap:16px;padding:18px 16px 20px;overflow:auto}
+#title.off{display:none}
+#title>*{flex:none}
+.t-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.t-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--bad)}
+.langs{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px;flex:none}
+.langs button{padding:7px 11px;border-radius:999px;font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;color:var(--muted);font-weight:500}
+.langs button.on{background:var(--ok);color:#04140c;font-weight:600}
+.t-name{font-family:var(--display);font-weight:900;font-size:clamp(76px,25vw,128px);line-height:.8;text-transform:uppercase;margin:0;letter-spacing:-.01em}
+.t-name span{display:block;color:var(--ok);text-shadow:0 0 34px #3cf5a055}
+.t-tag{margin:0;font-size:17px;color:#cfd5dd;max-width:32ch}
+.how{display:grid;gap:6px;margin:0;padding:0;list-style:none;font-size:14.5px;color:#cfd5dd}
+.how b{font-family:var(--display);font-weight:800;font-size:17px;letter-spacing:.05em;text-transform:uppercase;color:var(--text);margin-right:8px}
+.starts{display:grid;gap:8px}
+.best{font-family:var(--mono);font-size:12px;color:var(--muted);min-height:1em}
+.best b{color:var(--warn);font-weight:600}
+.rules h2,.pl summary{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:6px 0 8px;display:flex;justify-content:space-between;gap:10px}
+.pl summary{cursor:pointer;list-style:none}
+.pl summary span:last-child,.rules h2 span:last-child{text-align:right}
+html:not([lang=en]) .pl summary,html:not([lang=en]) .rules h2{letter-spacing:.08em;font-size:10.5px}
+.pl summary::-webkit-details-marker{display:none}
+.pl summary span:first-child::before{content:"▸ ";color:#4d5967}
+.pl[open] summary span:first-child::before{content:"▾ "}
+.rules ol,.pl ol{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.rules li{border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13.5px;line-height:1.35;color:#3d4753;font-family:var(--mono);display:flex;gap:10px;align-items:baseline}
+.rules li.got{color:var(--text);font-family:var(--body);border-color:#27413a;background:#0a1512}
+.rules li i{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--muted);flex:none;width:18px}
+.pl li{border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;line-height:1.3;display:grid;grid-template-columns:10px 1fr auto;gap:10px;align-items:center;color:#3d4753;font-family:var(--mono)}
+.pl li.met{color:var(--text);font-family:var(--body)}
+.pl li .pip{width:10px;height:10px;border-radius:3px;background:#27303a}
+.pl li.c .pip{background:var(--ok)}.pl li.s .pip{background:var(--warn)}.pl li.l .pip{background:var(--bad)}
+.pl li.due{border-color:#5a2632;background:#170b0f}
+.pl li em{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--muted);text-align:right;white-space:nowrap}
+.pl li.due em{color:var(--bad)}
+.fine{font-size:12px;color:var(--muted);margin:0}
+.fine a{color:var(--muted)}
+.float{position:fixed;left:50%;top:38%;transform:translateX(-50%);font-family:var(--display);font-weight:900;font-size:64px;color:var(--ok);pointer-events:none;z-index:35;animation:rise .9s ease-out forwards;text-shadow:0 0 30px #3cf5a088}
+@keyframes rise{from{opacity:1;transform:translate(-50%,0) scale(.8)}to{opacity:0;transform:translate(-50%,-90px) scale(1.15)}}
+@media (prefers-reduced-motion:reduce){#app.shake,#flash.go,.float,.sheet-in,.card-in,.pulse,.monitor.rosc{animation:none}}
+@media (min-height:820px){#ecg{height:210px}.tool{height:64px}}
+@media (max-height:640px){#ecg{height:140px}.tool{height:52px}.case{min-height:92px}}
+</style>
+</head>
+<body>
+<div id="flash"></div>
+<div id="app">
+  <div class="bar">
+    <a class="brand" href="./"><b>←</b> Smart Heart</a>
+    <div class="hud">
+      <span class="prog" id="prog"></span>
+      <div class="lives" id="lives"></div>
+      <span class="mult" id="mult"></span>
+      <span class="score" id="score">0</span>
+      <button class="mute" id="mute" type="button" aria-pressed="true">SND</button>
+    </div>
+  </div>
+
+  <div class="monitor" id="monitor">
+    <canvas id="ecg" role="img"></canvas>
+    <div class="vitals">
+      <div class="hr"><span id="vHr">--</span><small>HR</small></div>
+      <div class="side">
+        <div><span>BP</span><b id="vBp">--/--</b></div>
+        <div><span>SpO₂</span><b id="vSp">--</b></div>
+      </div>
+    </div>
+    <div class="ff" id="ff"></div>
+    <div class="stab" aria-hidden="true"><i id="stab"></i></div>
+  </div>
+
+  <div class="case">
+    <h1 class="vig" id="vig"></h1>
+    <div class="coach" id="coach"><p id="coachT"></p><div class="row"><button class="nx" id="coachN" type="button"></button><button class="sk" id="coachS" type="button"></button></div></div>
+    <p class="msg" id="msg" aria-live="polite"></p>
+  </div>
+
+  <div class="cart" id="cart" aria-disabled="true"></div>
+
+  <section id="title">
+    <div class="t-top"><span class="t-eyebrow" data-t="ui.eyebrow"></span><div class="langs" id="langs" role="group"></div></div>
+    <h1 class="t-name">The <span>Game</span></h1>
+    <p class="t-tag" data-t="ui.tag"></p>
+    <ul class="how">
+      <li><b data-t="how.read.b"></b><span data-t="how.read"></span></li>
+      <li><b data-t="how.pick.b"></b><span data-t="how.pick"></span></li>
+      <li><b data-t="how.draw.b"></b><span data-t="how.draw"></span></li>
+    </ul>
+    <div class="starts">
+      <button class="go tall" id="daily" type="button"><span id="dailyT"></span><small id="dailyS"></small></button>
+      <button class="go ghost" id="start" type="button" data-t="ui.endless"></button>
+      <button class="go ghost" id="missed" type="button" hidden></button>
+    </div>
+    <div class="best" id="best"></div>
+    <details class="pl" id="pl">
+      <summary><span data-t="ui.patientsH"></span><span id="plN"></span></summary>
+      <ol id="plist"></ol>
+    </details>
+    <div class="rules">
+      <h2><span data-t="ui.rulesH"></span><span id="ruleN"></span></h2>
+      <ol id="rules"></ol>
+    </div>
+    <p class="fine" data-t="ui.fine"></p>
+  </section>
+</div>
+
+<div class="sheet" id="sheet">
+  <div class="sheet-in">
+    <div class="sh-top"><span class="sh-name" id="shName"></span><button class="x" id="shX" type="button">×</button></div>
+    <div class="dose"><span id="shDose">0</span><small id="shUnit">mg</small></div>
+    <div class="syr" id="syr" role="slider" tabindex="0"><div class="barrel"><i id="shFill"></i></div><div class="needle"></div><div class="plunger" id="shPl"></div></div>
+    <div class="fine-row">
+      <button class="nud" id="syMinus" type="button" aria-label="−">−</button>
+      <p class="sh-hint" id="shHint"></p>
+      <button class="nud" id="syPlus" type="button" aria-label="+">+</button>
+    </div>
+    <div class="push">
+      <button class="fast" id="pFast" type="button"></button>
+      <button class="slow" id="pSlow" type="button"></button>
+    </div>
+  </div>
+</div>
+
+<div class="card" id="card">
+  <div class="card-in">
+    <p class="dx" id="cDx"></p>
+    <p class="verdict" id="cVerdict"></p>
+    <span class="pts" id="cPts"></span>
+    <p class="why" id="cWhy" hidden></p>
+    <img class="shot" id="cImg" alt="" hidden>
+    <p class="teach" id="cTeach"></p>
+    <p class="src" id="cSrc"></p>
+    <button class="go" id="cNext" type="button"></button>
+    <button class="go ghost" id="cShare" type="button" hidden></button>
+    <button class="go ghost" id="cCopy" type="button" hidden></button>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ════════════════════════════════════════════════════════════════════════
+   1. DATA. Everything a clinician needs to review lives in this section and
+   in the text table (section 2). There is no game logic here.
+   Every dose is taken from the named guideline. Do not edit a number without
+   the source open.
+   ════════════════════════════════════════════════════════════════════════ */
+const SRC={
+  ERC:'ERC Guidelines 2025 · Adult advanced life support',
+  ERCP:'ERC Guidelines 2025 · Peri-arrest arrhythmias',
+  ESCAF:'ESC Guidelines 2024 · Atrial fibrillation',
+  ESCHF:'ESC Guidelines 2021 · Acute heart failure'
+};
+
+/* UNVERIFIED: these two doses have not yet been checked against the ESC 2024
+   AF guideline table itself. They are kept exactly as they were. Do not build
+   new patients, rules or tutorial steps on them until a teacher has signed
+   them off, then delete the entry here. The test page lists whatever is left. */
+const UNVERIFIED={
+  metoprolol:'Metoprolol 2.5–5 mg IV bolus: not yet verified against the ESC 2024 AF table.',
+  digoxin:'Digoxin 0.25–0.5 mg IV bolus: not yet verified against the ESC 2024 AF table.'
+};
+
+/* Feel. `t` on each patient is the seconds the trace lasts if you do nothing. */
+const TUNE={
+  gain:16,           // stability returned by each correct step
+  ramp:.035,         // each save shortens the next timer by this share…
+  rampFloor:.55,     // …down to this share of the patient's `t`
+  syringeSlow:.35,   // the timer runs at this speed while the syringe is open
+  charge:.7,         // seconds a defibrillator takes to charge
+  ffSec:1.7,         // seconds a fast-forwarded CPR cycle takes on screen
+  dailyN:7,          // patients in a daily shift
+  lives:3
+};
+
+/* The crash cart. Fixed order, fixed forever: hands learn positions. */
+const TOOLS=[
+  {id:'cpr',kind:'hand'},{id:'shock',kind:'elec'},{id:'sync',kind:'elec'},{id:'pace',kind:'elec'},
+  {id:'vagal',kind:'hand'},{id:'o2',kind:'hand'},{id:'gtn',kind:'hand'},{id:'furosemide',kind:'drug'},
+  {id:'adenosine',kind:'drug'},{id:'adrenaline',kind:'drug'},{id:'amiodarone',kind:'drug'},{id:'atropine',kind:'drug'},
+  {id:'metoprolol',kind:'drug',wide:true},{id:'digoxin',kind:'drug',wide:true}
+];
+/* Syringe ranges. `max` and `step` are the slider, not a recommendation. */
+const DRUG={
+  adenosine:{u:'mg',max:24,step:1},
+  adrenaline:{u:'mg',max:2,step:.1},
+  amiodarone:{u:'mg',max:600,step:25},
+  atropine:{u:'mcg',max:3000,step:100},
+  metoprolol:{u:'mg',max:15,step:.5},   // UNVERIFIED dose, see above
+  digoxin:{u:'mg',max:1.5,step:.25},    // UNVERIFIED dose, see above
+  furosemide:{u:'mg',max:120,step:10}
+};
+/* The 14 rules. Text is in the table under 'fact.<id>'. */
+const FACT=['vfshock','adr3','amio','adrnow','vagal','aden6','aden12','sync','atro','pace','meto','lowef','furo','gtn'];
+
+/* Patient building blocks. Every string here is a key into the text table. */
+const LETHAL_SHOCK={lethal:true,say:'x.lethal'};
+const aden=(d,fx,say,fact)=>({a:'adenosine',dose:[d,d],speed:'rapid',fact,fx,say,
+  low:d===6?'aden.low6':'aden.lowN',high:d===6?'aden.high6':'aden.highN',speedSay:'aden.speed'});
+const CONVERT={pause:2.3,rhythm:'sinus',rate:84,hr:84,bp:'122/78'};
+const SVT_WRONG={shock:LETHAL_SHOCK,sync:{h:20,say:'svt.w.sync'},adrenaline:{h:35,say:'svt.w.adrenaline'},atropine:{h:22,say:'svt.w.atropine'},metoprolol:{h:10,say:'svt.w.metoprolol'},digoxin:{h:10,say:'svt.w.digoxin'},cpr:{h:10,say:'svt.w.cpr'}};
+const AF_WRONG={shock:LETHAL_SHOCK,sync:{h:20,say:'af.w.sync'},adenosine:{h:12,say:'af.w.adenosine'},vagal:{h:6,say:'af.w.vagal'},amiodarone:{h:8,say:'af.w.amiodarone'},atropine:{h:22,say:'af.w.atropine'},adrenaline:{h:35,say:'af.w.adrenaline'},cpr:{h:10,say:'x.pulse'}};
+/* UNVERIFIED: both dose ranges in rate() are the two flagged above. */
+const rate=fact=>({a:'metoprolol',dose:[2.5,5],speed:'slow',fact,fx:{rate:94,hr:94},say:'rate.say',low:'rate.low',high:'rate.high',hh:28,speedSay:'rate.speed',
+  alts:[{a:'digoxin',dose:[.25,.5],speed:'slow',low:'x.low',high:'dig.high',hh:25,speedSay:'dig.speed'}]});
+const UNSTABLE={adenosine:{h:22,say:'un.w.adenosine'},vagal:{h:16,say:'un.w.vagal'},metoprolol:{h:40,say:'un.w.metoprolol'},digoxin:{h:18,say:'un.w.digoxin'},shock:LETHAL_SHOCK,amiodarone:{h:12,say:'un.w.amiodarone'}};
+const APO_WRONG={shock:LETHAL_SHOCK,sync:{h:20,say:'apo.w.sync'},metoprolol:{h:38,say:'apo.w.metoprolol'},adrenaline:{h:35,say:'apo.w.adrenaline'},adenosine:{h:15,say:'apo.w.adenosine'},atropine:{h:15,say:'apo.w.atropine'},cpr:{h:10,say:'x.pulse'}};
+const FURO={a:'furosemide',dose:[20,40],speed:'slow',fact:'furo',say:'furo.say',low:'furo.low',high:'furo.high',hh:10,speedSay:'furo.speed'};
+const O2={a:'o2',fx:{sp:93},say:'apo.o2'};
+
+/* Patients.
+   steps  : groups in order; inside a group any order is accepted.
+            opt = may be skipped, alts = other accepted answers for that step.
+   wrong  : what each wrong tool costs (h = stability lost) and says.
+   t      : seconds the trace lasts untouched. Tuned with the model on test.html. */
+const PATIENTS=[
+ {id:'svt6',cat:'svt',dx:'dx.svt',vig:'p.svt6.vig',rhythm:'svt',rate:188,hr:188,bp:'118/76',sp:98,t:29,
+  steps:[[{a:'vagal',opt:true,fact:'vagal',say:'p.svt6.vagal',skip:'p.svt6.skip'}],[aden(6,CONVERT,'p.svt6.aden','aden6')]],
+  wrong:SVT_WRONG,hint:'p.svt6.hint',teach:'p.svt6.teach',src:SRC.ERCP},
+ {id:'svt12',cat:'svt',dx:'dx.svt',vig:'p.svt12.vig',rhythm:'svt',rate:196,hr:196,bp:'112/70',sp:97,t:31,
+  steps:[[{a:'vagal',opt:true,fact:'vagal',say:'p.svt12.vagal',skip:'x.vagalfirst'}],[aden(6,null,'p.svt12.aden6','aden6')],[aden(12,CONVERT,'p.svt12.aden12','aden12')]],
+  wrong:SVT_WRONG,hint:'p.svt12.hint',teach:'p.svt12.teach',src:SRC.ERCP},
+ {id:'svt18',cat:'svt',dx:'dx.svt',vig:'p.svt18.vig',rhythm:'svt',rate:182,hr:182,bp:'124/80',sp:98,t:33,
+  steps:[[{a:'vagal',opt:true,fact:'vagal',say:'p.svt18.vagal',skip:'x.vagalfirst'}],[aden(6,null,'p.svt18.aden6','aden6')],[aden(12,null,'p.svt18.aden12','aden12')],[aden(18,CONVERT,'p.svt18.aden18','aden12')]],
+  wrong:SVT_WRONG,hint:'p.svt18.hint',teach:'p.svt18.teach',src:SRC.ERCP},
+ {id:'svtvag',cat:'svt',dx:'dx.svt',vig:'p.svtvag.vig',rhythm:'svt',rate:178,hr:178,bp:'126/78',sp:99,t:32,
+  steps:[[{a:'vagal',fact:'vagal',fx:{pause:1.4,rhythm:'sinus',rate:88,hr:88},say:'p.svtvag.vagal',alts:[aden(6,CONVERT,'p.svtvag.aden','aden6')]}]],
+  wrong:SVT_WRONG,hint:'p.svtvag.hint',teach:'p.svtvag.teach',src:SRC.ERCP},
+ {id:'svtun',cat:'svt',dx:'dx.svtun',vig:'p.svtun.vig',rhythm:'svt',rate:204,hr:204,bp:'72/40',sp:92,t:36,
+  steps:[[{a:'sync',fact:'sync',fx:{shock:true,rhythm:'sinus',rate:92,hr:92,bp:'114/70',sp:96},say:'p.svtun.sync'}]],
+  wrong:UNSTABLE,hint:'p.svtun.hint',teach:'p.svtun.teach',src:SRC.ERCP},
+ {id:'brady',cat:'brady',dx:'dx.brady',vig:'p.brady.vig',rhythm:'sinus',rate:36,hr:36,bp:'78/46',sp:95,t:49,
+  steps:[[{a:'atropine',dose:[500,500],fact:'atro',fx:{rate:66,hr:66,bp:'108/66'},say:'p.brady.atro',low:'x.low',high:'p.brady.high',hh:10}]],
+  wrong:{adenosine:{h:55,say:'p.brady.w.adenosine'},metoprolol:{h:50,say:'p.brady.w.metoprolol'},digoxin:{h:30,say:'p.brady.w.digoxin'},amiodarone:{h:30,say:'p.brady.w.amiodarone'},adrenaline:{h:25,say:'p.brady.w.adrenaline'},pace:{h:6,say:'p.brady.w.pace'},shock:LETHAL_SHOCK,sync:{h:30,say:'x.nocv'},cpr:{h:10,say:'x.pulse.f'}},
+  hint:'p.brady.hint',teach:'p.brady.teach',src:SRC.ERCP},
+ {id:'chb',cat:'brady',dx:'dx.chb',vig:'p.chb.vig',rhythm:'chb',rate:30,hr:30,bp:'70/40',sp:94,t:44,
+  steps:[[{a:'atropine',opt:true,dose:[500,500],fact:'atro',say:'p.chb.atro',low:'x.low',high:'p.chb.high',hh:10}],[{a:'pace',fact:'pace',fx:{rhythm:'paced',rate:70,hr:70,bp:'112/70'},say:'p.chb.pace'}]],
+  wrong:{atropine:{h:5,say:'p.chb.w.atropine'},adenosine:{h:60,say:'p.chb.w.adenosine'},metoprolol:{h:50,say:'p.chb.w.metoprolol'},digoxin:{h:30,say:'p.chb.w.digoxin'},adrenaline:{h:25,say:'p.chb.w.adrenaline'},shock:LETHAL_SHOCK,sync:{h:30,say:'x.nocv'},cpr:{h:10,say:'x.pulse.m'}},
+  hint:'p.chb.hint',teach:'p.chb.teach',src:SRC.ERCP},
+ {id:'vf',cat:'arrest',dx:'dx.vf',vig:'p.vf.vig',rhythm:'vf',rate:0,hr:'--',bp:'--/--',sp:'--',t:32,
+  steps:[[{a:'shock',fact:'vfshock',fx:{shock:true},ff:'ff.cpr2',back:'p.vf.back',say:'p.vf.s1'}],
+         [{a:'shock',fx:{shock:true},ff:'ff.cpr2',back:'p.vf.back',say:'p.vf.s2'}],
+         [{a:'shock',fx:{shock:true},say:'p.vf.s3'}],
+         [{a:'adrenaline',dose:[1,1],fact:'adr3',say:'p.vf.adr',low:'x.adr.low',high:'x.adr.high',hh:10},{a:'amiodarone',dose:[300,300],fact:'amio',say:'p.vf.amio',low:'p.vf.amio.low',high:'p.vf.amio.high',hh:10,ff:'ff.cpr2',back:'p.vf.back2'}],
+         [{a:'shock',fx:{shock:true,rhythm:'sinus',rate:98,hr:98,bp:'96/58',sp:93},say:'p.vf.s4'}]],
+  wrong:{adrenaline:{h:8,say:'p.vf.w.adrenaline'},amiodarone:{h:8,say:'p.vf.w.amiodarone'},sync:{h:15,say:'p.vf.w.sync'},cpr:{h:0,say:'p.vf.w.cpr'},atropine:{h:12,say:'p.vf.w.atropine'},pace:{h:12,say:'p.vf.w.pace'}},
+  hint:'p.vf.hint',teach:'p.vf.teach',src:SRC.ERC},
+ {id:'asys',cat:'arrest',dx:'dx.asys',vig:'p.asys.vig',rhythm:'asys',rate:0,hr:0,bp:'--/--',sp:'--',t:31,
+  steps:[[{a:'cpr',ff:'ff.cprcheck',back:'p.asys.back1',say:'p.asys.cpr'}],
+         [{a:'adrenaline',dose:[1,1],fact:'adrnow',ff:'ff.cpr4',back:'p.asys.back2',say:'p.asys.adr1',low:'x.adr.low',high:'x.adr.high',hh:10}],
+         [{a:'adrenaline',dose:[1,1],fact:'adrnow',fx:{rhythm:'sinus',rate:58,hr:58,bp:'88/50',sp:90},say:'p.asys.adr2',low:'p.asys.low',high:'x.adr.high',hh:10}]],
+  wrong:{shock:{h:30,say:'p.asys.w.shock'},sync:{h:30,say:'p.asys.w.sync'},atropine:{h:12,say:'p.asys.w.atropine'},amiodarone:{h:12,say:'p.asys.w.amiodarone'},pace:{h:10,say:'p.asys.w.pace'},cpr:{h:0,say:'p.asys.w.cpr'}},
+  hint:'p.asys.hint',teach:'p.asys.teach',src:SRC.ERC},
+ {id:'af',cat:'af',dx:'dx.af',vig:'p.af.vig',rhythm:'af',rate:148,hr:148,bp:'128/82',sp:97,t:34,
+  steps:[[rate('meto')]],wrong:AF_WRONG,hint:'p.af.hint',teach:'p.af.teach',src:SRC.ESCAF},
+ {id:'aflow',cat:'af',dx:'dx.aflow',vig:'p.aflow.vig',rhythm:'af',rate:152,hr:152,bp:'106/68',sp:95,t:34,
+  steps:[[rate('lowef')]],wrong:AF_WRONG,hint:'p.aflow.hint',teach:'p.aflow.teach',src:SRC.ESCAF},
+ {id:'afun',cat:'af',dx:'dx.afun',vig:'p.afun.vig',rhythm:'af',rate:172,hr:172,bp:'68/40',sp:91,t:36,
+  steps:[[{a:'sync',fact:'sync',fx:{shock:true,rhythm:'sinus',rate:86,hr:86,bp:'110/68',sp:96},say:'p.afun.sync'}]],
+  wrong:UNSTABLE,hint:'p.afun.hint',teach:'p.afun.teach',src:SRC.ERCP},
+ {id:'apo',cat:'apo',dx:'dx.apo',vig:'p.apo.vig',rhythm:'sinus',rate:122,hr:122,bp:'186/108',sp:84,t:33,
+  steps:[[O2,FURO,{a:'gtn',fact:'gtn',fx:{bp:'150/92'},say:'p.apo.gtn'}]],
+  end:{rate:98,hr:98,sp:96},wrong:APO_WRONG,hint:'p.apo.hint',teach:'p.apo.teach',src:SRC.ESCHF},
+ {id:'apolow',cat:'apo',dx:'dx.apolow',vig:'p.apolow.vig',rhythm:'sinus',rate:116,hr:116,bp:'98/58',sp:86,t:33,
+  steps:[[O2,FURO]],
+  end:{rate:102,hr:102,sp:95},wrong:Object.assign({},APO_WRONG,{gtn:{h:42,say:'p.apolow.w.gtn',fx:{bp:'70/40'}}}),hint:'p.apolow.hint',teach:'p.apolow.teach',src:SRC.ESCHF}
+];
+
+/* The guided first patient. It only replays facts svt6 already teaches. */
+const TUTORIAL={patient:'svt6',tool:'vagal',drug:'adenosine',dose:6,speed:'rapid'};
+
+/* ════════════════════════════════════════════════════════════════════════
+   2. TEXT. One table for every word on screen: key → [English, Russian, Uzbek].
+   Russian and Uzbek follow the wording of index.html (СЛР / YOʻR, ФЖ / VF,
+   Полная АВ-блокада / Toʻliq AV blokada…). Rows marked ?? carry a medical term
+   the translator was not sure of: see CLINICAL-REVIEW.md before shipping.
+   Monitor labels (HR, BP, SpO₂, ROSC) stay in English, as on a real monitor.
+   ════════════════════════════════════════════════════════════════════════ */
+const LANGS=['en','ru','uz'];
+const L={
+/* ── interface ── */
+'ui.eyebrow':['Smart Heart 3.0 presents','Smart Heart 3.0 представляет','Smart Heart 3.0 taqdim etadi'],
+'ui.tag':['One trace. Fourteen tools. The line on the monitor is your patient and your health bar.','Одна кривая. Четырнадцать инструментов. Линия на мониторе — это и ваш пациент, и шкала его жизни.','Bitta egri chiziq. Oʻn toʻrtta vosita. Monitordagi chiziq — ham bemoringiz, ham uning hayot shkalasi.'],
+'how.read.b':['Read','Читайте','Oʻqing'],
+'how.read':['the rhythm and the three numbers.','ритм и три числа.','— ritm va uchta raqamni.'],
+'how.pick.b':['Pick','Берите','Tanlang'],
+'how.pick':['from the crash cart. It never changes, so your hands learn it.','с реанимационной тележки. Она не меняется, и руки её запомнят.','— reanimatsiya aravachasidan. U oʻzgarmaydi, qoʻllaringiz eslab qoladi.'],
+'how.draw.b':['Draw','Набирайте','Torting'],
+'how.draw':['the dose yourself, then choose how fast to push.','дозу сами, затем выберите скорость введения.','— dozani oʻzingiz, soʻng yuborish tezligini tanlang.'],
+'ui.daily':['Daily shift #{0}','Смена дня №{0}','Kun smenasi №{0}'],
+'ui.dailySub':['The same {0} patients for everyone today','Сегодня у всех одни и те же {0} пациентов','Bugun hammaga bir xil {0} ta bemor'],
+'ui.dailyDone':['Today: {0} points · play again','Сегодня: {0} очков · сыграть ещё раз','Bugun: {0} ochko · yana oʻynash'],
+'ui.endless':['Endless shift','Бесконечная смена','Cheksiz smena'],
+'ui.missed':['Practise the ones you lost · {0}','Отработать потерянных · {0}','Yoʻqotilganlarni mashq qilish · {0}'],
+'ui.best':['Best shift: ','Лучшая смена: ','Eng yaxshi smena: '],
+'ui.points':['{0} points','{0} очков','{0} ochko'],
+'ui.streak':['Daily streak: ','Дней подряд: ','Ketma-ket kunlar: '],
+'ui.rulesH':['Rules you have earned','Правила, которые вы заработали','Qoʻlga kiritilgan qoidalar'],
+'ui.locked':['· · · locked · · ·','· · · закрыто · · ·','· · · yopiq · · ·'],
+'ui.patientsH':['Your patients','Ваши пациенты','Bemorlaringiz'],
+'ui.plN':['{0} / {1} met','встречено {0} / {1}','{0} / {1} uchradi'],
+'ui.plDue':['{0} to practise','отработать: {0}','mashq uchun: {0}'],
+'ui.notmet':['· · · not met yet · · ·','· · · ещё не встречался · · ·','· · · hali uchramagan · · ·'],
+'ui.savedOf':['saved {0} of {1}','спасён {0} из {1}','{1} tadan {0} ta qutqarildi'],
+'ui.due':['lost {0} · comes back','потерян {0} · вернётся','{0} marta yoʻqotildi · qaytadi'],
+'ui.fine':['Training game for medical students. Adult doses follow ERC Guidelines 2025 (advanced life support), ESC 2024 (atrial fibrillation) and ESC 2021 (heart failure). Always check your local protocol. Not for clinical use.','Учебная игра для студентов-медиков. Дозы для взрослых — по рекомендациям ERC 2025 (расширенная реанимация), ESC 2024 (фибрилляция предсердий) и ESC 2021 (сердечная недостаточность). Всегда сверяйтесь с местным протоколом. Не для клинического применения.','Tibbiyot talabalari uchun oʻquv oʻyini. Kattalar uchun dozalar ERC 2025 (kengaytirilgan reanimatsiya), ESC 2024 (boʻlmachalar fibrillyatsiyasi) va ESC 2021 (yurak yetishmovchiligi) tavsiyalariga asoslangan. Har doim mahalliy protokolni tekshiring. Klinik qoʻllash uchun emas.'],
+'ui.sound':['Sound','Звук','Tovush'],
+'ui.lang':['Language','Язык','Til'],
+'ui.livesA':['Patients you can still lose','Сколько пациентов ещё можно потерять','Yana nechta bemorni yoʻqotish mumkin'],
+'ui.ecgA':['Live ECG trace','ЭКГ в реальном времени','Jonli EKG egri chizigʻi'],
+'ui.first':['What does this patient need first?','Что этому пациенту нужно в первую очередь?','Bu bemorga birinchi navbatda nima kerak?'],
+'sy.iv':['{0} · IV','{0} · в/в','{0} · v/i'],                                                  /* ?? uz: v/i */
+'sy.hint':['Drag to draw up the dose.','Потяните, чтобы набрать дозу.','Dozani tortish uchun suring.'],
+'sy.fine':['− and + move one step.','− и + сдвигают на один шаг.','− va + bir qadamga suradi.'],
+'sy.fast':['Rapid push|+ flush','Быстро струйно|+ промывание','Tez yuborish|+ yuvish'],
+'sy.slow':['Slow push','Медленно','Sekin yuborish'],
+'sy.cancel':['Cancel','Отмена','Bekor qilish'],
+'sy.doseA':['Dose','Доза','Doza'],
+'unit.mg':['mg','мг','mg'],
+'unit.mcg':['mcg','мкг','mkg'],                                                              /* ?? uz: mkg */
+'card.next':['Next patient','Следующий пациент','Keyingi bemor'],
+'card.see':['See your shift','Итоги смены','Smena yakuni'],
+'card.clean':['Clean save','Чистое спасение','Toza qutqaruv'],
+'card.saved':['Saved','Пациент спасён','Qutqarildi'],
+'card.lost':['Patient lost','Пациент потерян','Bemor yoʻqotildi'],
+'card.pts':['+{0} points','+{0} очков','+{0} ochko'],
+'card.nomist':[' · no mistakes',' · без ошибок',' · xatosiz'],
+'card.back':['This one comes back until you get it right.','Этот пациент будет возвращаться, пока вы не справитесь.','Bu bemor toʻgʻri bajarmaguningizcha qaytib kelaveradi.'],
+'end.h':['End of shift','Конец смены','Smena tugadi'],
+'end.saved':['{0} saved','Спасено: {0}','Qutqarildi: {0}'],
+'end.newbest':[' · new best',' · новый рекорд',' · yangi rekord'],
+'end.legend':['Green: clean save. Yellow: saved with mistakes. Red: lost.','Зелёный: чистое спасение. Жёлтый: спасён с ошибками. Красный: потерян.','Yashil: toza qutqaruv. Sariq: xatolar bilan qutqarildi. Qizil: yoʻqotildi.'],
+'end.replay':['A replay. Your result for today stays at {0} points.','Это повтор. Результат дня остаётся прежним: {0} очков.','Bu takror. Bugungi natija oʻzgarmaydi: {0} ochko.'],
+'end.caught':['All caught up. Nobody left to practise.','Всё отработано. Потерянных пациентов не осталось.','Hammasi mashq qilindi. Yoʻqotilgan bemor qolmadi.'],
+'end.new':['Back to start','В начало','Boshiga qaytish'],
+'end.share':['Share the image','Поделиться картинкой','Rasmni ulashish'],
+'end.copy':['Copy as text','Скопировать текстом','Matn sifatida nusxalash'],
+'end.copied':['Copied','Скопировано','Nusxalandi'],
+'end.copyfail':['Copy failed','Не удалось скопировать','Nusxalab boʻlmadi'],
+'end.saved2':['Image saved','Картинка сохранена','Rasm saqlandi'],
+'img.daily':['DAILY SHIFT #{0}','СМЕНА ДНЯ №{0}','KUN SMENASI №{0}'],
+'img.endless':['ENDLESS SHIFT','БЕСКОНЕЧНАЯ СМЕНА','CHEKSIZ SMENA'],
+'img.missed':['PRACTICE SHIFT','ТРЕНИРОВОЧНАЯ СМЕНА','MASHQ SMENASI'],
+'img.points':['POINTS','ОЧКОВ','OCHKO'],
+'img.saved':['{0} SAVED · {1} LOST','СПАСЕНО {0} · ПОТЕРЯНО {1}','QUTQARILDI {0} · YOʻQOTILDI {1}'],
+'img.rules':['RULES EARNED {0}/{1}','ПРАВИЛ ЗАРАБОТАНО {0}/{1}','QOIDALAR {0}/{1}'],
+'img.foot':['Training game. Not for clinical use.','Учебная игра. Не для клинического применения.','Oʻquv oʻyini. Klinik qoʻllash uchun emas.'],
+'share.saved':['{0} saved · {1} points','Спасено: {0} · {1} очков','Qutqarildi: {0} · {1} ochko'],
+'mon.charging':['CHARGING','ЗАРЯД','ZARYADLANMOQDA'],
+'mon.syncing':['SYNC · CHARGING','СИНХР. · ЗАРЯД','SINXRON · ZARYAD'],
+'mark.pause':['PAUSE {0} s','ПАУЗА {0} с','PAUZA {0} s'],
+'mark.sinus':['SINUS','СИНУС','SINUS'],
+'mark.capture':['CAPTURE','ЗАХВАТ','QAMRASH'],                                               /* ?? uz: capture */
+'mark.rosc':['ROSC','ROSC','ROSC'],                                                          /* ?? ru: ВСК? */
+'mark.hr':['HR {0}','HR {0}','HR {0}'],
+
+/* ── guided first patient: instructions only, the medicine is svt6's own text ── */
+'tut.trace':['This line is your patient: fast, regular, narrow. The bar under it is their time. When it runs out, you lose them.','Эта линия — ваш пациент: ритм частый, регулярный, комплексы узкие. Полоска под ней — его время. Когда оно закончится, вы его потеряете.','Bu chiziq — bemoringiz: ritm tez, muntazam, komplekslar tor. Ostidagi chiziqcha — uning vaqti. U tugasa, bemorni yoʻqotasiz.'],
+'tut.cart':['This is the crash cart. It never changes. She is stable, so the simplest tool comes first: tap {0}.','Это реанимационная тележка. Она никогда не меняется. Пациентка стабильна, поэтому сначала самое простое: нажмите «{0}».','Bu reanimatsiya aravachasi. U hech qachon oʻzgarmaydi. Bemor barqaror, shuning uchun avval eng oddiysi: «{0}» ni bosing.'],
+'tut.drug':['Tiles with a red mark are drugs. Tap {0}.','Плитки с красной меткой — лекарства. Нажмите «{0}».','Qizil belgili plitkalar — dorilar. «{0}» ni bosing.'],
+'tut.dose':['You draw up every dose yourself. Drag the plunger to {0}. The − and + buttons move one step.','Каждую дозу вы набираете сами. Потяните поршень до {0}. Кнопки − и + сдвигают на один шаг.','Har bir dozani oʻzingiz tortasiz. Porshenni {0} gacha suring. − va + tugmalari bir qadamga suradi.'],
+'tut.push':['Adenosine lasts seconds. Tap the rapid push.','Аденозин действует секунды. Нажмите быстрое введение.','Adenozin bir necha soniya taʼsir qiladi. Tez yuborishni bosing.'],
+'tut.watch':['Now watch the trace.','Теперь смотрите на кривую.','Endi egri chiziqqa qarang.'],
+'tut.done':['Guide finished. Your shift starts now.','Обучение пройдено. Ваша смена начинается.','Qoʻllanma tugadi. Smenangiz boshlanmoqda.'],
+'tut.next':['Next','Дальше','Keyingi'],
+'tut.skip':['Skip the guide','Пропустить обучение','Qoʻllanmani oʻtkazib yuborish'],
+'tut.start':['Start shift','Начать смену','Smenani boshlash'],
+
+/* ── the cart ── */
+'tool.cpr':['CPR','СЛР','YOʻR'],
+'tool.shock':['Shock','Разряд','Razryad'],                                                   /* ?? uz: razryad */
+'tool.sync':['Sync shock','Синхр. разряд','Sinxron razryad'],
+'tool.pace':['Pace','Стимуляция','Stimulyatsiya'],
+'tool.vagal':['Vagal','Вагусные пробы','Vagus sinamalari'],                                  /* ?? uz: vagus sinamalari */
+'tool.o2':['Oxygen','Кислород','Kislorod'],
+'tool.gtn':['Nitrate','Нитрат','Nitrat'],
+'tool.furosemide':['Furosemide','Фуросемид','Furosemid'],
+'tool.adenosine':['Adenosine','Аденозин','Adenozin'],
+'tool.adrenaline':['Adrenaline','Адреналин','Adrenalin'],
+'tool.amiodarone':['Amiodarone','Амиодарон','Amiodaron'],
+'tool.atropine':['Atropine','Атропин','Atropin'],
+'tool.metoprolol':['Metoprolol','Метопролол','Metoprolol'],
+'tool.digoxin':['Digoxin','Дигоксин','Digoksin'],
+
+/* ── the 14 rules ── */
+'fact.vfshock':['VF or pulseless VT: shock, then straight back to CPR for 2 minutes.','ФЖ или ЖТ без пульса: разряд, затем сразу СЛР в течение 2 минут.','VF yoki pulssiz VT: razryad, soʻng darhol 2 daqiqa YOʻR.'],
+'fact.adr3':['Shockable arrest: adrenaline 1 mg IV after the 3rd shock, then every 3–5 min.','Остановка с ритмом, подлежащим дефибрилляции: адреналин 1 мг в/в после 3-го разряда, далее каждые 3–5 мин.','Defibrillyatsiya qilinadigan ritm bilan yurak toʻxtashi: 3-razryaddan keyin adrenalin 1 mg v/i, soʻng har 3–5 daqiqada.'],
+'fact.amio':['Shockable arrest: amiodarone 300 mg IV after the 3rd shock, 150 mg after the 5th.','Остановка с ритмом, подлежащим дефибрилляции: амиодарон 300 мг в/в после 3-го разряда, 150 мг после 5-го.','Defibrillyatsiya qilinadigan ritm bilan yurak toʻxtashi: 3-razryaddan keyin amiodaron 300 mg v/i, 5-razryaddan keyin 150 mg.'],
+'fact.adrnow':['Asystole or PEA: adrenaline 1 mg IV as soon as possible. Never shock.','Асистолия или электрическая активность без пульса (ЭАБП): адреналин 1 мг в/в как можно раньше. Разряд не наносить.','Asistoliya yoki pulssiz elektr faollik (PEA): adrenalin 1 mg v/i imkon qadar erta. Razryad berilmaydi.'],   /* ?? ru: ЭАБП, uz: pulssiz elektr faollik */
+'fact.vagal':['Stable regular narrow tachycardia: vagal manoeuvres first.','Стабильная регулярная тахикардия с узкими QRS: сначала вагусные пробы.','Barqaror, muntazam, tor QRS li taxikardiya: avval vagus sinamalari.'],
+'fact.aden6':['Adenosine 6 mg as a rapid bolus with a flush.','Аденозин 6 мг быстрым болюсом с промыванием.','Adenozin 6 mg tez bolyus bilan, ketidan yuvish.'],
+'fact.aden12':['Adenosine ladder: 6 mg, then 12 mg, then 18 mg.','Лестница аденозина: 6 мг, затем 12 мг, затем 18 мг.','Adenozin zinasi: 6 mg, soʻng 12 mg, soʻng 18 mg.'],
+'fact.sync':['Tachycardia with adverse features: synchronised cardioversion.','Тахикардия с неблагоприятными признаками: синхронизированная кардиоверсия.','Xavfli belgilar bilan taxikardiya: sinxronlangan kardioversiya.'],   /* ?? adverse features: неблагоприятные признаки / xavfli belgilar */
+'fact.atro':['Bradycardia with adverse features: atropine 500 mcg IV, repeat to a maximum of 3 mg.','Брадикардия с неблагоприятными признаками: атропин 500 мкг в/в, повторять до максимума 3 мг.','Xavfli belgilar bilan bradikardiya: atropin 500 mkg v/i, jami 3 mg gacha takrorlash.'],
+'fact.pace':['Atropine fails: pace. Or isoprenaline 5 mcg/min, or adrenaline 2–10 mcg/min.','Атропин не помог: кардиостимуляция. Либо изопреналин 5 мкг/мин, либо адреналин 2–10 мкг/мин.','Atropin yordam bermadi: kardiostimulyatsiya. Yoki izoprenalin 5 mkg/daq, yoki adrenalin 2–10 mkg/daq.'],
+'fact.meto':['Fast AF, stable: metoprolol 2.5–5 mg IV over 2 minutes.','Частая ФП, пациент стабилен: метопролол 2,5–5 мг в/в за 2 минуты.','Tez AF, bemor barqaror: metoprolol 2,5–5 mg v/i 2 daqiqa davomida.'],   /* UNVERIFIED dose */
+'fact.lowef':['AF with LVEF ≤ 40%: beta-blocker and/or digoxin. No verapamil, no diltiazem.','ФП при ФВ ЛЖ ≤ 40%: бета-блокатор и/или дигоксин. Ни верапамила, ни дилтиазема.','Chap qorincha otish fraksiyasi ≤ 40% boʻlgan AF: beta-blokator va/yoki digoksin. Verapamil ham, diltiazem ham mumkin emas.'],   /* ?? uz: otish fraksiyasi */
+'fact.furo':['Pulmonary oedema: furosemide 20–40 mg IV. Oxygen only if SpO₂ is under 90%.','Отёк лёгких: фуросемид 20–40 мг в/в. Кислород — только при SpO₂ ниже 90%.','Oʻpka shishi: furosemid 20–40 mg v/i. Kislorod faqat SpO₂ 90% dan past boʻlsa.'],
+'fact.gtn':['Vasodilator in pulmonary oedema only if systolic BP is above 110 mmHg.','Вазодилататор при отёке лёгких — только если систолическое АД выше 110 мм рт. ст.','Oʻpka shishida vazodilatator faqat sistolik AB 110 mm sim. ust. dan yuqori boʻlsa.'],   /* ?? uz: AB, mm sim. ust. */
+
+/* ── shared answers ── */
+'x.hint':['Hint: ','Подсказка: ','Maslahat: '],
+'x.done':['Done.','Готово.','Bajarildi.'],
+'x.low':['Too little.','Слишком мало.','Juda kam.'],
+'x.high':['Too much.','Слишком много.','Juda koʻp.'],
+'x.speed':['Wrong speed.','Не та скорость.','Tezlik notoʻgʻri.'],
+'x.notind':['Not indicated here. Time lost.','Здесь не показано. Время потеряно.','Bu yerda koʻrsatma yoʻq. Vaqt yoʻqotildi.'],
+'x.lethal':['An unsynchronised shock on a beating heart landed on the T wave. Ventricular fibrillation.','Несинхронизированный разряд по работающему сердцу пришёлся на зубец T. Фибрилляция желудочков.','Urayotgan yurakka berilgan sinxronlanmagan razryad T tishchaga toʻgʻri keldi. Qorinchalar fibrillyatsiyasi.'],
+'x.pulse':['The patient has a pulse.','У пациента есть пульс.','Bemorning pulsi bor.'],
+'x.pulse.f':['She has a pulse.','У неё есть пульс.','Uning pulsi bor.'],
+'x.pulse.m':['He has a pulse.','У него есть пульс.','Uning pulsi bor.'],
+'x.nocv':['There is nothing to cardiovert.','Кардиовертировать нечего.','Kardioversiya qiladigan narsa yoʻq.'],
+'x.vagalfirst':['Vagal manoeuvres come first.','Сначала вагусные пробы.','Avval vagus sinamalari.'],
+'x.adr.low':['Under 1 mg. Not the arrest dose.','Меньше 1 мг. Это не доза для остановки сердца.','1 mg dan kam. Bu yurak toʻxtashi dozasi emas.'],
+'x.adr.high':['The arrest dose is 1 mg.','Доза при остановке сердца — 1 мг.','Yurak toʻxtashidagi doza — 1 mg.'],
+'ff.cpr2':['CPR · 2 min','СЛР · 2 мин','YOʻR · 2 daq'],
+'ff.cpr4':['CPR · 4 min','СЛР · 4 мин','YOʻR · 4 daq'],
+'ff.cprcheck':['CPR · rhythm check','СЛР · оценка ритма','YOʻR · ritmni tekshirish'],
+'aden.low6':['Too little. Nothing happens.','Слишком мало. Ничего не происходит.','Juda kam. Hech narsa oʻzgarmadi.'],
+'aden.lowN':['That dose already failed. Step up the ladder.','Эта доза уже не сработала. Поднимайтесь по лестнице.','Bu doza allaqachon yordam bermadi. Zinadan yuqoriga chiqing.'],
+'aden.high6':['Start at 6 mg. A bigger first dose only buys more flushing, chest tightness and a longer pause.','Начинайте с 6 мг. Бо́льшая первая доза даёт только больше приливов жара, стеснения в груди и более долгую паузу.','6 mg dan boshlang. Kattaroq birinchi doza faqat koʻproq qizarish, koʻkrakda siqilish va uzoqroq pauza beradi.'],
+'aden.highN':['Too big a jump. The ladder is 6, 12, 18.','Слишком большой скачок. Лестница: 6, 12, 18.','Sakrash juda katta. Zina: 6, 12, 18.'],
+'aden.speed':['Adenosine lasts seconds. Pushed slowly, it is gone before it reaches the heart.','Аденозин действует секунды. При медленном введении он исчезнет, не дойдя до сердца.','Adenozin bir necha soniya taʼsir qiladi. Sekin yuborilsa, yurakka yetmasdan yoʻqoladi.'],
+'svt.w.sync':['Awake and stable. Cardioversion is for adverse features.','В сознании и стабилен. Кардиоверсия — при неблагоприятных признаках.','Hushida va barqaror. Kardioversiya xavfli belgilar boʻlganda qilinadi.'],
+'svt.w.adrenaline':['Adrenaline into a tachycardia with a pulse. The rate climbs.','Адреналин при тахикардии с пульсом. Частота растёт.','Pulsi bor taxikardiyaga adrenalin. Chastota oshmoqda.'],
+'svt.w.atropine':['Atropine speeds the heart up. Wrong direction.','Атропин ускоряет сердце. Не в ту сторону.','Atropin yurakni tezlashtiradi. Teskari yoʻnalish.'],
+'svt.w.metoprolol':['Not first line. A regular narrow tachycardia has a faster answer.','Не первая линия. У регулярной тахикардии с узкими QRS есть ответ быстрее.','Birinchi qator emas. Muntazam tor QRS li taxikardiyaning tezroq yechimi bor.'],
+'svt.w.digoxin':['Far too slow for this.','Слишком медленно для этой ситуации.','Bu holat uchun juda sekin.'],
+'svt.w.cpr':['The patient has a pulse and is talking to you.','У пациента есть пульс, и он с вами разговаривает.','Bemorning pulsi bor va u siz bilan gaplashmoqda.'],
+'af.w.sync':['Stable and awake. No emergency cardioversion.','Стабилен и в сознании. Экстренная кардиоверсия не нужна.','Barqaror va hushida. Shoshilinch kardioversiya kerak emas.'],
+'af.w.adenosine':['Irregular means AF. Adenosine will not convert it.','Нерегулярный ритм — это ФП. Аденозин её не купирует.','Notekis ritm — bu AF. Adenozin uni toʻxtatmaydi.'],
+'af.w.vagal':['No lasting effect in AF.','При ФП стойкого эффекта нет.','AF da barqaror taʼsir yoʻq.'],
+'af.w.amiodarone':['Possible, but slow. Rate control comes first when the patient is stable.','Возможно, но медленно. У стабильного пациента сначала контроль частоты.','Mumkin, lekin sekin. Barqaror bemorda avval chastota nazorati.'],
+'af.w.atropine':['Atropine speeds the heart up.','Атропин ускоряет сердце.','Atropin yurakni tezlashtiradi.'],
+'af.w.adrenaline':['Adrenaline into a fast AF. The rate climbs.','Адреналин при частой ФП. Частота растёт.','Tez AF ga adrenalin. Chastota oshmoqda.'],
+'rate.say':['Rate settles to 94. Still AF, and that is fine: the goal was the rate.','Частота снижается до 94. Всё ещё ФП, и это нормально: целью была частота.','Chastota 94 gacha tushdi. Hali ham AF, bu normal: maqsad chastota edi.'],
+'rate.low':['Too little to slow the node.','Слишком мало, чтобы замедлить узел.','Tugunni sekinlashtirish uchun juda kam.'],
+'rate.high':['More than 5 mg in one bolus. The pressure drops with the rate.','Больше 5 мг одним болюсом. Вместе с частотой падает давление.','Bir bolyusda 5 mg dan koʻp. Chastota bilan birga bosim ham tushadi.'],   /* UNVERIFIED dose */
+'rate.speed':['Over 2 minutes. Not a slam.','За 2 минуты. Не струйно.','2 daqiqa davomida. Shoshilmasdan.'],
+'dig.high':['Too much digoxin at once.','Слишком много дигоксина за один раз.','Bir martada juda koʻp digoksin.'],
+'dig.speed':['Digoxin goes in slowly.','Дигоксин вводят медленно.','Digoksin sekin yuboriladi.'],
+'un.w.adenosine':['Shock, chest pain, confusion. Those are adverse features: do not wait for a drug.','Шок, боль в груди, спутанность сознания. Это неблагоприятные признаки: не ждите действия лекарства.','Shok, koʻkrak ogʻrigʻi, ong chalkashligi. Bular xavfli belgilar: dori taʼsirini kutmang.'],
+'un.w.vagal':['No time for manoeuvres. This patient is crashing.','На пробы нет времени. Пациент стремительно ухудшается.','Sinamalarga vaqt yoʻq. Bemorning ahvoli keskin yomonlashmoqda.'],
+'un.w.metoprolol':['A beta-blocker with a pressure of 70. The pressure is gone.','Бета-блокатор при давлении 70. Давления больше нет.','Bosim 70 boʻlganda beta-blokator. Bosim yoʻqoldi.'],
+'un.w.digoxin':['Hours too slow.','Подействует через часы. Слишком поздно.','Taʼsiri soatlardan keyin. Juda kech.'],
+'un.w.amiodarone':['Amiodarone comes after cardioversion fails, not before.','Амиодарон — после неудачной кардиоверсии, а не до неё.','Amiodaron — kardioversiya yordam bermagandan keyin, undan oldin emas.'],
+'apo.o2':['Oxygen on. Saturation climbing.','Кислород подан. Сатурация растёт.','Kislorod berildi. Saturatsiya koʻtarilmoqda.'],
+'apo.w.sync':['Sinus tachycardia is the body coping. Nothing to cardiovert.','Синусовая тахикардия — это компенсация. Кардиовертировать нечего.','Sinus taxikardiyasi — organizmning moslashuvi. Kardioversiya qiladigan narsa yoʻq.'],
+'apo.w.metoprolol':['A beta-blocker bolus in acute pulmonary oedema. The ventricle gives up.','Болюс бета-блокатора при остром отёке лёгких. Желудочек сдаётся.','Oʻtkir oʻpka shishida beta-blokator bolyusi. Qorincha taslim boʻladi.'],
+'apo.w.adrenaline':['More afterload for a failing ventricle.','Ещё больше постнагрузки для слабеющего желудочка.','Zaiflashgan qorinchaga yanada koʻproq postyuklama.'],   /* ?? uz: postyuklama */
+'apo.w.adenosine':['This is sinus tachycardia. Treat the cause.','Это синусовая тахикардия. Лечите причину.','Bu sinus taxikardiyasi. Sababini davolang.'],
+'apo.w.atropine':['The heart is already fast.','Сердце и так бьётся часто.','Yurak shundoq ham tez urmoqda.'],
+'furo.say':['Furosemide in. Venodilation first, diuresis to follow.','Фуросемид введён. Сначала венодилатация, затем диурез.','Furosemid yuborildi. Avval venodilatatsiya, keyin diurez.'],
+'furo.low':['Too little for wet lungs.','Слишком мало для «мокрых» лёгких.','«Hoʻl» oʻpka uchun juda kam.'],
+'furo.high':['For a patient not already on diuretics, 20–40 mg is the starting bolus.','Если пациент раньше не получал диуретики, стартовый болюс — 20–40 мг.','Ilgari diuretik olmagan bemor uchun boshlangʻich bolyus 20–40 mg.'],
+'furo.speed':['Give it slowly.','Вводите медленно.','Sekin yuboring.'],
+
+/* ── diagnoses ── */
+'dx.svt':['Supraventricular tachycardia','Наджелудочковая тахикардия','Supraventrikulyar taxikardiya'],
+'dx.svtun':['Unstable tachycardia','Нестабильная тахикардия','Nobarqaror taxikardiya'],
+'dx.brady':['Bradycardia with adverse features','Брадикардия с неблагоприятными признаками','Xavfli belgilar bilan bradikardiya'],
+'dx.chb':['Complete heart block','Полная АВ-блокада','Toʻliq AV blokada'],
+'dx.vf':['Cardiac arrest · ventricular fibrillation','Остановка сердца · фибрилляция желудочков','Yurak toʻxtashi · qorinchalar fibrillyatsiyasi'],
+'dx.asys':['Cardiac arrest · asystole','Остановка сердца · асистолия','Yurak toʻxtashi · asistoliya'],
+'dx.af':['Atrial fibrillation · fast ventricular rate','Фибрилляция предсердий · высокая частота желудочков','Boʻlmachalar fibrillyatsiyasi · qorinchalar chastotasi yuqori'],
+'dx.aflow':['Atrial fibrillation · reduced ejection fraction','Фибрилляция предсердий · сниженная фракция выброса','Boʻlmachalar fibrillyatsiyasi · pasaygan otish fraksiyasi'],
+'dx.afun':['Unstable atrial fibrillation','Нестабильная фибрилляция предсердий','Nobarqaror boʻlmachalar fibrillyatsiyasi'],
+'dx.apo':['Acute pulmonary oedema','Острый отёк лёгких','Oʻtkir oʻpka shishi'],
+'dx.apolow':['Acute pulmonary oedema · low pressure','Острый отёк лёгких · низкое давление','Oʻtkir oʻpka shishi · past bosim'],
+
+/* ── patients ── */
+'p.svt6.vig':['31 F · sudden palpitations · alert, talking','Ж 31 · внезапное сердцебиение · в сознании, разговаривает','A 31 · toʻsatdan yurak urishi · hushida, gaplashmoqda'],
+'p.svt6.vagal':['Modified Valsalva. No change.','Модифицированная проба Вальсальвы. Без изменений.','Modifikatsiyalangan Valsalva sinamasi. Oʻzgarish yoʻq.'],
+'p.svt6.skip':['It worked, but vagal manoeuvres come first.','Сработало, но сначала положены вагусные пробы.','Yordam berdi, lekin avval vagus sinamalari qilinadi.'],
+'p.svt6.aden':['A two-second pause. Then sinus rhythm.','Пауза в две секунды. Затем синусовый ритм.','Ikki soniyalik pauza. Soʻng sinus ritmi.'],
+'p.svt6.hint':['Regular, narrow, stable: vagal manoeuvre, then adenosine from 6 mg, pushed fast.','Регулярная, узкая, стабильная: вагусная проба, затем аденозин с 6 мг, быстро.','Muntazam, tor, barqaror: vagus sinamasi, soʻng adenozin 6 mg dan boshlab, tez.'],
+'p.svt6.teach':['Stable regular narrow tachycardia: vagal manoeuvres, then adenosine 6 mg as a rapid bolus. If that fails 12 mg, then 18 mg.','Стабильная регулярная тахикардия с узкими QRS: вагусные пробы, затем аденозин 6 мг быстрым болюсом. Если не помогло — 12 мг, затем 18 мг.','Barqaror, muntazam, tor QRS li taxikardiya: vagus sinamalari, soʻng adenozin 6 mg tez bolyus bilan. Yordam bermasa — 12 mg, soʻng 18 mg.'],
+'p.svt12.vig':['44 M · racing heart for an hour · BP holding','М 44 · сердцебиение уже час · давление держится','E 44 · bir soatdan beri yurak tez urmoqda · bosim saqlangan'],
+'p.svt12.vagal':['Valsalva. Nothing.','Проба Вальсальвы. Ничего.','Valsalva sinamasi. Hech narsa.'],
+'p.svt12.aden6':['Brief flush. The tachycardia runs on.','Короткий прилив жара. Тахикардия продолжается.','Qisqa qizarish. Taxikardiya davom etmoqda.'],
+'p.svt12.aden12':['Long pause… sinus rhythm.','Долгая пауза… синусовый ритм.','Uzoq pauza… sinus ritmi.'],
+'p.svt12.hint':['6 mg did not hold. The ladder goes 6, 12, 18.','6 мг не помогли. Лестница: 6, 12, 18.','6 mg yordam bermadi. Zina: 6, 12, 18.'],
+'p.svt12.teach':['Adenosine is a ladder: 6 mg, then 12 mg, then 18 mg. Each one a rapid bolus with a flush.','Аденозин — это лестница: 6 мг, затем 12 мг, затем 18 мг. Каждая доза — быстрым болюсом с промыванием.','Adenozin — bu zina: 6 mg, soʻng 12 mg, soʻng 18 mg. Har biri tez bolyus bilan, ketidan yuvish.'],
+'p.svt18.vig':['52 F · palpitations and a tight chest · stable','Ж 52 · сердцебиение и стеснение в груди · стабильна','A 52 · yurak urishi va koʻkrakda siqilish · barqaror'],
+'p.svt18.vagal':['Valsalva. No change.','Проба Вальсальвы. Без изменений.','Valsalva sinamasi. Oʻzgarish yoʻq.'],
+'p.svt18.aden6':['No effect.','Эффекта нет.','Taʼsir yoʻq.'],
+'p.svt18.aden12':['A flicker of block. It comes straight back.','Мгновение блокады. Тахикардия тут же возвращается.','Bir lahzalik blokada. Taxikardiya darhol qaytdi.'],
+'p.svt18.aden18':['Pause. Sinus rhythm.','Пауза. Синусовый ритм.','Pauza. Sinus ritmi.'],
+'p.svt18.hint':['Still stable. Keep climbing: 18 mg is the top of the ladder.','Всё ещё стабильна. Поднимайтесь дальше: 18 мг — верх лестницы.','Hali ham barqaror. Koʻtarilishda davom eting: 18 mg — zinaning tepasi.'],
+'p.svt18.teach':['The adenosine ladder ends at 18 mg. After that it is verapamil or a beta-blocker, then a synchronised shock.','Лестница аденозина заканчивается на 18 мг. Дальше — верапамил или бета-блокатор, затем синхронизированный разряд.','Adenozin zinasi 18 mg da tugaydi. Undan keyin verapamil yoki beta-blokator, soʻng sinxronlangan razryad.'],
+'p.svtvag.vig':['24 M · heart pounding after coffee · well','М 24 · сильное сердцебиение после кофе · чувствует себя хорошо','E 24 · qahvadan keyin yurak kuchli urmoqda · ahvoli yaxshi'],
+'p.svtvag.vagal':['Modified Valsalva… and it breaks. Sinus rhythm.','Модифицированная проба Вальсальвы… и приступ обрывается. Синусовый ритм.','Modifikatsiyalangan Valsalva sinamasi… va xuruj toʻxtadi. Sinus ritmi.'],
+'p.svtvag.aden':['Adenosine works. A Valsalva would have too.','Аденозин сработал. Проба Вальсальвы тоже сработала бы.','Adenozin yordam berdi. Valsalva sinamasi ham yordam bergan boʻlardi.'],
+'p.svtvag.hint':['The cheapest tool on the cart comes first.','Сначала — самый простой инструмент на тележке.','Avval — aravachadagi eng oddiy vosita.'],
+'p.svtvag.teach':['Vagal manoeuvres come before any drug in a stable regular narrow tachycardia, and sometimes they are all you need.','При стабильной регулярной тахикардии с узкими QRS вагусные пробы идут раньше любого лекарства, и иногда их одних достаточно.','Barqaror, muntazam, tor QRS li taxikardiyada vagus sinamalari har qanday doridan oldin qilinadi, baʼzan ularning oʻzi yetarli.'],
+'p.svtun.vig':['67 M · rate 204 · grey, confused, chest pain','М 67 · частота 204 · серый, спутанное сознание, боль в груди','E 67 · chastota 204 · rangi kulrang, ongi chalkash, koʻkrak ogʻrigʻi'],
+'p.svtun.sync':['Synchronised shock. Sinus rhythm, pressure returning.','Синхронизированный разряд. Синусовый ритм, давление восстанавливается.','Sinxronlangan razryad. Sinus ritmi, bosim tiklanmoqda.'],
+'p.svtun.hint':['Shock, syncope, ischaemia or heart failure with a tachycardia means electricity, synchronised.','Шок, обморок, ишемия или сердечная недостаточность при тахикардии — значит, электричество, синхронизированно.','Taxikardiyada shok, hushdan ketish, ishemiya yoki yurak yetishmovchiligi — demak elektr, sinxronlangan holda.'],
+'p.svtun.teach':['Tachycardia with adverse features (shock, syncope, myocardial ischaemia, heart failure): synchronised cardioversion. Drugs only if that fails.','Тахикардия с неблагоприятными признаками (шок, обморок, ишемия миокарда, сердечная недостаточность): синхронизированная кардиоверсия. Лекарства — только если она не помогла.','Xavfli belgilar bilan taxikardiya (shok, hushdan ketish, miokard ishemiyasi, yurak yetishmovchiligi): sinxronlangan kardioversiya. Dorilar — faqat u yordam bermasa.'],
+'p.brady.vig':['74 F · dizzy and clammy · rate 36','Ж 74 · головокружение, липкий пот · частота 36','A 74 · bosh aylanishi, yopishqoq ter · chastota 36'],
+'p.brady.atro':['The rate climbs to 66. Colour returns.','Частота растёт до 66. Цвет кожи возвращается.','Chastota 66 gacha koʻtarildi. Teri rangi tiklanmoqda.'],
+'p.brady.high':['Start at 500 mcg and repeat. The ceiling is 3 mg in total.','Начинайте с 500 мкг и повторяйте. Потолок — 3 мг суммарно.','500 mkg dan boshlang va takrorlang. Jami chegara — 3 mg.'],
+'p.brady.w.adenosine':['Adenosine blocks the AV node. In a bradycardia that is a pause you may not get back.','Аденозин блокирует АВ-узел. При брадикардии это пауза, из которой можно не выйти.','Adenozin AV tugunni bloklaydi. Bradikardiyada bu ortga qaytmasligi mumkin boʻlgan pauza.'],
+'p.brady.w.metoprolol':['A beta-blocker into a rate of 36.','Бета-блокатор при частоте 36.','Chastota 36 boʻlganda beta-blokator.'],
+'p.brady.w.digoxin':['Digoxin slows the node further.','Дигоксин ещё сильнее замедляет узел.','Digoksin tugunni yanada sekinlashtiradi.'],
+'p.brady.w.amiodarone':['Amiodarone slows the heart.','Амиодарон замедляет сердце.','Amiodaron yurakni sekinlashtiradi.'],
+'p.brady.w.adrenaline':['A 1 mg bolus is for cardiac arrest. In bradycardia adrenaline is an infusion at 2–10 mcg/min, after atropine.','Болюс 1 мг — для остановки сердца. При брадикардии адреналин — это инфузия 2–10 мкг/мин, после атропина.','1 mg bolyus — yurak toʻxtashi uchun. Bradikardiyada adrenalin — atropindan keyin 2–10 mkg/daq infuziya.'],
+'p.brady.w.pace':['Atropine first. Pacing is for when it fails.','Сначала атропин. Стимуляция — если он не помог.','Avval atropin. Stimulyatsiya — u yordam bermasa.'],
+'p.brady.hint':['Slow with adverse features: atropine. The dose is in micrograms.','Редкий ритм с неблагоприятными признаками: атропин. Доза — в микрограммах.','Xavfli belgilar bilan sekin ritm: atropin. Doza mikrogrammlarda.'],
+'p.brady.teach':['Bradycardia with adverse features: atropine 500 mcg IV, repeated every 3–5 minutes to a maximum of 3 mg.','Брадикардия с неблагоприятными признаками: атропин 500 мкг в/в, повторять каждые 3–5 минут до максимума 3 мг.','Xavfli belgilar bilan bradikardiya: atropin 500 mkg v/i, har 3–5 daqiqada takrorlab, jami 3 mg gacha.'],
+'p.chb.vig':['69 M · collapsed twice · broad complexes at 30','М 69 · дважды падал · широкие комплексы, 30 в минуту','E 69 · ikki marta yiqilgan · keng komplekslar, daqiqasiga 30'],
+'p.chb.atro':['No response. Complete heart block rarely answers atropine.','Ответа нет. Полная АВ-блокада редко отвечает на атропин.','Javob yoʻq. Toʻliq AV blokada atropinga kamdan-kam javob beradi.'],
+'p.chb.high':['Start at 500 mcg.','Начинайте с 500 мкг.','500 mkg dan boshlang.'],
+'p.chb.pace':['Capture. Every spike followed by a beat.','Захват. За каждым спайком следует сокращение.','Qamrash bor. Har bir spaykdan keyin qisqarish.'],   /* ?? uz: qamrash, spayk */
+'p.chb.w.atropine':['Still nothing. He needs pacing.','По-прежнему ничего. Ему нужна стимуляция.','Hali ham hech narsa. Unga stimulyatsiya kerak.'],
+'p.chb.w.adenosine':['Adenosine in complete heart block. Asystole.','Аденозин при полной АВ-блокаде. Асистолия.','Toʻliq AV blokadada adenozin. Asistoliya.'],
+'p.chb.w.metoprolol':['A beta-blocker into a rate of 30.','Бета-блокатор при частоте 30.','Chastota 30 boʻlganda beta-blokator.'],
+'p.chb.w.digoxin':['Digoxin slows conduction further.','Дигоксин ещё сильнее замедляет проведение.','Digoksin oʻtkazuvchanlikni yanada sekinlashtiradi.'],
+'p.chb.w.adrenaline':['A 1 mg bolus is for arrest. Here adrenaline is an infusion at 2–10 mcg/min.','Болюс 1 мг — для остановки сердца. Здесь адреналин — это инфузия 2–10 мкг/мин.','1 mg bolyus — yurak toʻxtashi uchun. Bu yerda adrenalin — 2–10 mkg/daq infuziya.'],
+'p.chb.hint':['Broad-complex complete block is at risk of asystole. If atropine does nothing, pace.','Полная блокада с широкими комплексами — риск асистолии. Если атропин не действует — стимуляция.','Keng kompleksli toʻliq blokada — asistoliya xavfi. Atropin taʼsir qilmasa — stimulyatsiya.'],
+'p.chb.teach':['If atropine fails, or there is a risk of asystole (complete block with broad QRS, Mobitz II, pauses over 3 s): pace. Bridges are isoprenaline 5 mcg/min or adrenaline 2–10 mcg/min.','Если атропин не помог или есть риск асистолии (полная блокада с широкими QRS, Мобиц II, паузы более 3 с): кардиостимуляция. Временный «мост» — изопреналин 5 мкг/мин или адреналин 2–10 мкг/мин.','Atropin yordam bermasa yoki asistoliya xavfi boʻlsa (keng QRS li toʻliq blokada, Mobits II, 3 s dan uzun pauzalar): kardiostimulyatsiya. Vaqtinchalik «koʻprik» — izoprenalin 5 mkg/daq yoki adrenalin 2–10 mkg/daq.'],
+'p.vf.vig':['58 M · collapsed in the corridor · CPR in progress','М 58 · упал в коридоре · идёт СЛР','E 58 · yoʻlakda yiqilgan · YOʻR olib borilmoqda'],
+'p.vf.back':['Rhythm check. Still VF.','Оценка ритма. Всё ещё ФЖ.','Ritmni tekshirish. Hali ham VF.'],
+'p.vf.back2':['Rhythm check. VF, coarser now.','Оценка ритма. ФЖ, теперь более крупноволновая.','Ritmni tekshirish. VF, endi yirikroq toʻlqinli.'],
+'p.vf.s1':['Shock 1. Back on the chest.','Разряд 1. Снова компрессии.','1-razryad. Yana kompressiyalar.'],
+'p.vf.s2':['Shock 2. Back on the chest.','Разряд 2. Снова компрессии.','2-razryad. Yana kompressiyalar.'],
+'p.vf.s3':['Shock 3. Compressions continue. Now the drugs.','Разряд 3. Компрессии продолжаются. Теперь лекарства.','3-razryad. Kompressiyalar davom etmoqda. Endi dorilar.'],
+'p.vf.adr':['Adrenaline 1 mg in.','Адреналин 1 мг введён.','Adrenalin 1 mg yuborildi.'],
+'p.vf.amio':['Amiodarone 300 mg in.','Амиодарон 300 мг введён.','Amiodaron 300 mg yuborildi.'],
+'p.vf.amio.low':['Too little. The first dose is 300 mg.','Слишком мало. Первая доза — 300 мг.','Juda kam. Birinchi doza — 300 mg.'],
+'p.vf.amio.high':['Too much. 300 mg now, 150 mg after the 5th shock.','Слишком много. Сейчас 300 мг, после 5-го разряда — 150 мг.','Juda koʻp. Hozir 300 mg, 5-razryaddan keyin 150 mg.'],
+'p.vf.s4':['Shock 4… an organised rhythm. A pulse.','Разряд 4… организованный ритм. Есть пульс.','4-razryad… tartibli ritm. Puls bor.'],
+'p.vf.w.adrenaline':['Shockable rhythm: adrenaline waits until after the 3rd shock.','Ритм, подлежащий дефибрилляции: адреналин — только после 3-го разряда.','Defibrillyatsiya qilinadigan ritm: adrenalin faqat 3-razryaddan keyin.'],
+'p.vf.w.amiodarone':['Amiodarone comes after the 3rd shock.','Амиодарон — после 3-го разряда.','Amiodaron — 3-razryaddan keyin.'],
+'p.vf.w.sync':['Sync mode is hunting for an R wave. VF has none. No shock delivered.','Режим синхронизации ищет зубец R. При ФЖ его нет. Разряд не нанесён.','Sinxron rejim R tishchani qidiradi. VF da u yoʻq. Razryad berilmadi.'],
+'p.vf.w.cpr':['CPR is already running. What does this rhythm need?','СЛР уже идёт. Что нужно этому ритму?','YOʻR allaqachon olib borilmoqda. Bu ritmga nima kerak?'],
+'p.vf.w.atropine':['Atropine has no role in cardiac arrest.','Атропину нет места при остановке сердца.','Yurak toʻxtashida atropinning oʻrni yoʻq.'],
+'p.vf.w.pace':['You cannot pace fibrillation.','При фибрилляции стимуляция невозможна.','Fibrillyatsiyada stimulyatsiya qilib boʻlmaydi.'],
+'p.vf.hint':['VF: shock, 2 minutes of CPR, repeat. After the 3rd shock give adrenaline 1 mg and amiodarone 300 mg.','ФЖ: разряд, 2 минуты СЛР, повторить. После 3-го разряда — адреналин 1 мг и амиодарон 300 мг.','VF: razryad, 2 daqiqa YOʻR, takrorlash. 3-razryaddan keyin adrenalin 1 mg va amiodaron 300 mg.'],
+'p.vf.teach':['Shockable arrest: shock, then CPR for 2 minutes, and repeat. After the 3rd shock give adrenaline 1 mg (then every 3–5 min) and amiodarone 300 mg (150 mg after the 5th).','Остановка с ритмом, подлежащим дефибрилляции: разряд, затем СЛР 2 минуты, и повторять. После 3-го разряда — адреналин 1 мг (далее каждые 3–5 мин) и амиодарон 300 мг (150 мг после 5-го).','Defibrillyatsiya qilinadigan ritm bilan yurak toʻxtashi: razryad, soʻng 2 daqiqa YOʻR, va takrorlash. 3-razryaddan keyin adrenalin 1 mg (soʻng har 3–5 daqiqada) va amiodaron 300 mg (5-razryaddan keyin 150 mg).'],
+'p.asys.vig':['81 F · found unresponsive · not breathing','Ж 81 · найдена без сознания · не дышит','A 81 · hushsiz topilgan · nafas olmayapti'],
+'p.asys.cpr':['Compressions started.','Компрессии начаты.','Kompressiyalar boshlandi.'],
+'p.asys.back1':['Rhythm check. Asystole.','Оценка ритма. Асистолия.','Ritmni tekshirish. Asistoliya.'],
+'p.asys.adr1':['Adrenaline 1 mg in, as early as you could.','Адреналин 1 мг введён — так рано, как было возможно.','Adrenalin 1 mg yuborildi — imkon qadar erta.'],
+'p.asys.back2':['Still asystole. Adrenaline is due again.','Всё ещё асистолия. Пора снова вводить адреналин.','Hali ham asistoliya. Adrenalinni yana yuborish vaqti keldi.'],
+'p.asys.adr2':['Second dose… a slow rhythm with a pulse.','Вторая доза… медленный ритм с пульсом.','Ikkinchi doza… pulsli sekin ritm.'],
+'p.asys.low':['Under 1 mg.','Меньше 1 мг.','1 mg dan kam.'],
+'p.asys.w.shock':['Asystole is not shockable. Compressions stopped for nothing.','Асистолия не подлежит дефибрилляции. Компрессии прерваны зря.','Asistoliya defibrillyatsiya qilinmaydi. Kompressiyalar bekorga toʻxtatildi.'],
+'p.asys.w.sync':['Asystole is not shockable.','Асистолия не подлежит дефибрилляции.','Asistoliya defibrillyatsiya qilinmaydi.'],
+'p.asys.w.atropine':['Atropine is no longer recommended in asystole or PEA.','Атропин больше не рекомендован при асистолии и ЭАБП.','Atropin asistoliya va PEA da endi tavsiya etilmaydi.'],
+'p.asys.w.amiodarone':['Amiodarone is for shockable rhythms.','Амиодарон — для ритмов, подлежащих дефибрилляции.','Amiodaron — defibrillyatsiya qilinadigan ritmlar uchun.'],
+'p.asys.w.pace':['Pacing does not capture a true asystole.','При истинной асистолии стимуляция не даёт захвата.','Haqiqiy asistoliyada stimulyatsiya qamrab olmaydi.'],
+'p.asys.w.cpr':['CPR is running. What goes in the vein?','СЛР идёт. Что вводим в вену?','YOʻR olib borilmoqda. Venaga nima yuboramiz?'],
+'p.asys.hint':['Non-shockable arrest: CPR, and adrenaline 1 mg as soon as there is a line.','Остановка с ритмом, не подлежащим дефибрилляции: СЛР и адреналин 1 мг, как только есть венозный доступ.','Defibrillyatsiya qilinmaydigan ritm bilan yurak toʻxtashi: YOʻR va venaga yoʻl ochilishi bilan adrenalin 1 mg.'],
+'p.asys.teach':['Non-shockable arrest (asystole, PEA): CPR and adrenaline 1 mg IV as soon as possible, repeated every 3–5 minutes. No shock.','Остановка с ритмом, не подлежащим дефибрилляции (асистолия, ЭАБП): СЛР и адреналин 1 мг в/в как можно раньше, повторять каждые 3–5 минут. Без разряда.','Defibrillyatsiya qilinmaydigan ritm bilan yurak toʻxtashi (asistoliya, PEA): YOʻR va adrenalin 1 mg v/i imkon qadar erta, har 3–5 daqiqada takrorlash. Razryadsiz.'],
+'p.af.vig':['63 M · irregular palpitations since morning · alert','М 63 · неритмичное сердцебиение с утра · в сознании','E 63 · ertalabdan notekis yurak urishi · hushida'],
+'p.af.hint':['Stable fast AF: slow the node. A beta-blocker, drawn small and pushed slowly.','Стабильная частая ФП: замедлите узел. Бета-блокатор, малой дозой и медленно.','Barqaror tez AF: tugunni sekinlashtiring. Beta-blokator, kichik dozada va sekin.'],
+'p.af.teach':['Stable fast AF: rate control. Metoprolol 2.5–5 mg IV over 2 minutes. Digoxin is an alternative at any ejection fraction.','Стабильная частая ФП: контроль частоты. Метопролол 2,5–5 мг в/в за 2 минуты. Дигоксин — альтернатива при любой фракции выброса.','Barqaror tez AF: chastota nazorati. Metoprolol 2,5–5 mg v/i 2 daqiqa davomida. Digoksin — har qanday otish fraksiyasida muqobil.'],   /* UNVERIFIED dose */
+'p.aflow.vig':['71 F · AF at 152 · known LVEF 30%, swollen ankles','Ж 71 · ФП с частотой 152 · ФВ ЛЖ 30%, отёки лодыжек','A 71 · AF, chastota 152 · chap qorincha otish fraksiyasi 30%, toʻpiqlar shishgan'],
+'p.aflow.hint':['A weak ventricle narrows the choice to a beta-blocker or digoxin.','Слабый желудочек сужает выбор до бета-блокатора или дигоксина.','Zaif qorincha tanlovni beta-blokator yoki digoksin bilan cheklaydi.'],
+'p.aflow.teach':['AF with LVEF ≤ 40%: a beta-blocker and/or digoxin. Verapamil and diltiazem are only for LVEF above 40%.','ФП при ФВ ЛЖ ≤ 40%: бета-блокатор и/или дигоксин. Верапамил и дилтиазем — только при ФВ ЛЖ выше 40%.','Chap qorincha otish fraksiyasi ≤ 40% boʻlgan AF: beta-blokator va/yoki digoksin. Verapamil va diltiazem — faqat otish fraksiyasi 40% dan yuqori boʻlganda.'],
+'p.afun.vig':['77 M · AF at 172 · pressure 68, chest pain','М 77 · ФП с частотой 172 · давление 68, боль в груди','E 77 · AF, chastota 172 · bosim 68, koʻkrak ogʻrigʻi'],
+'p.afun.sync':['Synchronised shock. Sinus rhythm.','Синхронизированный разряд. Синусовый ритм.','Sinxronlangan razryad. Sinus ritmi.'],
+'p.afun.hint':['The rhythm does not matter. The adverse features do.','Важен не ритм. Важны неблагоприятные признаки.','Muhimi ritm emas. Muhimi — xavfli belgilar.'],
+'p.afun.teach':['Any tachycardia with adverse features, AF included: synchronised cardioversion.','Любая тахикардия с неблагоприятными признаками, включая ФП: синхронизированная кардиоверсия.','Xavfli belgilar bilan har qanday taxikardiya, shu jumladan AF: sinxronlangan kardioversiya.'],
+'p.apo.vig':['70 M · woke gasping · pink frothy sputum','М 70 · проснулся от удушья · розовая пенистая мокрота','E 70 · boʻgʻilib uygʻongan · pushti koʻpikli balgʻam'],
+'p.apo.gtn':['Nitrate running. Pressure and preload come down.','Нитрат идёт. Давление и преднагрузка снижаются.','Nitrat yuborilmoqda. Bosim va oldyuklama pasaymoqda.'],   /* ?? uz: oldyuklama */
+'p.apo.hint':['Three things, any order: air, diuretic, and with a pressure this high, a vasodilator.','Три вещи в любом порядке: кислород, диуретик и, при таком высоком давлении, вазодилататор.','Uch narsa, istalgan tartibda: kislorod, diuretik va shunday yuqori bosimda vazodilatator.'],
+'p.apo.teach':['Acute pulmonary oedema: oxygen if SpO₂ is under 90%, furosemide 20–40 mg IV, and a vasodilator if systolic BP is above 110 mmHg.','Острый отёк лёгких: кислород при SpO₂ ниже 90%, фуросемид 20–40 мг в/в и вазодилататор, если систолическое АД выше 110 мм рт. ст.','Oʻtkir oʻpka shishi: SpO₂ 90% dan past boʻlsa kislorod, furosemid 20–40 mg v/i va sistolik AB 110 mm sim. ust. dan yuqori boʻlsa vazodilatator.'],
+'p.apolow.vig':['82 F · drowning in her own lungs · cold hands','Ж 82 · захлёбывается, в лёгких жидкость · холодные руки','A 82 · oʻpkasi suyuqlikka toʻlgan, boʻgʻilmoqda · qoʻllari sovuq'],
+'p.apolow.w.gtn':['Systolic under 110. The vasodilator took her pressure to 70.','Систолическое ниже 110. Вазодилататор уронил её давление до 70.','Sistolik bosim 110 dan past. Vazodilatator uning bosimini 70 gacha tushirdi.'],
+'p.apolow.hint':['Look at the pressure before you reach for the nitrate.','Посмотрите на давление, прежде чем тянуться к нитрату.','Nitratga qoʻl choʻzishdan oldin bosimga qarang.'],
+'p.apolow.teach':['Vasodilators are only for systolic BP above 110 mmHg. Below that: oxygen and a diuretic, and think about inotropes if perfusion fails.','Вазодилататоры — только при систолическом АД выше 110 мм рт. ст. Ниже: кислород и диуретик, а при падении перфузии подумайте об инотропах.','Vazodilatatorlar — faqat sistolik AB 110 mm sim. ust. dan yuqori boʻlganda. Undan past boʻlsa: kislorod va diuretik, perfuziya pasaysa inotroplar haqida oʻylang.']
+};
+
+/* ════════════════════════════════════════════════════════════════════════
+   3. LANGUAGE
+   ════════════════════════════════════════════════════════════════════════ */
+const TEST=/[?&]test\b/.test(location.search);   // test.html loads the game with ?test: manual clock, no saved data
+let LANG='en';
+(()=>{let l=null;const q=/[?&]lang=(\w\w)/.exec(location.search);if(q)l=q[1];
+  if(!l)try{l=localStorage.getItem('smartheart-lang');}catch(e){}   // same key as index.html
+  if(!l)l=(navigator.language||'').slice(0,2).toLowerCase();
+  if(LANGS.includes(l))LANG=l;})();
+const MISSING=new Set();
+function t(key,...a){
+  const row=L[key];if(!row){MISSING.add(key);return '['+key+']';}
+  let s=row[LANGS.indexOf(LANG)];if(s==null)s=row[0];
+  return a.length?s.replace(/\{(\d)\}/g,(m,i)=>a[i]):s;
+}
+const num=s=>LANG==='en'?String(s):String(s).replace('.',',');
+function fmtNum(d,v){const x=DRUG[d];return num(x.step<1?(+v).toFixed(x.step<.2?1:x.step<.5?2:1).replace(/\.?0+$/,''):String(Math.round(v)));}
+const fmtDose=(d,v)=>fmtNum(d,v)+' '+t('unit.'+DRUG[d].u);
+/* A message is a list of text keys and drawn doses, so it can be re-rendered in another language. */
+const msgText=parts=>parts.map(p=>typeof p==='string'?t(p):fmtDose(p.d,p.v)+'.').join(' ');
+
+/* ════════════════════════════════════════════════════════════════════════
+   4. ENGINE. Pure rules: no screen, no clock, no sound. The game and
+   test.html both drive exactly this code.
+   ════════════════════════════════════════════════════════════════════════ */
+function newCase(P,drainT){
+  return {P,i:0,steps:P.steps.map(g=>g.map(s=>Object.assign({},s,{done:false}))),stab:100,mistakes:0,drainT:drainT||P.t,won:false,dead:false};
+}
+function cloneCase(C){const D=Object.assign({},C);D.steps=C.steps.map(g=>g.map(s=>Object.assign({},s)));return D;}
+function caseTick(C,dt){C.stab=clamp(C.stab-100/C.drainT*dt,0,100);if(C.stab<=0)C.dead=true;}
+function caseAct(C,a,dose,speed){
+  if(C.won||C.dead)return null;
+  const P=C.P;
+  const find=g=>{for(const s of g){if(s.done)continue;if(s.a===a)return [s,s];if(s.alts){const al=s.alts.find(x=>x.a===a);if(al)return [s,al];}}return null;};
+  const bad=(h,msg,o)=>{
+    C.mistakes++;C.stab=clamp(C.stab-h,0,100);
+    const r={ok:false,h,msg,hint:C.mistakes>=2&&P.hint?P.hint:null,fx:(o&&o.fx)||null,lethal:!!(o&&o.lethal)};
+    if(r.lethal)C.stab=0;if(C.stab<=0)C.dead=true;r.dead=C.dead;return r;
+  };
+  let grp=C.steps[C.i],hit=find(grp),skipped=null;
+  if(!hit&&grp.every(s=>s.opt||s.done)&&C.steps[C.i+1]){
+    const h2=find(C.steps[C.i+1]);if(h2){skipped=grp.find(s=>s.opt&&!s.done)||null;grp=C.steps[C.i+1];hit=h2;}
+  }
+  if(!hit){const w=(P.wrong&&P.wrong[a])||{h:12,say:'x.notind'};return bad(w.h||0,[w.say],w);}
+  const st=hit[0],spec=hit[1];
+  if(spec.dose){
+    const v=dose||0;
+    if(v<spec.dose[0]-1e-9)return bad(12,[{d:a,v},spec.low||'x.low']);
+    if(v>spec.dose[1]+1e-9)return bad(spec.hh||22,[{d:a,v},spec.high||'x.high']);
+    if(spec.speed&&speed!==spec.speed)return bad(12,[spec.speedSay||'x.speed']);
+  }
+  if(grp!==C.steps[C.i])C.i++;                       // an optional step was skipped: only now is that final
+  st.done=true;C.stab=clamp(C.stab+TUNE.gain,0,100);
+  const eff=spec.fx!==undefined?spec.fx:st.fx;
+  const r={ok:true,msg:[spec.say||st.say||'x.done'],fact:spec.fact||st.fact||null,fx:eff||null,
+    progress:!!(eff&&(eff.rhythm||eff.rate||eff.sp||eff.bp))};
+  if(skipped&&skipped.skip)r.msg.push(skipped.skip);
+  if(grp.every(s=>s.done)){
+    C.i++;
+    if(C.i>=C.steps.length){C.won=true;r.win=true;}
+    else{const f=grp.find(x=>x.ff);if(f)r.ff={label:f.ff,back:f.back};}
+  }
+  return r;
+}
+/* The intended way to save a patient, read straight from the data. */
+function pathOf(P,o){
+  const out=[];
+  P.steps.forEach(g=>g.forEach(s=>{
+    if(s.opt&&o&&o.skipOpt)return;
+    const spec=(o&&o.alt&&s.alts)?s.alts[0]:s;
+    out.push({a:spec.a,dose:spec.dose?spec.dose[o&&o.top?1:0]:undefined,speed:spec.speed||(o&&o.rapid?'rapid':'slow')});
+  }));
+  return out;
+}
+function finalLook(P){
+  const s={rhythm:P.rhythm,rate:P.rate};
+  P.steps.forEach(g=>g.forEach(st=>{const f=st.fx;if(f){if(f.rhythm)s.rhythm=f.rhythm;if(f.rate)s.rate=f.rate;}}));
+  if(P.end&&P.end.rate)s.rate=P.end.rate;return s;
+}
+function mulberry(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let x=Math.imul(a^a>>>15,1|a);x=x+Math.imul(x^x>>>7,61|x)^x;return((x^x>>>14)>>>0)/4294967296;};}
+/* Daily shift: the day number (UTC) seeds the list, so everyone gets the same patients. */
+const DAY0=Date.UTC(2026,10,10);
+const dayNum=()=>Math.floor((Date.now()-DAY0)/864e5)+1;
+function dailySeq(n){
+  const r=mulberry(n*7919+101),out=[];let last=null;
+  while(out.length<TUNE.dailyN){const pool=PATIENTS.filter(p=>!out.includes(p)&&p.cat!==last);const p=pool[Math.floor(r()*pool.length)];out.push(p);last=p.cat;}
+  return out;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   5. ECG ENGINE. One instance draws the live monitor, another draws the
+   result image.
+   ════════════════════════════════════════════════════════════════════════ */
+function makeECG(rng,keep){
+  const E={now:0,segs:[{t:-99,type:'asys'}],rate:60,beats:[],ps:[],shocks:[],marks:[],next:0,pnext:0};
+  E.cur=()=>E.segs[E.segs.length-1].type;
+  E.set=(type,rateV,pause)=>{
+    const now=E.now;E.segs.push({t:now,type});if(E.segs.length>keep)E.segs.shift();
+    E.rate=rateV||60;E.beats=E.beats.filter(b=>b.t<=now);E.ps=E.ps.filter(p=>p<=now);
+    E.next=now+(pause||0)+.12;E.pnext=now+.1;
+  };
+  E.sched=()=>{
+    const type=E.cur(),hz=E.now+1.2;
+    if(type==='vf'||type==='asys'||type==='cpr')return;
+    while(E.next<hz){
+      let rr=60/E.rate;rr*=type==='af'?(.6+rng()*.85):(1+(rng()-.5)*.04);
+      E.beats.push({t:E.next,broad:type==='chb'||type==='paced',p:type==='sinus',pace:type==='paced',fast:E.rate>140,done:false});E.next+=rr;
+    }
+    if(type==='chb')while(E.pnext<hz){E.ps.push(E.pnext);E.pnext+=60/88;}
+    if(E.beats.length>keep*4)E.beats.splice(0,E.beats.length-keep*4);
+    if(E.ps.length>keep*4)E.ps.splice(0,E.ps.length-keep*4);
+  };
+  const gs=(x,c,s,a)=>{const d=(x-c)/s;return d*d>40?0:a*Math.exp(-.5*d*d);};
+  E.sig=t=>{
+    let type='asys';for(let i=E.segs.length-1;i>=0;i--)if(E.segs[i].t<=t){type=E.segs[i].type;break;}
+    let v=.03*Math.sin(t*1.3)+.012*Math.sin(t*6.7);
+    if(type==='vf'){const a=.5+.28*Math.sin(t*.9)+.14*Math.sin(t*2.3);v+=a*(.6*Math.sin(t*31+2*Math.sin(t*3))+.3*Math.sin(t*23.7)+.2*Math.sin(t*41.3));}
+    else if(type==='cpr'){v+=.85*Math.sin(t*11.5)*(.8+.2*Math.sin(t*3.1))+.1*Math.sin(t*37);}
+    else if(type==='af'){v+=.035*Math.sin(t*38)+.03*Math.sin(t*47.3+1)+.02*Math.sin(t*29.1);}
+    for(let i=E.beats.length-1;i>=0;i--){
+      const b=E.beats[i],d=t-b.t;if(d<-.4)continue;if(d>.7)break;
+      if(b.broad){v+=gs(d,.03,.034,.95)+gs(d,.115,.04,-.5)+gs(d,.36,.08,-.26);}
+      else{v+=gs(d,0,.011,1)+gs(d,-.028,.009,-.13)+gs(d,.03,.011,-.22)+(b.fast?gs(d,.16,.04,.2):gs(d,.27,.06,.27));if(b.p)v+=gs(d,-.17,.026,.12);}
+    }
+    for(let i=E.ps.length-1;i>=0;i--){const d=t-E.ps[i];if(d<-.2)continue;if(d>.3)break;v+=gs(d,0,.026,.12);}
+    for(const s of E.shocks){const d=t-s;if(d>0&&d<.5)v+=2.6*Math.exp(-d*16)*Math.cos(d*60);}
+    return v;
+  };
+  return E;
+}
+const ECG=makeECG(Math.random,12);
+const cv=$('ecg'),cx=cv.getContext('2d');
+let W=0,H=0,dpr=1,now=0;
+function resize(){dpr=Math.min(window.devicePixelRatio||1,2.5);W=cv.clientWidth;H=cv.clientHeight;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);}
+function mark(t0,d,key,arg){ECG.marks.push({t:t0,d:d||0,key,arg});if(ECG.marks.length>8)ECG.marks.shift();}
+function draw(){
+  if(!W)return;
+  cx.setTransform(dpr,0,0,dpr,0,0);cx.clearRect(0,0,W,H);
+  const win=W<420?3.4:4.4,mid=H*.63,amp=H*.3,col=G.col,X=t0=>W-(now-t0)/win*W;
+  const gr=cx.createLinearGradient(0,0,W,0);gr.addColorStop(0,col+'00');gr.addColorStop(.35,col+'aa');gr.addColorStop(1,col);
+  cx.beginPath();
+  for(let x=0;x<=W;x+=2){const t0=now-(W-x)/W*win,y=mid-clamp(ECG.sig(t0),-1.9,1.9)*amp;x?cx.lineTo(x,y):cx.moveTo(x,y);}
+  cx.lineJoin='round';cx.lineCap='round';
+  cx.strokeStyle=gr;cx.lineWidth=7;cx.globalAlpha=.16;cx.stroke();
+  cx.globalAlpha=1;cx.lineWidth=2.6;cx.shadowColor=col;cx.shadowBlur=14;cx.stroke();cx.shadowBlur=0;
+  /* pacing spikes and sync markers are drawn as their own marks so they never fall between samples */
+  for(const b of ECG.beats){
+    if(b.t>now)continue;
+    if(b.pace){const x=X(b.t-.035);if(x>0){cx.strokeStyle='#fff';cx.lineWidth=1.8;cx.globalAlpha=Math.min(1,x/W*2.2);cx.beginPath();cx.moveTo(x,mid+amp*.22);cx.lineTo(x,mid-amp*1.2);cx.stroke();cx.globalAlpha=1;}}
+    if(b.sync){const x=X(b.t),y=mid-amp*1.1;if(x>0){cx.fillStyle='#ffb648';cx.beginPath();cx.moveTo(x-5,y-8);cx.lineTo(x+5,y-8);cx.lineTo(x,y);cx.closePath();cx.fill();}}
+  }
+  /* labels that scroll with the trace: PAUSE, SINUS, CAPTURE, ROSC, HR n */
+  cx.font='600 10px "IBM Plex Mono",ui-monospace,monospace';cx.textBaseline='alphabetic';
+  for(const m of ECG.marks){
+    if(m.t>now)continue;
+    const x0=X(m.t),x1=Math.min(W,X(m.t+m.d)),y=H-21;if(x1<-80)continue;
+    const label=t('mark.'+m.key,m.key==='pause'?num(m.d.toFixed(1)):m.arg);
+    cx.globalAlpha=clamp((x1+80)/160,0,1);cx.strokeStyle='#e9edf2';cx.fillStyle='#e9edf2';cx.lineWidth=1.4;
+    cx.beginPath();
+    if(m.d){cx.moveTo(x0,y-5);cx.lineTo(x0,y);cx.lineTo(x1,y);if(now>=m.t+m.d)cx.lineTo(x1,y-5);cx.stroke();cx.textAlign='left';cx.fillText(label,Math.max(4,x0+2),y+12);}
+    else{cx.moveTo(x0,y-6);cx.lineTo(x0,y+7);cx.stroke();cx.textAlign='left';cx.fillText(label,x0+6,y+6);}
+    cx.globalAlpha=1;
+  }
+  const y=mid-clamp(ECG.sig(now),-1.9,1.9)*amp;cx.fillStyle='#fff';cx.beginPath();cx.arc(W-1,y,3.2,0,6.283);cx.fill();
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   6. SAVE DATA AND SOUND
+   ════════════════════════════════════════════════════════════════════════ */
+let SAVE={best:0,facts:{},miss:{},runs:0,tut:0,stats:{},daily:null,dstreak:0};
+if(!TEST)try{const s=JSON.parse(localStorage.getItem('sh-game')||'null');if(s&&typeof s==='object'){if(s.runs>0&&s.tut==null)s.tut=1;SAVE=Object.assign(SAVE,s);}}catch(e){}
+const persist=()=>{if(TEST)return;try{localStorage.setItem('sh-game',JSON.stringify(SAVE));}catch(e){}};
+function stat(id,r){const s=SAVE.stats[id]||(SAVE.stats[id]={n:0,c:0,s:0,l:0,last:''});s.n++;s[r]++;s.last=r;}
+
+let AC=null,OUT=null,NOISE=null,snd=true,flat=null;
+function audio(){
+  if(AC)return;
+  try{
+    const A=window.AudioContext||window.webkitAudioContext;if(!A)return;AC=new A();
+    const comp=AC.createDynamicsCompressor();OUT=AC.createGain();OUT.gain.value=snd?1:0;OUT.connect(comp);comp.connect(AC.destination);
+    NOISE=AC.createBuffer(1,AC.sampleRate*.4,AC.sampleRate);const d=NOISE.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  }catch(e){AC=null;}
+}
+function tone(f,d,type,g,slide,at){
+  if(!AC||!snd)return;const t0=AC.currentTime+(at||0),o=AC.createOscillator(),e=AC.createGain();
+  o.type=type||'sine';o.frequency.setValueAtTime(f,t0);if(slide)o.frequency.exponentialRampToValueAtTime(slide,t0+d);
+  e.gain.setValueAtTime(.0001,t0);e.gain.exponentialRampToValueAtTime(g||.12,t0+.008);e.gain.exponentialRampToValueAtTime(.0001,t0+d);
+  o.connect(e);e.connect(OUT);o.start(t0);o.stop(t0+d+.03);
+}
+function noise(d,g,lp,at){
+  if(!AC||!snd||!NOISE)return;const t0=AC.currentTime+(at||0),s=AC.createBufferSource(),f=AC.createBiquadFilter(),e=AC.createGain();
+  s.buffer=NOISE;f.type='lowpass';f.frequency.setValueAtTime(lp,t0);f.frequency.exponentialRampToValueAtTime(120,t0+d);
+  e.gain.setValueAtTime(g,t0);e.gain.exponentialRampToValueAtTime(.0001,t0+d);s.connect(f);f.connect(e);e.connect(OUT);s.start(t0);s.stop(t0+d+.02);
+}
+/* monitor beep: pitch follows SpO₂, as on a real pulse oximeter */
+const sBeep=()=>{const sp=typeof G.sp==='number'?G.sp:88,f=520+(clamp(sp,80,100)-80)*18;tone(f,.075,'sine',.075);tone(f*2,.045,'sine',.016);};
+const sGood=p=>{[523,659,784].concat(p?[1047]:[]).forEach((f,i)=>tone(f,.24,'triangle',.11,0,i*.085));};
+const sRosc=()=>{[392,494,587,784].forEach((f,i)=>tone(f,1.1,'sine',.06,0,.25+i*.07));};
+const sBad=()=>tone(170,.28,'sawtooth',.1,90);
+const sLost=()=>{tone(196,.9,'sawtooth',.07,49);tone(98,.9,'sine',.12,40,.05);};
+const sCharge=d=>{tone(240,d,'sawtooth',.03,2200);tone(120,d,'triangle',.035,1100);tone(1760,.06,'square',.04,0,d-.17);tone(1760,.06,'square',.04,0,d-.07);};
+const sShock=()=>{noise(.24,.55,1400);tone(130,.32,'sine',.5,30);tone(64,.2,'square',.1,32);};
+const sAlarm=crit=>{for(let i=0;i<3;i++)tone(crit?1319:988,.085,'square',.04,0,i*.13);};
+const sTick=f=>tone(300+f*500,.03,'square',.03);
+function setFlat(on){
+  if(!AC)return;
+  if(on&&!flat&&snd){flat=AC.createOscillator();const g=AC.createGain();flat.frequency.value=880;g.gain.value=.03;flat.connect(g);g.connect(OUT);flat.start();}
+  else if(!on&&flat){try{flat.stop();}catch(e){}flat=null;}
+}
+const vib=ms=>{try{navigator.vibrate&&navigator.vibrate(ms);}catch(e){}};
+
+/* ════════════════════════════════════════════════════════════════════════
+   7. GAME
+   ════════════════════════════════════════════════════════════════════════ */
+const ARREST={vf:1,asys:1};
+const G={mode:'title',kind:'endless',C:null,lives:TUNE.lives,score:0,streak:0,saved:0,log:[],n:0,queue:null,lastCat:null,col:'#3cf5a0',sp:98,
+  hrT:null,hrV:null,timers:[],pend:null,said:null,cardFn:null,force:null,day:0,alarmAt:0,lastPause:0,shot:null,replay:false,ffUntil:0,ffBack:null,ffType:null};
+const TUT={on:false,step:null,lead:null};
+const SY={d:null,v:0,drag:false,open:false};
+const after=(s,fn)=>G.timers.push({t:now+s,fn});
+const toolName=id=>t('tool.'+id);
+
+function setV(id,txt){const e=$(id);txt=String(txt);if(e.textContent!==txt){e.textContent=txt;e.classList.remove('chg');void e.offsetWidth;e.classList.add('chg');}}
+function vit(o){
+  if(!o)return;
+  if('hr' in o){if(typeof o.hr==='number'){G.hrT=o.hr;if(G.hrV==null){G.hrV=o.hr;$('vHr').textContent=o.hr;}}else{G.hrT=null;G.hrV=null;$('vHr').textContent=o.hr;}}
+  if('bp' in o)setV('vBp',o.bp);
+  if('sp' in o){G.sp=o.sp;setV('vSp',o.sp+(typeof o.sp==='number'?'%':''));}
+}
+function say(parts,cls,hint){G.said={parts,cls,hint:hint||null};renderSay();}
+function renderSay(){const s=G.said,m=$('msg');if(!s){m.textContent='';return;}m.textContent=msgText(s.parts)+(s.hint?' '+t('x.hint')+t(s.hint):'');m.className='msg '+(s.cls||'');}
+function hud(){
+  $('score').textContent=G.score;$('mult').textContent=G.streak>0?'×'+num((1+Math.min(G.streak,8)*.25).toFixed(2).replace(/0$/,'')):'';
+  $('prog').textContent=G.kind==='daily'&&G.queue&&G.n?G.n+'/'+G.queue.length:'';
+  const Lv=$('lives');Lv.innerHTML='';for(let i=0;i<TUNE.lives;i++){Lv.insertAdjacentHTML('beforeend','<svg viewBox="0 0 24 24" class="'+(i<G.lives?'':'gone')+'"><path d="M12 21C5 16 2 12 2 8.2 2 5.3 4.3 3 7.1 3c1.9 0 3.6 1 4.9 2.6C13.3 4 15 3 16.9 3 19.7 3 22 5.3 22 8.2 22 12 19 16 12 21Z"/></svg>');}
+}
+function zapFx(){
+  ECG.shocks.push(now);if(ECG.shocks.length>6)ECG.shocks.shift();sShock();
+  const f=$('flash');f.classList.remove('go');void f.offsetWidth;f.classList.add('go');
+  const a=$('app');a.classList.remove('shake');void a.offsetWidth;a.classList.add('shake');vib(60);
+}
+/* Apply what a step does to the patient, and make the change readable on the trace. */
+function applyFx(o){
+  if(!o)return;
+  if(o.shock)zapFx();
+  if(o.rhythm){
+    ECG.set(o.rhythm,o.rate,o.pause);
+    if(o.pause){G.lastPause=o.pause;mark(now,o.pause,'pause');mark(now+o.pause+.12,0,'sinus');vit({hr:0});after(o.pause+.1,()=>vit(o));return;}
+    if(o.rhythm==='paced')mark(now+.12,0,'capture');
+    else if(o.rhythm==='sinus'){
+      if(G.C&&ARREST[G.C.P.rhythm]){mark(now+.12,0,'rosc');sRosc();const m=$('monitor');m.classList.remove('rosc');void m.offsetWidth;m.classList.add('rosc');}
+      else mark(now+.12,0,'sinus');
+    }
+  }else if(o.rate){ECG.rate=o.rate;ECG.next=Math.min(ECG.next,now+.4);mark(now+.4,0,'hr',o.rate);}
+  vit(o);
+}
+
+function shiftOver(){return G.lives<=0||(G.kind==='daily'&&G.n>=G.queue.length)||(G.kind==='missed'&&!PATIENTS.some(p=>SAVE.miss[p.id]>0));}
+function pick(){
+  if(G.force){const p=PATIENTS.find(x=>x.id===G.force);G.force=null;if(p)return p;}
+  if(G.kind==='daily')return G.queue[G.n];
+  let pool;
+  if(G.kind==='missed'){pool=PATIENTS.filter(p=>SAVE.miss[p.id]>0);const other=pool.filter(p=>p.cat!==G.lastCat);if(other.length)pool=other;}
+  else pool=PATIENTS.filter(p=>p.cat!==G.lastCat);
+  let tot=0;const w=pool.map(p=>{const x=1+2*Math.min(3,SAVE.miss[p.id]||0);tot+=x;return x;});
+  let r=Math.random()*tot;for(let i=0;i<pool.length;i++){r-=w[i];if(r<=0)return pool[i];}return pool[0];
+}
+function loadPatient(P){
+  G.C=newCase(P,P.t*Math.max(TUNE.rampFloor,1-TUNE.ramp*G.saved));G.lastCat=P.cat;G.mode='play';G.lastPause=0;G.alarmAt=0;G.pend=null;
+  ECG.marks.length=0;ECG.set(P.rhythm,P.rate);G.hrV=null;vit({hr:P.hr,bp:P.bp,sp:P.sp});
+  $('vig').textContent=t(P.vig);say(['ui.first'],'');$('ff').classList.remove('on');
+  $('cart').setAttribute('aria-disabled','false');$('card').classList.remove('on');setFlat(P.rhythm==='asys');hud();
+}
+function nextPatient(){
+  if(shiftOver())return endShift();
+  const P=pick();G.n++;loadPatient(P);
+}
+
+/* every tap on the cart and every push of a syringe arrives here */
+function doAct(a,dose,speed){
+  if(G.mode!=='play'||!G.C)return;
+  if(a==='shock')return charge(a);
+  if(a==='sync'){const r=caseAct(cloneCase(G.C),'sync');if(r&&r.ok&&r.fx&&r.fx.shock)return charge(a);}
+  resolve(a,dose,speed);
+}
+function charge(a){
+  G.mode='charge';G.pend={a,until:now+TUNE.charge+(a==='sync'?.25:0),sync:a==='sync'};
+  $('ff').textContent=t(a==='sync'?'mon.syncing':'mon.charging');$('ff').classList.add('on');
+  $('cart').setAttribute('aria-disabled','true');sCharge(G.pend.until-now);
+}
+function resolve(a,dose,speed){
+  const C=G.C,r=caseAct(C,a,dose,speed);if(!r)return;
+  if(r.fact){SAVE.facts[r.fact]=(SAVE.facts[r.fact]||0)+1;persist();}
+  if(!r.ok){
+    sBad();say(r.msg,'poor',r.hint);
+    if(r.fx)applyFx(r.fx);
+    if(a==='shock')zapFx();
+    if(r.lethal){ECG.set('vf',0);vit({hr:'--',bp:'--/--'});}
+    if(r.dead)lose();else if(TUT.on&&TUT.step==='dose')tutSet('drug');
+    return;
+  }
+  if(a==='shock'&&!(r.fx&&r.fx.shock))zapFx();
+  applyFx(r.fx);say(r.msg,r.progress?'good':'flat');
+  if(!(r.fx&&r.fx.shock))tone(r.progress?700:440,.1,'triangle',.09);
+  tutOnAct(a,r);
+  if(r.win)return win();
+  if(r.ff)fastForward(r.ff.label,r.ff.back);
+}
+function fastForward(label,back){
+  G.mode='ff';G.ffUntil=now+TUNE.ffSec;G.ffBack=back;G.ffType=G.C.P.rhythm;$('ff').textContent=t(label)+' ▸▸';$('ff').classList.add('on');
+  ECG.set('cpr',0);setFlat(false);$('cart').setAttribute('aria-disabled','true');
+}
+function win(){
+  const C=G.C,P=C.P;G.mode='debrief';if(P.end)applyFx(P.end);setFlat(false);$('cart').setAttribute('aria-disabled','true');
+  const wait=1.9+G.lastPause;                      // long enough to watch the new rhythm arrive before the card covers it
+  if(TUT.on){sGood(true);after(wait,debriefTut);return;}
+  const perfect=C.mistakes===0,mult=1+Math.min(G.streak,8)*.25,pts=Math.round((150+Math.round(C.stab)*2+(perfect?100:0))*mult);
+  G.score+=pts;G.streak++;G.saved++;G.log.push({id:P.id,r:perfect?'c':'s'});stat(P.id,perfect?'c':'s');SAVE.miss[P.id]=Math.max(0,(SAVE.miss[P.id]||0)-1);persist();
+  sGood(perfect);const fl=document.createElement('div');fl.className='float';fl.textContent='+'+pts;document.body.appendChild(fl);setTimeout(()=>fl.remove(),950);
+  hud();after(wait,()=>debrief(true,pts,perfect));
+}
+function lose(){
+  const P=G.C.P;if(G.mode==='debrief')return;G.mode='debrief';closeSy(true);G.C.dead=true;
+  G.lives--;G.streak=0;G.log.push({id:P.id,r:'l'});stat(P.id,'l');SAVE.miss[P.id]=(SAVE.miss[P.id]||0)+1;persist();
+  if(ECG.cur()!=='vf')ECG.set('asys',0);vit({hr:0,bp:'--/--'});setFlat(true);sLost();hud();$('ff').classList.remove('on');$('cart').setAttribute('aria-disabled','true');
+  after(1.5,()=>debrief(false,0,false));
+}
+function showCard(fn){G.cardFn=fn;fn();$('card').classList.add('on');$('card').scrollTop=0;}
+function plainCard(){$('cWhy').hidden=true;$('cImg').hidden=true;$('cShare').hidden=true;$('cCopy').hidden=true;$('cTeach').hidden=false;}
+function debrief(saved,pts,perfect){
+  const P=G.C.P,over=shiftOver(),why=!saved&&G.said&&G.said.cls==='poor'?G.said.parts:null;setFlat(false);
+  showCard(()=>{
+    plainCard();if(why){$('cWhy').hidden=false;$('cWhy').textContent=msgText(why);}$('cDx').textContent=t(P.dx);
+    $('cVerdict').textContent=t(saved?(perfect?'card.clean':'card.saved'):'card.lost');$('cVerdict').className='verdict '+(saved?'saved':'lost');
+    $('cPts').textContent=saved?t('card.pts',pts)+(perfect?t('card.nomist'):''):t('card.back');
+    $('cTeach').textContent=t(P.teach);$('cSrc').textContent=P.src;$('cNext').textContent=t(over?'card.see':'card.next');
+  });
+  $('cNext').onclick=nextPatient;
+}
+const modeLabel=()=>G.kind==='daily'?t('img.daily',G.day):t('img.'+G.kind);
+function endShift(){
+  G.mode='over';G.C=null;G.said=null;SAVE.runs++;const best=G.score>SAVE.best;if(best)SAVE.best=G.score;
+  if(G.kind==='daily'){
+    if(!SAVE.daily||SAVE.daily.n!==G.day){SAVE.dstreak=SAVE.daily&&SAVE.daily.n===G.day-1?(SAVE.dstreak||0)+1:1;SAVE.daily={n:G.day,score:G.score,saved:G.saved,log:G.log.map(x=>x.r).join('')};}
+    else G.replay=true;
+  }
+  persist();
+  const caught=G.kind==='missed'&&G.lives>0;
+  showCard(()=>{
+    $('cDx').textContent=t('end.h')+' · '+modeLabel();$('cVerdict').textContent=t('end.saved',G.saved);$('cVerdict').className='verdict '+(G.saved?'saved':'lost');
+    $('cPts').textContent=t('ui.points',G.score)+(best&&G.score?t('end.newbest'):'')+(G.replay?' · '+t('end.replay',SAVE.daily.score):'')+(caught?' · '+t('end.caught'):'');
+    $('cWhy').hidden=true;$('cTeach').hidden=true;$('cSrc').textContent=t('end.legend');$('cNext').textContent=t('end.new');
+    $('cShare').hidden=false;$('cShare').textContent=t('end.share');$('cCopy').hidden=false;$('cCopy').textContent=t('end.copy');
+    G.shot=drawShot();try{$('cImg').src=G.shot.toDataURL('image/png');$('cImg').hidden=false;}catch(e){$('cImg').hidden=true;}
+  });
+  $('cNext').onclick=toTitle;
+  if(document.fonts&&document.fonts.load)Promise.all([document.fonts.load('900 300px "Big Shoulders Display"'),document.fonts.load('500 26px "IBM Plex Mono"')]).then(()=>{if(G.mode==='over'&&G.cardFn)G.cardFn();}).catch(()=>{});
+}
+function toTitle(){
+  $('card').classList.remove('on');G.mode='title';G.C=null;G.cardFn=null;G.timers.length=0;setFlat(false);
+  ECG.marks.length=0;ECG.set('sinus',72);vit({hr:'--',bp:'--/--',sp:'--'});$('vig').textContent='';G.said=null;renderSay();
+  showTitle();$('title').classList.remove('off');$('title').scrollTop=0;
+}
+function beginShift(kind){
+  audio();if(AC&&AC.state==='suspended')AC.resume().catch(()=>{});
+  G.timers.length=0;
+  Object.assign(G,{kind,lives:TUNE.lives,score:0,streak:0,saved:0,log:[],n:0,lastCat:null,queue:null,day:dayNum(),replay:false,shot:null});
+  if(kind==='daily')G.queue=dailySeq(G.day);
+  $('title').classList.add('off');hud();
+  if(!SAVE.tut)return tutStart();
+  nextPatient();
+}
+
+/* ───────── title screen ───────── */
+function showTitle(){
+  const got=FACT.filter(f=>SAVE.facts[f]).length;$('ruleN').textContent=got+' / '+FACT.length;
+  $('rules').innerHTML='';FACT.forEach((f,i)=>{const li=document.createElement('li'),n=document.createElement('i');n.textContent=String(i+1).padStart(2,'0');li.appendChild(n);
+    const s=document.createElement('span');if(SAVE.facts[f]){li.className='got';s.textContent=t('fact.'+f);}else s.textContent=t('ui.locked');li.appendChild(s);$('rules').appendChild(li);});
+  const b=$('best');b.innerHTML='';
+  const add=(label,val)=>{if(b.childNodes.length)b.appendChild(document.createTextNode(' · '));b.appendChild(document.createTextNode(label));const x=document.createElement('b');x.textContent=val;b.appendChild(x);};
+  if(SAVE.best)add(t('ui.best'),t('ui.points',SAVE.best));
+  const today=dayNum(),done=SAVE.daily&&SAVE.daily.n===today;
+  if(SAVE.dstreak>1&&SAVE.daily&&SAVE.daily.n>=today-1)add(t('ui.streak'),SAVE.dstreak);
+  $('dailyT').textContent=t('ui.daily',today);$('dailyS').textContent=done?t('ui.dailyDone',SAVE.daily.score):t('ui.dailySub',TUNE.dailyN);
+  const due=PATIENTS.filter(p=>SAVE.miss[p.id]>0);
+  $('missed').hidden=!due.length;$('missed').textContent=t('ui.missed',due.length);
+  /* progress per patient, worst first, so the player can see what to practise */
+  const met=PATIENTS.filter(p=>SAVE.stats[p.id]);
+  $('plN').textContent=t('ui.plN',met.length,PATIENTS.length)+(due.length?' · '+t('ui.plDue',due.length):'');
+  const rank=p=>{const s=SAVE.stats[p.id];if(!s)return 9;if(SAVE.miss[p.id]>0)return 0;return s.last==='l'?1:s.last==='s'?2:3;};
+  const ol=$('plist');ol.innerHTML='';
+  PATIENTS.slice().sort((a,c)=>rank(a)-rank(c)).forEach(p=>{
+    const s=SAVE.stats[p.id],li=document.createElement('li'),pip=document.createElement('span'),nm=document.createElement('span'),em=document.createElement('em');pip.className='pip';
+    if(!s){nm.textContent=t('ui.notmet');}
+    else{const m=SAVE.miss[p.id]||0;li.className='met '+s.last+(m?' due':'');nm.textContent=t(p.dx)+' · '+t(p.vig).split(' · ')[0];em.textContent=m?t('ui.due',s.l):t('ui.savedOf',s.c+s.s,s.n);}
+    li.appendChild(pip);li.appendChild(nm);li.appendChild(em);ol.appendChild(li);
+  });
+  if(due.length)$('pl').open=true;
+}
+
+/* ───────── guided first patient ───────── */
+function tutStart(){TUT.on=true;TUT.lead=null;loadPatient(PATIENTS.find(p=>p.id===TUTORIAL.patient));tutSet('trace');}
+function tutSet(step){TUT.step=step;renderTut();}
+function renderTut(){
+  const on=TUT.on,s=TUT.step;
+  $('coach').classList.toggle('on',on);
+  $('monitor').classList.toggle('ring',on&&(s==='trace'||s==='watch'));
+  const allow=!on?null:s==='cart'?TUTORIAL.tool:s==='drug'?TUTORIAL.drug:'';
+  document.querySelectorAll('.tool').forEach(b=>{b.classList.toggle('lock',allow!==null&&b.dataset.tool!==allow);b.classList.toggle('pulse',allow!==null&&b.dataset.tool===allow);});
+  if(!on){renderSy();return;}
+  const lead=TUT.lead?msgText(TUT.lead)+' ':'';
+  $('coachT').textContent=s==='trace'?t('tut.trace'):s==='cart'?t('tut.cart',toolName(TUTORIAL.tool)):s==='watch'?t('tut.watch')+' '+lead:lead+t('tut.drug',toolName(TUTORIAL.drug));
+  $('coachN').hidden=s!=='trace';$('coachN').textContent=t('tut.next');$('coachS').textContent=t('tut.skip');$('coachS').hidden=s==='watch';
+  renderSy();
+}
+function tutOnAct(a,r){
+  if(!TUT.on)return;
+  if(TUT.step==='cart'&&a===TUTORIAL.tool){TUT.lead=r.msg;tutSet('drug');}
+  else if(a===TUTORIAL.drug&&r.ok){TUT.lead=r.msg;tutSet('watch');}
+}
+function tutEnd(){TUT.on=false;TUT.step=null;TUT.lead=null;renderTut();}
+function tutSkip(){SAVE.tut=1;persist();closeSy(true);tutEnd();G.timers.length=0;nextPatient();}
+function debriefTut(){
+  const P=G.C.P;
+  showCard(()=>{
+    plainCard();$('cDx').textContent=t(P.dx);$('cVerdict').textContent=t('card.saved');$('cVerdict').className='verdict saved';
+    $('cPts').textContent=t('tut.done');$('cTeach').textContent=t(P.teach);$('cSrc').textContent=P.src;$('cNext').textContent=t('tut.start');
+  });
+  $('cNext').onclick=()=>{SAVE.tut=1;persist();tutEnd();nextPatient();};
+}
+
+/* ───────── syringe ───────── */
+function openSyringe(d){
+  if(G.mode!=='play')return;SY.d=d;SY.v=0;SY.open=true;
+  $('shName').textContent=t('sy.iv',toolName(d));$('shUnit').textContent=t('unit.'+DRUG[d].u);
+  const s=$('syr');s.setAttribute('aria-valuemin','0');s.setAttribute('aria-valuemax',String(DRUG[d].max));s.setAttribute('aria-label',t('sy.doseA'));
+  $('sheet').classList.add('on');if(TUT.on&&TUT.step==='drug')TUT.step='dose';renderSy();
+}
+function renderSy(){
+  if(!SY.d)return;
+  const x=DRUG[SY.d],f=SY.v/x.max;$('shDose').textContent=fmtNum(SY.d,SY.v);
+  $('shFill').style.width=(f*100)+'%';const tr=$('syr').clientWidth-26;$('shPl').style.left=(f*tr)+'px';
+  $('syr').setAttribute('aria-valuenow',String(SY.v));$('syr').setAttribute('aria-valuetext',fmtDose(SY.d,SY.v));
+  const h=$('shHint'),tut=TUT.on&&SY.d===TUTORIAL.drug,hit=tut&&Math.abs(SY.v-TUTORIAL.dose)<1e-9;
+  h.className='sh-hint'+(tut?' tut':'');h.textContent='';
+  if(tut)h.textContent=hit?t('tut.push'):t('tut.dose',fmtDose(SY.d,TUTORIAL.dose));
+  else{h.appendChild(document.createTextNode(t('sy.hint')));const b=document.createElement('b');b.textContent=t('sy.fine');h.appendChild(b);}
+  $('pFast').disabled=SY.v<=0||(tut&&!hit);$('pSlow').disabled=SY.v<=0||tut;
+  $('pFast').classList.toggle('pulse',!!hit);
+}
+function setSy(v,quiet){
+  const x=DRUG[SY.d];v=+clamp(Math.round(v/x.step)*x.step,0,x.max).toFixed(3);
+  if(Math.abs(v-SY.v)<1e-9)return;SY.v=v;if(!quiet){sTick(v/x.max);vib(4);}renderSy();
+}
+function syMove(e){const r=$('syr').getBoundingClientRect(),x=DRUG[SY.d];setSy(clamp((e.clientX-r.left)/(r.width-26),0,1)*x.max);}
+function closeSy(silent){
+  if(!SY.open)return;SY.open=false;SY.drag=false;$('sheet').classList.remove('on');
+  if(!silent&&TUT.on&&TUT.step==='dose')tutSet('drug');
+}
+function push(speed){if(!SY.open||SY.v<=0)return;const d=SY.d,v=SY.v;closeSy(true);doAct(d,v,speed);}
+$('syr').addEventListener('pointerdown',e=>{SY.drag=true;try{$('syr').setPointerCapture(e.pointerId);}catch(_){ }syMove(e);});
+$('syr').addEventListener('pointermove',e=>{if(SY.drag)syMove(e);});
+['pointerup','pointercancel'].forEach(n=>$('syr').addEventListener(n,()=>{SY.drag=false;}));
+$('syr').addEventListener('keydown',e=>{const x=DRUG[SY.d],k=e.key;const d=k==='ArrowRight'||k==='ArrowUp'?1:k==='ArrowLeft'||k==='ArrowDown'?-1:0;if(d){e.preventDefault();setSy(SY.v+d*x.step);}else if(k==='Home'){e.preventDefault();setSy(0);}});
+/* − and +: one step per tap, repeats while held */
+let nudT=null;
+const nudStop=()=>{clearTimeout(nudT);clearInterval(nudT);nudT=null;};
+function nudge(id,dir){
+  const b=$(id),go=()=>{if(SY.open)setSy(SY.v+dir*DRUG[SY.d].step);};
+  b.addEventListener('pointerdown',e=>{e.preventDefault();nudStop();go();nudT=setTimeout(()=>{nudT=setInterval(go,75);},380);});
+  ['pointerup','pointercancel','pointerleave'].forEach(n=>b.addEventListener(n,nudStop));
+  b.addEventListener('click',e=>{if(e.detail===0)go();});   // keyboard and assistive tech
+}
+nudge('syMinus',-1);nudge('syPlus',1);
+$('shX').addEventListener('click',()=>closeSy());
+$('sheet').addEventListener('click',e=>{if(e.target===$('sheet'))closeSy();});
+$('pFast').addEventListener('click',()=>push('rapid'));
+$('pSlow').addEventListener('click',()=>push('slow'));
+
+/* ───────── result image: the whole shift as one trace ───────── */
+function drawShot(){
+  const c=document.createElement('canvas'),Wd=1080,Ht=1350;c.width=Wd;c.height=Ht;const x=c.getContext('2d');
+  const COL={c:'#3cf5a0',s:'#ffb648',l:'#ff4d6d'},disp='"Big Shoulders Display","Oswald","Arial Narrow",Impact,sans-serif',mono='"IBM Plex Mono",ui-monospace,Menlo,monospace';
+  x.fillStyle='#06080b';x.fillRect(0,0,Wd,Ht);
+  x.strokeStyle='rgba(255,255,255,.04)';x.lineWidth=1;x.beginPath();for(let i=0;i<=Wd;i+=54){x.moveTo(i,0);x.lineTo(i,Ht);}for(let j=0;j<=Ht;j+=54){x.moveTo(0,j);x.lineTo(Wd,j);}x.stroke();
+  const sp=px=>{try{x.letterSpacing=px+'px';}catch(e){}};
+  x.textBaseline='alphabetic';sp(6);x.font='500 26px '+mono;x.fillStyle='#8792a0';x.textAlign='left';x.fillText('SMART HEART · THE GAME',64,100);
+  x.fillStyle='#ff4d6d';x.fillText(modeLabel()+(G.kind==='daily'?'  ·  '+new Date(DAY0+(G.day-1)*864e5).toISOString().slice(0,10):''),64,146);sp(0);
+  /* the trace: one segment per patient, in its rhythm, coloured by the outcome */
+  const log=G.log.slice(-14),n=Math.max(1,log.length),seg=2.6,top=190,hh=380,mid=top+hh*.6,amp=hh*.3;
+  x.fillStyle='#080b0f';x.fillRect(0,top,Wd,hh);x.strokeStyle='#1f2832';x.lineWidth=2;x.strokeRect(1,top,Wd-2,hh);
+  const E=makeECG(mulberry(G.day*31+G.score+7),1e5),ev=[];
+  log.forEach((e,i)=>{const P=PATIENTS.find(p=>p.id===e.id),f=finalLook(P);ev.push({t:i*seg,r:P.rhythm,rate:P.rate});ev.push(e.r==='l'?{t:i*seg+seg*.6,r:'asys',rate:0}:{t:i*seg+seg*.5,r:f.rhythm,rate:f.rate,p:.25});});
+  let k=0;for(let tt=0;tt<n*seg+.05;tt+=.02){E.now=tt;while(k<ev.length&&ev[k].t<=tt){E.set(ev[k].r,ev[k].rate,ev[k].p);k++;}E.sched();}
+  x.lineJoin='round';x.lineCap='round';
+  log.forEach((e,i)=>{
+    const x0=i*Wd/n,x1=(i+1)*Wd/n;x.beginPath();
+    for(let px=x0;px<=x1;px+=1.5){const tt=px/Wd*n*seg,y=mid-clamp(E.sig(tt),-1.7,1.7)*amp;px===x0?x.moveTo(px,y):x.lineTo(px,y);}
+    x.strokeStyle=COL[e.r];x.globalAlpha=.18;x.lineWidth=12;x.stroke();x.globalAlpha=1;x.lineWidth=4;x.shadowColor=COL[e.r];x.shadowBlur=22;x.stroke();x.shadowBlur=0;
+    if(i){x.strokeStyle='#1f2832';x.lineWidth=2;x.beginPath();x.moveTo(x0,top);x.lineTo(x0,top+hh);x.stroke();}
+  });
+  /* giant numerals */
+  x.textAlign='left';x.fillStyle='#3cf5a0';x.shadowColor='rgba(60,245,160,.45)';x.shadowBlur=60;x.font='900 340px '+disp;x.fillText(String(G.score),52,890);x.shadowBlur=0;
+  sp(4);x.font='800 52px '+disp;x.fillStyle='#8792a0';x.fillText(t('img.points'),64,958);
+  const lost=log.filter(e=>e.r==='l').length;x.fillStyle='#e9edf2';x.font='800 60px '+disp;x.fillText(t('img.saved',G.saved,G.log.length-G.saved),64,1052);sp(0);
+  const sz=Math.min(84,(Wd-128-(n-1)*14)/n);log.forEach((e,i)=>{x.fillStyle=COL[e.r];const bx=64+i*(sz+14);x.beginPath();if(x.roundRect)x.roundRect(bx,1092,sz,sz,sz*.2);else x.rect(bx,1092,sz,sz);x.fill();});
+  sp(3);x.font='500 26px '+mono;x.fillStyle='#8792a0';x.fillText(t('img.rules',FACT.filter(f=>SAVE.facts[f]).length,FACT.length),64,1236);
+  sp(0);x.font='400 22px '+mono;x.fillStyle='#5d6875';x.fillText(t('img.foot')+'  ERC 2025 · ESC 2024 · ESC 2021',64,1284);
+  x.fillStyle='#8792a0';x.fillText(location.host+location.pathname,64,1318);
+  return c;
+}
+const SQ={c:'🟩',s:'🟨',l:'🟥'};
+const shareText=()=>'Smart Heart: The Game\n'+modeLabel()+'\n'+t('share.saved',G.saved,G.score)+'\n'+G.log.map(e=>SQ[e.r]).join('')+'\n'+location.origin+location.pathname;
+async function shareShot(){
+  if(!G.shot)return;const btn=$('cShare');
+  try{
+    const blob=await new Promise(r=>G.shot.toBlob(r,'image/png')),name='smart-heart-shift.png';
+    const file=typeof File==='function'?new File([blob],name,{type:'image/png'}):null;
+    if(file&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text:shareText()});return;}catch(e){if(e&&e.name==='AbortError')return;}}
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    btn.textContent=t('end.saved2');
+  }catch(e){btn.textContent=t('end.copyfail');}
+}
+
+/* ───────── wiring ───────── */
+function buildCart(){
+  const c=$('cart');c.innerHTML='';
+  TOOLS.forEach(x=>{const b=document.createElement('button');b.type='button';b.className='tool '+x.kind+(x.wide?' wide':'');b.dataset.tool=x.id;c.appendChild(b);});
+}
+function fitTools(){
+  document.querySelectorAll('.tool').forEach(b=>{
+    b.style.fontSize='';let fs=parseFloat(getComputedStyle(b).fontSize)||15,n=0;
+    while((b.scrollWidth>b.clientWidth+1||b.scrollHeight>b.clientHeight+1)&&fs>9&&n++<24){fs-=.5;b.style.fontSize=fs+'px';}
+  });
+}
+function applyStatic(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-t]').forEach(e=>{e.textContent=t(e.dataset.t);});
+  document.querySelectorAll('.tool').forEach(b=>{b.textContent=toolName(b.dataset.tool);});
+  $('mute').setAttribute('aria-label',t('ui.sound'));$('lives').setAttribute('aria-label',t('ui.livesA'));cv.setAttribute('aria-label',t('ui.ecgA'));
+  $('langs').setAttribute('aria-label',t('ui.lang'));$('shX').setAttribute('aria-label',t('sy.cancel'));
+  const pf=$('pFast');pf.textContent='';t('sy.fast').split('|').forEach((s,i)=>{if(i)pf.appendChild(document.createElement('br'));pf.appendChild(document.createTextNode(s));});
+  $('pSlow').textContent=t('sy.slow');
+  document.querySelectorAll('#langs button').forEach(b=>b.classList.toggle('on',b.dataset.l===LANG));
+  fitTools();
+}
+function setLang(l){
+  if(!LANGS.includes(l))return;LANG=l;if(!TEST)try{localStorage.setItem('smartheart-lang',l);}catch(e){}
+  applyStatic();showTitle();hud();
+  if(G.C)$('vig').textContent=t(G.C.P.vig);renderSay();renderTut();
+  if(SY.open){$('shName').textContent=t('sy.iv',toolName(SY.d));$('shUnit').textContent=t('unit.'+DRUG[SY.d].u);renderSy();}
+  if(G.cardFn&&$('card').classList.contains('on'))G.cardFn();
+  if(G.mode==='charge'&&G.pend)$('ff').textContent=t(G.pend.sync?'mon.syncing':'mon.charging');
+}
+buildCart();
+LANGS.forEach(l=>{const b=document.createElement('button');b.type='button';b.dataset.l=l;b.textContent=l.toUpperCase();b.addEventListener('click',()=>setLang(l));$('langs').appendChild(b);});
+$('cart').addEventListener('click',e=>{const b=e.target.closest('.tool');if(!b||b.classList.contains('lock'))return;audio();const id=b.dataset.tool;if(DRUG[id])openSyringe(id);else doAct(id);});
+$('daily').addEventListener('click',()=>beginShift('daily'));
+$('start').addEventListener('click',()=>beginShift('endless'));
+$('missed').addEventListener('click',()=>beginShift('missed'));
+$('coachN').addEventListener('click',()=>{if(TUT.on&&TUT.step==='trace')tutSet('cart');});
+$('coachS').addEventListener('click',()=>{if(TUT.on)tutSkip();});
+$('mute').addEventListener('click',()=>{snd=!snd;$('mute').setAttribute('aria-pressed',String(snd));if(OUT)OUT.gain.value=snd?1:0;if(!snd)setFlat(false);});
+$('cShare').addEventListener('click',shareShot);
+$('cCopy').addEventListener('click',()=>{
+  const done=ok=>{$('cCopy').textContent=t(ok?'end.copied':'end.copyfail');};
+  try{navigator.clipboard.writeText(shareText()).then(()=>done(true),()=>done(false));}catch(e){done(false);}
+});
+window.addEventListener('resize',()=>{resize();fitTools();if(SY.open)renderSy();});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitTools).catch(()=>{});
+
+/* ───────── loop ───────── */
+function tick(dt){
+  now+=dt;ECG.now=now;ECG.sched();
+  let beat=false;
+  for(const b of ECG.beats){if(!b.done&&b.t<=now){b.done=true;beat=true;if(G.mode==='charge'&&G.pend&&G.pend.sync)b.sync=true;if(G.mode!=='title'&&G.mode!=='over')sBeep();}}
+  for(let i=G.timers.length-1;i>=0;i--){if(now>=G.timers[i].t){const f=G.timers.splice(i,1)[0].fn;f();}}
+  const C=G.C;
+  if(G.mode==='play'&&C){
+    /* the timer slows while the syringe is open: drawing an exact dose is the lesson, not a reflex test */
+    let k=SY.open?TUNE.syringeSlow:1;
+    if(TUT.on)k=TUT.step==='trace'?0:.4;
+    caseTick(C,dt*k);if(TUT.on&&C.stab<45){C.stab=45;C.dead=false;}
+    if(C.stab<30&&now>G.alarmAt){G.alarmAt=now+(C.stab<15?.7:1.15);sAlarm(C.stab<15);}
+    if(C.dead)lose();
+  }else if(G.mode==='charge'&&G.pend&&now>=G.pend.until&&(!G.pend.sync||beat||now>=G.pend.until+1.4)){
+    /* a synchronised shock waits for the next R wave */
+    const a=G.pend.a;G.pend=null;G.mode='play';$('ff').classList.remove('on');$('cart').setAttribute('aria-disabled','false');resolve(a);
+  }else if(G.mode==='ff'&&now>=G.ffUntil){
+    G.mode='play';$('ff').classList.remove('on');ECG.set(G.ffType,C.P.rate);setFlat(G.ffType==='asys');
+    if(G.ffBack)say([G.ffBack],'flat');$('cart').setAttribute('aria-disabled','false');
+  }
+  if(G.hrT!=null&&G.hrV!=null&&G.hrV!==G.hrT){G.hrV+=(G.hrT-G.hrV)*Math.min(1,dt*5);if(Math.abs(G.hrT-G.hrV)<.6)G.hrV=G.hrT;$('vHr').textContent=Math.round(G.hrV);}
+  const s=C?C.stab:100;G.col=s>60?'#3cf5a0':s>30?'#ffb648':'#ff4d6d';
+  $('monitor').style.setProperty('--c',G.col);$('stab').style.width=s+'%';
+}
+let last=0;
+function frame(ts){const dt=Math.min(.05,(ts-last)/1000||0);last=ts;tick(dt);draw();requestAnimationFrame(frame);}
+
+/* ───────── hooks for test.html ───────── */
+window.SH={PATIENTS,DRUG,TOOLS,FACT,L,LANGS,UNVERIFIED,TUNE,SRC,TUTORIAL,MISSING,newCase,cloneCase,caseAct,caseTick,pathOf,finalLook,dailySeq,dayNum,t,msgText,fmtDose,setLang,
+  textIn(l,parts,hint){const o=LANG;LANG=l;try{return msgText(parts)+(hint?t(hint):'');}finally{LANG=o;}},
+  ui:{
+    start(id,kind){SAVE.tut=1;G.force=id||null;beginShift(kind||'endless');},
+    tutorial(){SAVE.tut=0;beginShift('endless');},
+    advance(sec){for(let i=0,n=Math.round(sec*30);i<n;i++)tick(1/30);draw();},
+    dose(v){setSy(v,true);},
+    state(){return {mode:G.mode,stab:G.C?G.C.stab:null,won:G.C?G.C.won:null,lives:G.lives,score:G.score,saved:G.saved,n:G.n,tut:TUT.on?TUT.step:null,sheet:SY.open,card:$('card').classList.contains('on'),log:G.log.map(e=>e.r).join('')};},
+    save(){return SAVE;},
+    reset(){SAVE.best=0;SAVE.facts={};SAVE.miss={};SAVE.runs=0;SAVE.stats={};SAVE.daily=null;SAVE.dstreak=0;},
+    shot(){return G.shot;},
+    marks(){return ECG.marks.slice();},
+    home(){closeSy(true);if(TUT.on)tutEnd();G.pend=null;$('ff').classList.remove('on');toTitle();}
+  }};
+
+resize();hud();applyStatic();showTitle();ECG.set('sinus',72);
+if(!TEST)requestAnimationFrame(ts=>{last=ts;frame(ts);});
+})();
+</script>
+</body>
+</html>
